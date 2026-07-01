@@ -161,7 +161,7 @@ export const sizes = {
   iconFab: 52,
   barMaxHeight: 80,
   barLabelSpace: 40,
-  numpadKeyHeight: 64,
+  numpadKeyHeight: 76,
 } as const;
 
 export const shadows = {

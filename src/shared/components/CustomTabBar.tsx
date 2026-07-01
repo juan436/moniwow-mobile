@@ -4,8 +4,10 @@
  * @what     Tab bar minimalista: 4 íconos con label + FAB central esmeralda sobresaliente 28px.
  *           Active state: línea 3px bajo label. Glow esmeralda en FAB.
  * @receives BottomTabBarProps (state, navigation, insets)
- * @processes tabPress via navigation.dispatch. FAB protrude = 28px sobre la barra.
- * @returns  JSX — barra blanca 50px + FAB 60px con ring interior y glow.
+ * @processes tabPress via navigation.dispatch. FAB protrude = 28px sobre la barra. No renderiza
+ *           nada si la tab activa es "quick-add" — es un flujo de pantalla completa (Registro de
+ *           Gasto), no una pestaña navegable en la que uno se queda.
+ * @returns  JSX — barra blanca 50px + FAB 60px con ring interior y glow, o null en quick-add.
  * @props    BottomTabBarProps
  */
 import { useCallback } from 'react';
@@ -33,6 +35,8 @@ const FAB_PROTRUDE = 20;
 
 export function CustomTabBar({ state, navigation, insets }: BottomTabBarProps) {
   const activeRoute = state.routes[state.index]?.name ?? '';
+
+  if (activeRoute === 'quick-add') return null;
 
   const handlePress = useCallback((routeName: string) => {
     const route = state.routes.find((r) => r.name === routeName);

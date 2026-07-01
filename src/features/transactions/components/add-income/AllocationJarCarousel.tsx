@@ -1,7 +1,7 @@
 /**
  * AllocationJarCarousel — Component
  *
- * @what     Carrusel horizontal de jarras para distribuir ingreso: páginas de 6.
+ * @what     Carrusel horizontal de jarras para distribuir ingreso: páginas de 7.
  * @receives 5 props: jars, distribution, onSelectJar, activePage, onPageChange
  * @processes Ordena jarras base (Libre/Hogar/Ahorro, M03 "inborrables") primero, personalizadas
  *           después en su orden original. Agrupa en páginas de PAGE_SIZE — filas son solo

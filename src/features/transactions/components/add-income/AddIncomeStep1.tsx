@@ -35,7 +35,7 @@ export function AddIncomeStep1({ amount, concept, onConceptChange, onKey, onSigu
           style={styles.conceptInput}
           value={concept}
           onChangeText={onConceptChange}
-          placeholder="¿De dónde llegó? Ej: Freelance, Bono"
+          placeholder="¿De dónde llega?"
           placeholderTextColor={colors.slateGray}
           returnKeyType="done"
         />

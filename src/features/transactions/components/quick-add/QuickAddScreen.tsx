@@ -2,10 +2,10 @@
  * QuickAddScreen — Component (Screen)
  *
  * @what     M02 — Orquestador Quick Add: header compartido + Paso 1 (numpad) o Paso 2 (jarra).
- * @receives —
+ * @receives 1 prop: jars
  * @processes Gestiona step via useQuickAdd. Header cambia ícono (X/←) y título según paso.
  * @returns  JSX — SafeArea + header + QuickAddStep1 o QuickAddStep2.
- * @props    —
+ * @props    1: jars
  */
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -16,19 +16,22 @@ import { colors, typography, spacing } from '@shared/styles';
 import { useQuickAdd } from '../../hooks/useQuickAdd';
 import { QuickAddStep1 } from './QuickAddStep1';
 import { QuickAddStep2 } from './QuickAddStep2';
+import type { JarOption } from '../../types';
 
 const TITLES = { 1: 'Registro de Gasto', 2: '¿De qué jarra sale?' } as const;
 
 function handleClose() { router.navigate('/'); }
 
-export function QuickAddScreen() {
+type Props = { jars: JarOption[] };
+
+export function QuickAddScreen({ jars }: Props) {
   const insets = useSafeAreaInsets();
   const {
     amount, concept, setConcept,
     selectedJar, setSelectedJar,
     step,
     handleKey, handleSiguiente, handleConfirmar, handleBack,
-  } = useQuickAdd();
+  } = useQuickAdd(jars);
 
   return (
     <View style={[styles.screen, { paddingTop: insets.top }]}>
@@ -59,6 +62,7 @@ export function QuickAddScreen() {
       )}
       {step === 2 && (
         <QuickAddStep2
+          jars={jars}
           selectedJar={selectedJar}
           onJarSelect={setSelectedJar}
           onConfirmar={handleConfirmar}

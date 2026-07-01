@@ -34,9 +34,9 @@ export function AddIncomeScreen({ jars }: Props) {
     amount, concept, setConcept,
     step,
     isDistributing, distribution, totalAmount, remaining,
-    selectedJarId, jarAmountDraft, carouselPage, setCarouselPage,
+    selectedJarId, jarAmountDraft, jarMaxAvailable, carouselPage, setCarouselPage,
     handleKey, handleSiguiente, handleToggleDistribute,
-    handleSelectJar, handleJarNumpadKey, handleJarNumpadConfirm, handleJarNumpadCancel,
+    handleSelectJar, handleJarNumpadKey, handleJarNumpadConfirm, handleAssignAll, handleJarNumpadCancel,
     handleConfirmar, handleBack,
   } = useAddIncome(jars);
 
@@ -46,8 +46,11 @@ export function AddIncomeScreen({ jars }: Props) {
   }, [handleConfirmar]);
 
   const step2State = useMemo(
-    () => ({ isDistributing, distribution, totalAmount, remaining, jars, selectedJarId, jarAmountDraft, carouselPage }),
-    [isDistributing, distribution, totalAmount, remaining, jars, selectedJarId, jarAmountDraft, carouselPage]
+    () => ({
+      isDistributing, distribution, totalAmount, remaining, jars,
+      selectedJarId, jarAmountDraft, jarMaxAvailable, carouselPage,
+    }),
+    [isDistributing, distribution, totalAmount, remaining, jars, selectedJarId, jarAmountDraft, jarMaxAvailable, carouselPage]
   );
 
   const step2Actions = useMemo(
@@ -56,13 +59,14 @@ export function AddIncomeScreen({ jars }: Props) {
       onSelectJar: handleSelectJar,
       onJarNumpadKey: handleJarNumpadKey,
       onJarNumpadConfirm: handleJarNumpadConfirm,
+      onAssignAll: handleAssignAll,
       onJarNumpadCancel: handleJarNumpadCancel,
       onConfirmar: handleConfirmarYVolver,
       onCarouselPageChange: setCarouselPage,
     }),
     [
       handleToggleDistribute, handleSelectJar, handleJarNumpadKey, handleJarNumpadConfirm,
-      handleJarNumpadCancel, handleConfirmarYVolver, setCarouselPage,
+      handleAssignAll, handleJarNumpadCancel, handleConfirmarYVolver, setCarouselPage,
     ]
   );
 

@@ -1,13 +1,14 @@
 /**
  * QuickAddStep1 — Component
  *
- * @what     Paso 1 Quick Add: display monto hero + campo concepto + numpad + botón SIGUIENTE.
+ * @what     Paso 1 Quick Add: display monto hero + campo concepto + numpad + botón Continuar.
  * @receives 5 props: amount, concept, onConceptChange, onKey, onSiguiente
- * @processes SIGUIENTE deshabilitado si monto es 0. Campo concepto con ícono IA Scanner (noop).
- * @returns  JSX — AmountDisplay + TextInput + NumpadGrid + MoniButton.
+ * @processes Continuar deshabilitado si monto es 0. Campo concepto con ícono IA Scanner (noop).
+ * @returns  JSX — AmountDisplay + TextInput + NumpadGrid + botón Continuar.
  * @props    5: amount, concept, onConceptChange, onKey, onSiguiente
  */
-import { View, TextInput, Pressable, StyleSheet } from 'react-native';
+import { View, Text, TextInput, Pressable, StyleSheet } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
 
 import { colors, spacing, radius, typography } from '@shared/styles';
@@ -23,6 +24,7 @@ type Props = {
 };
 
 export function QuickAddStep1({ amount, concept, onConceptChange, onKey, onSiguiente }: Props) {
+  const insets = useSafeAreaInsets();
   const canProceed = parseFloat(amount) > 0;
 
   return (
@@ -45,13 +47,13 @@ export function QuickAddStep1({ amount, concept, onConceptChange, onKey, onSigui
 
       <NumpadGrid onKey={onKey} />
 
-      <View style={styles.btnWrap}>
+      <View style={[styles.btnWrap, { paddingBottom: insets.bottom + spacing.stackLg + spacing.stackMd }]}>
         <Pressable
           style={[styles.btn, !canProceed && styles.btnDisabled]}
           onPress={onSiguiente}
           disabled={!canProceed}
         >
-          <MaterialIcons name="arrow-forward" size={20} color={colors.pureWhite} />
+          <Text style={styles.btnText}>Continuar</Text>
         </Pressable>
       </View>
     </View>
@@ -80,4 +82,5 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
   },
   btnDisabled:  { backgroundColor: colors.surfaceContainerHigh },
+  btnText:      { ...typography.labelMd, color: colors.pureWhite },
 });

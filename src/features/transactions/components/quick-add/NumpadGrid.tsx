@@ -34,7 +34,7 @@ export function NumpadGrid({ onKey }: Props) {
               hitSlop={4}
             >
               {key === '⌫'
-                ? <MaterialIcons name="backspace" size={24} color={colors.navyDark} />
+                ? <MaterialIcons name="backspace" size={28} color={colors.navyDark} />
                 : <Text style={styles.keyText}>{key}</Text>
               }
             </Pressable>
@@ -60,5 +60,5 @@ const styles = StyleSheet.create({
     elevation: 1,
   },
   keyActive: { backgroundColor: colors.surfaceContainerLow },
-  keyText:   { ...typography.headlineMd, color: colors.navyDark },
+  keyText:   { ...typography.headlineLg, color: colors.navyDark },
 });
