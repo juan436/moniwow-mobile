@@ -14,6 +14,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { colors, typography, spacing, radius } from '@shared/styles';
 import { MoniInput, MoniButton } from '@shared/components';
+import type { CreateGoalData } from '../types';
 
 const EMOJI_SIZE = 48;
 const EMOJI_GAP  = 8;
@@ -29,7 +30,6 @@ const GOAL_EMOJIS = [
 type Form = { nombre: string; emoji: string; monto: string };
 function emptyForm(): Form { return { nombre: '', emoji: '', monto: '' }; }
 
-export type CreateGoalData = { name: string; icon: string; targetAmount: number };
 type Props = { visible: boolean; onClose: () => void; onCreate: (data: CreateGoalData) => void };
 
 export function AnadirSuenoModal({ visible, onClose, onCreate }: Props) {

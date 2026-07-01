@@ -3,7 +3,8 @@
  *
  * @what     Card de jarra para grid 2 columnas en pantalla Mis Jarras.
  * @receives 1 prop: jar
- * @processes Muestra icono, nombre, saldo, barra de progreso y badge Blindado.
+ * @processes Muestra icono o emoji (jarras creadas por el usuario), nombre, saldo, barra de
+ *           progreso y badge Blindado.
  * @returns  JSX — card flex:1 compatible con FlatList numColumns={2}.
  * @props    1: jar
  */
@@ -20,7 +21,10 @@ export function JarItem({ jar }: Props) {
     <View style={[styles.card, shadows.card]}>
       <View style={styles.top}>
         <View style={[styles.icon, { backgroundColor: jar.iconBg }]}>
-          <MaterialIcons name={jar.iconName} size={22} color={jar.iconColor} />
+          {jar.emoji
+            ? <Text style={styles.emoji}>{jar.emoji}</Text>
+            : jar.iconName && <MaterialIcons name={jar.iconName} size={22} color={jar.iconColor} />
+          }
         </View>
         {jar.isBlindado && (
           <View style={styles.badge}>
@@ -43,6 +47,7 @@ const styles = StyleSheet.create({
   card:  { flex: 1, backgroundColor: colors.pureWhite, borderRadius: radius.card, padding: spacing.cardPadding, gap: spacing.stackSm },
   top:   { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
   icon:  { width: sizes.iconSm, height: sizes.iconSm, borderRadius: radius.lg, alignItems: 'center', justifyContent: 'center' },
+  emoji: { fontSize: sizes.emojiFontMd },
   badge: { paddingHorizontal: spacing.stackSm, paddingVertical: spacing.stackXxs, backgroundColor: colors.goldTint, borderRadius: radius.full },
   badgeText: { ...typography.labelXs, color: colors.goldDreams },
   name:    { ...typography.labelMd, color: colors.slateGray },

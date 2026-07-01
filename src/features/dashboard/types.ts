@@ -12,12 +12,15 @@ export type JarDisplay = {
   id: string;
   name: string;
   balance: number;
-  iconName: IconName;
   iconBg: string;
   iconColor: string;
+  iconName?: IconName;
+  emoji?: string;
   progress?: number;
   isBlindado?: boolean;
 };
+
+export type CreateJarData = { name: string; emoji: string };
 
 export type TransactionItem = {
   description: string;

@@ -1,13 +1,14 @@
 /**
  * JarrasScreen — Screen
  *
- * @what     Lista completa de jarras con saldo total y grid 2 columnas.
+ * @what     Lista completa de jarras con saldo total, grid 2 columnas y creación de jarras.
  * @receives —
- * @processes Carga jars desde useDashboard. Calcula saldo total acumulado.
- * @returns  JSX — FlatList 2 columnas con header scrolleable.
+ * @processes Carga jars desde useDashboard, combina con jarras creadas localmente (custom, sin
+ *           backend aún). Calcula saldo total acumulado sobre el combinado.
+ * @returns  JSX — FlatList 2 columnas con header scrolleable + CreateJarModal.
  * @props    —
  */
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { View, Text, FlatList, Pressable, StyleSheet } from 'react-native';
 import { router } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -15,17 +16,34 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { colors, typography, spacing, radius, shadows, sizes } from '@shared/styles';
 import { JarItem } from '@features/dashboard/components/JarItem';
+import { CreateJarModal } from '@features/dashboard/components/CreateJarModal';
 import { useDashboard } from '@features/dashboard/hooks/useDashboard';
-import type { JarDisplay } from '@features/dashboard/types';
+import type { JarDisplay, CreateJarData } from '@features/dashboard/types';
 
 function handleBack() { router.back(); }
 function RowSeparator() { return <View style={styles.rowSep} />; }
 
 export default function JarrasScreen() {
-  const { jars } = useDashboard();
+  const { jars: baseJars } = useDashboard();
   const insets   = useSafeAreaInsets();
+  const [customJars, setCustomJars]     = useState<JarDisplay[]>([]);
+  const [isCreateVisible, setIsCreateVisible] = useState(false);
 
+  const jars  = useMemo(() => [...baseJars, ...customJars], [baseJars, customJars]);
   const total = useMemo(() => jars.reduce((s, j) => s + j.balance, 0), [jars]);
+
+  const handleOpenCreate  = useCallback(() => setIsCreateVisible(true), []);
+  const handleCloseCreate = useCallback(() => setIsCreateVisible(false), []);
+  const handleCreate = useCallback((data: CreateJarData) => {
+    setCustomJars((prev) => [...prev, {
+      id: `custom-${Date.now()}`,
+      name: data.name,
+      emoji: data.emoji,
+      balance: 0,
+      iconBg: colors.emeraldTint,
+      iconColor: colors.emeraldSuccess,
+    }]);
+  }, []);
 
   const renderItem = useCallback(
     ({ item }: { item: JarDisplay }) => <JarItem jar={item} />,
@@ -39,6 +57,9 @@ export default function JarrasScreen() {
           <MaterialIcons name="arrow-back" size={24} color={colors.navyDark} />
         </Pressable>
         <Text style={styles.headerTitle}>Mis jarras</Text>
+        <Pressable style={styles.addBtn} onPress={handleOpenCreate} hitSlop={8}>
+          <MaterialIcons name="add" size={24} color={colors.emeraldSuccess} />
+        </Pressable>
       </View>
 
       <View style={[styles.summaryCard, shadows.card]}>
@@ -56,7 +77,7 @@ export default function JarrasScreen() {
 
       <Text style={styles.sectionTitle}>Todas las jarras</Text>
     </>
-  ), [total, jars.length, insets.top]);
+  ), [total, jars.length, insets.top, handleOpenCreate]);
 
   return (
     <View style={styles.screen}>
@@ -72,6 +93,7 @@ export default function JarrasScreen() {
         showsVerticalScrollIndicator={false}
       />
       <View style={[styles.statusBarCover, { height: insets.top }]} />
+      <CreateJarModal visible={isCreateVisible} onClose={handleCloseCreate} onCreate={handleCreate} />
     </View>
   );
 }
@@ -99,6 +121,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   headerTitle: { ...typography.headlineMd, color: colors.navyDark, flex: 1 },
+  addBtn: {
+    width: sizes.iconSm,
+    height: sizes.iconSm,
+    borderRadius: radius.full,
+    backgroundColor: colors.emeraldTint,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   summaryCard: {
     backgroundColor: colors.pureWhite,
     borderRadius: radius.card,

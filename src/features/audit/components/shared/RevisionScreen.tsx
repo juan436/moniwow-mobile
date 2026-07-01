@@ -4,11 +4,13 @@
  * @what     Pantalla Revisión: header hide-on-scroll + carrusel 4 páginas (Auditoría, MoniAI, Mundo Paralelo, Mis Sueños).
  * @receives Ninguna prop — screen raíz del tab Revisión.
  * @processes scrollY compartido entre páginas. Header se oculta al bajar y reaparece al subir.
- *           Al cambiar página, scrollY se resetea a 0 y header reaparece.
+ *           Al cambiar página, scrollY se resetea a 0 y header reaparece. `pageProps`/`indicator`/
+ *           `data` por página van memoizados — objetos inline como prop JSX causan re-render en
+ *           cada render del padre (code_rules §2).
  * @returns  JSX — statusBarBg fijo + PagerView + headerFloat animado.
  * @props    —
  */
-import { useState, useRef } from 'react';
+import { useCallback, useMemo, useState, useRef } from 'react';
 import { View, Animated, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import PagerView from 'react-native-pager-view';
@@ -37,13 +39,26 @@ export function RevisionScreen() {
     extrapolate: 'clamp',
   });
 
-  function handlePageSelected(position: number) {
+  const handlePageSelected = useCallback((position: number) => {
     setActivePage(position);
     scrollY.setValue(0);
-  }
+  }, [scrollY]);
 
-  const pageProps = { scrollY, topOffset: headerHeight };
-  const indicator = { count: PAGE_COUNT, active: activePage };
+  const pageProps = useMemo(() => ({ scrollY, topOffset: headerHeight }), [scrollY, headerHeight]);
+  const indicator = useMemo(() => ({ count: PAGE_COUNT, active: activePage }), [activePage]);
+
+  const auditoriaData = useMemo(
+    () => ({ barChart: data.barChart, fugas: data.fugas, distribution: data.distribution }),
+    [data.barChart, data.fugas, data.distribution]
+  );
+  const mundoParaleloData = useMemo(
+    () => ({ patrimonio: data.patrimonio, deudaTotal: data.deudaTotal, deudaPagada: data.deudaPagada, deudaBreakdown: data.deudaBreakdown }),
+    [data.patrimonio, data.deudaTotal, data.deudaPagada, data.deudaBreakdown]
+  );
+  const misSuenosData = useMemo(
+    () => ({ goalProgress: data.goalProgress, ahorroTotal: data.ahorroTotal, metaGlobal: data.metaGlobal, goals: data.goals }),
+    [data.goalProgress, data.ahorroTotal, data.metaGlobal, data.goals]
+  );
 
   return (
     <View style={styles.screen}>
@@ -53,28 +68,16 @@ export function RevisionScreen() {
         onPageSelected={(e) => handlePageSelected(e.nativeEvent.position)}
       >
         <View key="0" style={styles.page}>
-          <AuditoriaPage
-            data={{ barChart: data.barChart, fugas: data.fugas, distribution: data.distribution }}
-            indicator={indicator}
-            {...pageProps}
-          />
+          <AuditoriaPage data={auditoriaData} indicator={indicator} {...pageProps} />
         </View>
         <View key="1" style={styles.page}>
           <MoniAIPage indicator={indicator} {...pageProps} />
         </View>
         <View key="2" style={styles.page}>
-          <MundoParaleloPage
-            data={{ patrimonio: data.patrimonio, deudaTotal: data.deudaTotal, deudaPagada: data.deudaPagada, deudaBreakdown: data.deudaBreakdown }}
-            indicator={indicator}
-            {...pageProps}
-          />
+          <MundoParaleloPage data={mundoParaleloData} indicator={indicator} {...pageProps} />
         </View>
         <View key="3" style={styles.page}>
-          <MisSuenosPage
-            data={{ goalProgress: data.goalProgress, ahorroTotal: data.ahorroTotal, metaGlobal: data.metaGlobal, goals: data.goals }}
-            indicator={indicator}
-            {...pageProps}
-          />
+          <MisSuenosPage data={misSuenosData} indicator={indicator} {...pageProps} />
         </View>
       </PagerView>
 

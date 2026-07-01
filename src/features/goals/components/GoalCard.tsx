@@ -12,16 +12,7 @@ import { View, Text, Pressable, StyleSheet } from 'react-native';
 
 import { colors, typography, spacing, radius, shadows, sizes } from '@shared/styles';
 import { StarRow } from './StarRow';
-
-export type GoalItem = {
-  id: string;
-  emoji: string;
-  name: string;
-  statusLabel: string;
-  current: number;
-  target: number;
-  progress: number;
-};
+import type { GoalItem } from '../types';
 
 function calcStars(progress: number): number {
   return Math.min(Math.floor(progress / 20), 5);

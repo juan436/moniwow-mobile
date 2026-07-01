@@ -1,5 +1,5 @@
 /**
- * types — Revision Feature
+ * types — Audit Feature
  *
  * @what Tipos de presentación del tab Revisión. No son entidades de dominio.
  */

@@ -3,43 +3,28 @@
  *
  * @what     M10 — Proyectos de Vida: resumen compacto + lista de metas + hide-on-scroll.
  * @receives —
- * @processes AppTopBar se oculta al hacer scroll down y reaparece al subir.
+ * @processes AppTopBar se oculta al hacer scroll down y reaparece al subir. Estado/CRUD de metas
+ *           vive en useGoals — este componente solo orquesta presentación.
  * @returns  JSX — header flotante animado + ScrollView con summary card + cards.
  * @props    —
  */
-import { useCallback, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { View, Text, Pressable, StyleSheet, Animated } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { MaterialIcons } from '@expo/vector-icons';
 import { AppTopBar } from '@shared/components';
 import { colors, typography, spacing, radius, shadows } from '@shared/styles';
-import { GoalCard, type GoalItem } from './GoalCard';
-import { AnadirSuenoModal, type CreateGoalData } from './AnadirSuenoModal';
-import { EditarSuenoModal, type SaveGoalData } from './EditarSuenoModal';
-
-const AHORRO_TOTAL = 29500;
-
-const INITIAL_GOALS: GoalItem[] = [
-  { id: '1', emoji: '🚗', name: 'Mi Carro Nuevo',   statusLabel: 'Progreso Constante', current: 4000,  target: 10000,  progress: 40 },
-  { id: '2', emoji: '✈️', name: 'Viaje a Japón',    statusLabel: 'Apenas comenzando',  current: 500,   target: 5000,   progress: 10 },
-  { id: '3', emoji: '🏠', name: 'Fondo Casa',        statusLabel: 'Vas muy bien',       current: 25000, target: 50000,  progress: 50 },
-  { id: '4', emoji: '💻', name: 'MacBook Pro',       statusLabel: '¡Ya casi!',          current: 3200,  target: 3500,   progress: 91 },
-  { id: '5', emoji: '🎓', name: 'Maestría',          statusLabel: 'En camino',          current: 6000,  target: 20000,  progress: 30 },
-  { id: '6', emoji: '🏖️', name: 'Vacaciones Caribe', statusLabel: 'Soñando despierto',  current: 200,   target: 4000,   progress: 5  },
-  { id: '7', emoji: '💍', name: 'Anillo de Compromiso', statusLabel: 'Guardando en secreto', current: 1800, target: 3000, progress: 60 },
-  { id: '8', emoji: '🛵', name: 'Moto Eléctrica',   statusLabel: 'Progreso Constante', current: 900,   target: 2500,   progress: 36 },
-];
+import { GoalCard } from './GoalCard';
+import { AnadirSuenoModal } from './AnadirSuenoModal';
+import { EditarSuenoModal } from './EditarSuenoModal';
+import { useGoals } from '../hooks/useGoals';
 
 export function SuenosScreen() {
   const insets = useSafeAreaInsets();
-  const [goals, setGoals] = useState<GoalItem[]>(INITIAL_GOALS);
-  const [isAddVisible, setIsAddVisible] = useState(false);
-  const [selectedGoal, setSelectedGoal] = useState<GoalItem | null>(null);
-  const handleAnadir     = useCallback(() => setIsAddVisible(true), []);
-  const handleCreate     = useCallback((_data: CreateGoalData) => { /* TODO: CreateGoal use-case */ }, []);
-  const handleCardPress  = useCallback((goal: GoalItem) => setSelectedGoal(goal), []);
-  const handleSave       = useCallback((data: SaveGoalData) => setGoals((g) => g.map((x) => x.id === data.id ? { ...x, name: data.name, emoji: data.icon, target: data.targetAmount } : x)), []);
-  const handleDelete     = useCallback((id: string) => setGoals((g) => g.filter((x) => x.id !== id)), []);
+  const {
+    goals, isAddVisible, selectedGoal, ahorroTotal,
+    handleAnadir, handleCloseAdd, handleCreate,
+    handleCardPress, handleCloseEdit, handleSave, handleDelete,
+  } = useGoals();
   const [headerHeight, setHeaderHeight] = useState(0);
   const scrollY = useRef(new Animated.Value(0)).current;
 
@@ -64,7 +49,7 @@ export function SuenosScreen() {
         <View style={[styles.summaryCard, shadows.card]}>
           <View style={styles.summaryLeft}>
             <Text style={styles.summaryLabel}>Ahorro total acumulado</Text>
-            <Text style={styles.summaryAmount}>$ {AHORRO_TOTAL.toLocaleString('es')}.00</Text>
+            <Text style={styles.summaryAmount}>$ {ahorroTotal.toLocaleString('es')}.00</Text>
           </View>
           <Pressable style={styles.btnNew} onPress={handleAnadir}>
             <Text style={styles.btnNewText}>Añadir</Text>
@@ -85,8 +70,8 @@ export function SuenosScreen() {
         </View>
       </Animated.ScrollView>
 
-      <AnadirSuenoModal visible={isAddVisible} onClose={() => setIsAddVisible(false)} onCreate={handleCreate} />
-      <EditarSuenoModal visible={selectedGoal !== null} goal={selectedGoal} onClose={() => setSelectedGoal(null)} onSave={handleSave} onDelete={handleDelete} />
+      <AnadirSuenoModal visible={isAddVisible} onClose={handleCloseAdd} onCreate={handleCreate} />
+      <EditarSuenoModal visible={selectedGoal !== null} goal={selectedGoal} onClose={handleCloseEdit} onSave={handleSave} onDelete={handleDelete} />
 
       <View style={[styles.statusBarBg, { height: insets.top }]} />
       <Animated.View

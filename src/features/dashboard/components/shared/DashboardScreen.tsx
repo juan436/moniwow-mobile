@@ -3,11 +3,12 @@
  *
  * @what     Pantalla Inicio: header hide-on-scroll + DashboardPage standalone.
  * @receives Ninguna prop — screen raíz del tab Inicio.
- * @processes scrollY para hide-on-scroll del header.
+ * @processes scrollY para hide-on-scroll del header. `data` memoizado — objeto inline como
+ *           prop JSX causa re-render en cada render del padre (code_rules §2).
  * @returns  JSX — statusBarBg fijo + DashboardPage + headerFloat animado.
  * @props    —
  */
-import { useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { View, Animated, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -28,13 +29,14 @@ export function DashboardScreen() {
     extrapolate: 'clamp',
   });
 
+  const pageData = useMemo(
+    () => ({ saldoLibre: data.saldoLibre, nudgeCount: data.nudgeCount, jars: data.jars, transactions: data.transactions, upcoming: data.upcoming }),
+    [data.saldoLibre, data.nudgeCount, data.jars, data.transactions, data.upcoming]
+  );
+
   return (
     <View style={styles.screen}>
-      <DashboardPage
-        data={{ saldoLibre: data.saldoLibre, nudgeCount: data.nudgeCount, jars: data.jars, transactions: data.transactions, upcoming: data.upcoming }}
-        scrollY={scrollY}
-        topOffset={headerHeight}
-      />
+      <DashboardPage data={pageData} scrollY={scrollY} topOffset={headerHeight} />
 
       <View style={[styles.statusBarBg, { height: insets.top }]} />
       <Animated.View
