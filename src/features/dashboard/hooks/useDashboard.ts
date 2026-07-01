@@ -72,7 +72,6 @@ const MOCK_UPCOMING: UpcomingExpense[] = [
 export function useDashboard() {
   return {
     saldoLibre:   1285.50,
-    nudgeCount:   3,
     jars:         MOCK_JARS,
     transactions: MOCK_TRANSACTIONS,
     upcoming:     MOCK_UPCOMING,

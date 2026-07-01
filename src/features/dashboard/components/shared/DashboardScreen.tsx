@@ -30,8 +30,8 @@ export function DashboardScreen() {
   });
 
   const pageData = useMemo(
-    () => ({ saldoLibre: data.saldoLibre, nudgeCount: data.nudgeCount, jars: data.jars, transactions: data.transactions, upcoming: data.upcoming }),
-    [data.saldoLibre, data.nudgeCount, data.jars, data.transactions, data.upcoming]
+    () => ({ saldoLibre: data.saldoLibre, jars: data.jars, transactions: data.transactions, upcoming: data.upcoming }),
+    [data.saldoLibre, data.jars, data.transactions, data.upcoming]
   );
 
   return (

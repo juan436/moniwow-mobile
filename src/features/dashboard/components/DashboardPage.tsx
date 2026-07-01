@@ -23,7 +23,6 @@ import type { JarDisplay, TransactionDisplay, UpcomingExpense } from '../types';
 
 type Data = {
   saldoLibre: number;
-  nudgeCount: number;
   jars: JarDisplay[];
   transactions: TransactionDisplay[];
   upcoming: UpcomingExpense[];
@@ -36,7 +35,7 @@ function handleFiltroMovimientos() { router.push('/movimientos'); }
 function handleVerAgenda() { router.push('/agenda'); }
 
 export function DashboardPage({ data, scrollY, topOffset }: Props) {
-  const { saldoLibre, nudgeCount, jars, transactions, upcoming } = data;
+  const { saldoLibre, jars, transactions, upcoming } = data;
   const [selectedTx, setSelectedTx] = useState<TransactionDisplay | null>(null);
   const handleTxLongPress  = useCallback((tx: TransactionDisplay) => setSelectedTx(tx), []);
   const handleTxModalClose = useCallback(() => setSelectedTx(null), []);
@@ -53,16 +52,7 @@ export function DashboardPage({ data, scrollY, topOffset }: Props) {
       onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], { useNativeDriver: true })}
       scrollEventThrottle={16}
     >
-      {nudgeCount > 0 && (
-        <View style={styles.nudgeRow}>
-          <View style={styles.nudgePill}>
-            <MaterialIcons name="report" size={18} color={colors.alertOrange} />
-            <Text style={styles.nudgeText}>{nudgeCount} fondos sin proteger</Text>
-          </View>
-        </View>
-      )}
-
-      <View style={[styles.heroSection, nudgeCount === 0 && styles.heroSectionTop]}>
+      <View style={styles.heroSection}>
         <HeroBalance balance={saldoLibre} onAddPress={handleAddPress} />
       </View>
 
@@ -106,11 +96,7 @@ export function DashboardPage({ data, scrollY, topOffset }: Props) {
 const styles = StyleSheet.create({
   scroll:      { flex: 1 },
   content:     { paddingBottom: spacing.stackLg },
-  nudgeRow:    { alignItems: 'center', paddingTop: spacing.stackMd },
-  nudgePill:   { flexDirection: 'row', alignItems: 'center', gap: spacing.stackSm, paddingHorizontal: spacing.gutter, paddingVertical: spacing.stackSm, backgroundColor: colors.alertOrange + '1A', borderRadius: radius.full, borderWidth: 1, borderColor: colors.alertOrange },
-  nudgeText:   { ...typography.labelMd, color: colors.alertOrange },
-  heroSection: { paddingHorizontal: spacing.marginPage, paddingTop: spacing.stackLg },
-  heroSectionTop: { paddingTop: spacing.stackMd },
+  heroSection: { paddingHorizontal: spacing.marginPage, paddingTop: spacing.stackMd },
   section:     { marginTop: spacing.stackMd },
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: spacing.marginPage, marginBottom: spacing.stackSm },
   sectionTitle: { ...typography.bodyMdBold, color: colors.navyDark },
