@@ -5,7 +5,8 @@
  * @receives 3 props: data, scrollY, topOffset
  * @processes Renderiza secciones verticales. JarCard/JarDisplay vienen de features/jars/ — única
  *           excepción documentada a "features no se conocen entre sí" (dashboard = composition
- *           root del home, unidireccional, ver clean_architecture.md).
+ *           root del home, unidireccional, ver clean_architecture.md). Tap en jarra Ahorro navega
+ *           a /suenos (mismo comportamiento que en JarsScreen).
  * @returns  JSX — ScrollView vertical con todas las secciones.
  * @props    3: data, scrollY, topOffset
  */
@@ -36,6 +37,7 @@ function handleAddPress() { router.push('/add-income'); }
 function handleVerJarras() { router.push('/jarras'); }
 function handleFiltroMovimientos() { router.push('/movimientos'); }
 function handleVerAgenda() { router.push('/agenda'); }
+function handleJarPress(id: string) { if (id === 'ahorro') router.push('/suenos'); }
 
 export function DashboardPage({ data, scrollY, topOffset }: Props) {
   const { saldoLibre, jars, transactions, upcoming } = data;
@@ -65,7 +67,7 @@ export function DashboardPage({ data, scrollY, topOffset }: Props) {
           <Pressable hitSlop={8} onPress={handleVerJarras}><Text style={styles.sectionLink}>Ver todas</Text></Pressable>
         </View>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.jarsRow}>
-          {jars.map((jar) => <JarCard key={jar.id} jar={jar} />)}
+          {jars.map((jar) => <JarCard key={jar.id} jar={jar} onPress={() => handleJarPress(jar.id)} />)}
         </ScrollView>
       </View>
 
