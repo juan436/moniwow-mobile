@@ -1,11 +1,11 @@
 /**
  * RecurrentesPage — Component
  *
- * @what     Tab Recurrentes: filtros scrollables + header sección + lista de compromisos + modal añadir.
- * @receives 5 props: recurrentes, activeFilter, onFilterChange, scrollY, topOffset
- * @processes Filtra recurrentes por activeFilter. Gestiona showModal local. AgendaFilterChips dentro del scroll.
- * @returns  JSX — Fragment: ScrollView vertical con chips + sectionHeader + lista + ProgramarCompromisoModal.
- * @props    5: recurrentes, activeFilter, onFilterChange, scrollY, topOffset
+ * @what     Tab Recurrentes: filtros scrollables + header sección + lista de compromisos + modales añadir/editar.
+ * @receives 5 props: recurrentes, activeFilter, onFilterChange, layout, actions
+ * @processes Filtra recurrentes por activeFilter. Gestiona showAddModal + editingItem locales. AgendaFilterChips dentro del scroll.
+ * @returns  JSX — Fragment: ScrollView vertical con chips + sectionHeader + lista + AnadirCompromisoModal + EditarCompromisoModal.
+ * @props    5: recurrentes, activeFilter, onFilterChange, layout, actions
  */
 import { useState, useCallback } from 'react';
 import { Animated, View, Text, StyleSheet } from 'react-native';
@@ -14,28 +14,31 @@ import { colors, typography, spacing } from '@shared/styles';
 import { MoniButton } from '@shared/components';
 import { AgendaFilterChips } from '../shared/AgendaFilterChips';
 import { RecurrenteItem } from './RecurrenteItem';
-import { ProgramarCompromisoModal } from './ProgramarCompromisoModal';
-import type { RecurrenteDisplay, AgendaFilter } from '../../types';
+import { AnadirCompromisoModal } from './AnadirCompromisoModal';
+import { EditarCompromisoModal } from './EditarCompromisoModal';
+import type { RecurrenteDisplay, AgendaFilter, RecurrenteActions } from '../../types';
 
 type Props = {
   recurrentes: RecurrenteDisplay[];
   activeFilter: AgendaFilter;
   onFilterChange: (filter: AgendaFilter) => void;
-  scrollY: Animated.Value;
-  topOffset: number;
+  layout: { scrollY: Animated.Value; topOffset: number };
+  actions: RecurrenteActions;
 };
 
-export function RecurrentesPage({ recurrentes, activeFilter, onFilterChange, scrollY, topOffset }: Props) {
+export function RecurrentesPage({ recurrentes, activeFilter, onFilterChange, layout, actions }: Props) {
+  const { scrollY, topOffset } = layout;
   const items = recurrentes.filter((r) => r.filter === activeFilter);
-  const [showModal, setShowModal]       = useState(false);
+  const [showAddModal, setShowAddModal] = useState(false);
   const [editingItem, setEditingItem]   = useState<RecurrenteDisplay | null>(null);
 
-  const handleEdit       = useCallback((id: string) => {
+  const handleEdit      = useCallback((id: string) => {
     const found = recurrentes.find((r) => r.id === id);
     if (found) setEditingItem(found);
   }, [recurrentes]);
-  const handleProgramar  = useCallback(() => setShowModal(true), []);
-  const handleModalClose = useCallback(() => { setShowModal(false); setEditingItem(null); }, []);
+  const handleProgramar = useCallback(() => setShowAddModal(true), []);
+  const handleCloseAdd  = useCallback(() => setShowAddModal(false), []);
+  const handleCloseEdit = useCallback(() => setEditingItem(null), []);
 
   return (
     <>
@@ -62,11 +65,18 @@ export function RecurrentesPage({ recurrentes, activeFilter, onFilterChange, scr
         </View>
       </Animated.ScrollView>
 
-      <ProgramarCompromisoModal
-        visible={showModal || !!editingItem}
+      <AnadirCompromisoModal
+        visible={showAddModal}
         initialType={activeFilter}
-        onClose={handleModalClose}
-        editItem={editingItem ?? undefined}
+        onClose={handleCloseAdd}
+        onCreate={actions.onCreate}
+      />
+      <EditarCompromisoModal
+        visible={editingItem !== null}
+        item={editingItem}
+        onClose={handleCloseEdit}
+        onSave={actions.onSave}
+        onDelete={actions.onDelete}
       />
     </>
   );

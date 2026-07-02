@@ -9,7 +9,7 @@
  * @returns  JSX — statusBarBg + float animado (AppTopBar + divider + AgendaTabBar) + página activa.
  * @props    0
  */
-import { useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { View, Animated, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -24,7 +24,7 @@ import type { AgendaTab } from '../../types';
 
 export function AgendaScreen() {
   const insets   = useSafeAreaInsets();
-  const { activeTab, setActiveTab, activeFilter, setActiveFilter, data } = useAgenda();
+  const { activeTab, setActiveTab, activeFilter, setActiveFilter, data, recurrentes, recurrenteActions } = useAgenda();
   const scrollY  = useRef(new Animated.Value(0)).current;
 
   const [appBarHeight, setAppBarHeight] = useState(0);
@@ -46,6 +46,7 @@ export function AgendaScreen() {
 
   const topOffset = appBarHeight + tabBarHeight;
   const pageProps  = { scrollY, topOffset };
+  const layout     = useMemo(() => ({ scrollY, topOffset }), [scrollY, topOffset]);
 
   return (
     <View style={styles.screen}>
@@ -56,7 +57,7 @@ export function AgendaScreen() {
         <ListasPage listas={data.listas} {...pageProps} />
       )}
       {activeTab === 'recurrentes' && (
-        <RecurrentesPage recurrentes={data.recurrentes} activeFilter={activeFilter} onFilterChange={setActiveFilter} {...pageProps} />
+        <RecurrentesPage recurrentes={recurrentes} activeFilter={activeFilter} onFilterChange={setActiveFilter} layout={layout} actions={recurrenteActions} />
       )}
 
       <View style={[styles.statusBarBg, { height: insets.top }]} />

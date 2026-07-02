@@ -3,12 +3,14 @@
  *
  * @what     Modal bottom sheet para crear una jarra nueva: nombre + emoji.
  * @receives 3 props: visible, onClose, onCreate
- * @processes Form local: nombre, emoji. Valida nombre no vacío + emoji elegido.
+ * @processes Form local: nombre, emoji. Valida nombre no vacío + emoji elegido. Sheet sube con
+ *           el teclado (Keyboard listeners + marginBottom) + ScrollView interno con
+ *           automaticallyAdjustKeyboardInsets — mismo patrón de dev/modal-keyboard-pattern.
  * @returns  JSX — bottom sheet con campo nombre, emoji grid y CTA.
  * @props    3: visible, onClose, onCreate
  */
 import { useState, useEffect } from 'react';
-import { Modal, View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
+import { Modal, View, Text, Pressable, ScrollView, Keyboard, Platform, StyleSheet } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -34,8 +36,21 @@ type Props = { visible: boolean; onClose: () => void; onCreate: (data: CreateJar
 export function CreateJarModal({ visible, onClose, onCreate }: Props) {
   const insets = useSafeAreaInsets();
   const [form, setForm] = useState<Form>(emptyForm);
+  const [kbHeight, setKbHeight] = useState(0);
 
   useEffect(() => { if (visible) setForm(emptyForm()); }, [visible]);
+
+  useEffect(() => {
+    const show = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      (e) => setKbHeight(e.endCoordinates.height),
+    );
+    const hide = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+      () => setKbHeight(0),
+    );
+    return () => { show.remove(); hide.remove(); };
+  }, []);
 
   function setField<K extends keyof Form>(key: K, val: Form[K]) {
     setForm((prev) => ({ ...prev, [key]: val }));
@@ -52,7 +67,7 @@ export function CreateJarModal({ visible, onClose, onCreate }: Props) {
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose} statusBarTranslucent navigationBarTranslucent>
       <Pressable style={styles.backdrop} onPress={onClose}>
-        <View style={styles.sheet} onStartShouldSetResponder={() => true}>
+        <View style={[styles.sheet, { marginBottom: kbHeight }]} onStartShouldSetResponder={() => true}>
           <View style={styles.handle} />
           <View style={styles.header}>
             <Text style={styles.title}>Nueva jarra</Text>

@@ -47,6 +47,15 @@ export type RecurrenteDisplay = {
   filter: AgendaFilter;
 };
 
+export type CreateRecurrenteData = { name: string; amount: number; day: number; filter: AgendaFilter };
+export type SaveRecurrenteData   = CreateRecurrenteData & { id: string };
+
+export type RecurrenteActions = {
+  onCreate: (data: CreateRecurrenteData) => void;
+  onSave: (data: SaveRecurrenteData) => void;
+  onDelete: (id: string) => void;
+};
+
 export type CompromisoFrecuencia = 'indefinido' | 'cuotas';
 export type CompromisoJarra     = 'hogar' | 'ahorro' | 'libre' | 'transporte' | 'salud' | 'educacion' | 'viajes' | 'emergencias' | 'ocio';
 
@@ -68,5 +77,4 @@ export type AgendaData = {
   totalDeudas: number;
   items: AgendaItemDisplay[];
   listas: ListaDisplay[];
-  recurrentes: RecurrenteDisplay[];
 };

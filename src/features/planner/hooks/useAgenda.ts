@@ -1,15 +1,26 @@
 /**
  * useAgenda — Hook
  *
- * @what     Estado y datos mock de la feature Agenda.
+ * @what     Estado y datos mock de la feature Agenda + CRUD local de compromisos recurrentes.
  * @receives —
- * @processes Expone activeTab, activeFilter, data mock y setters.
- * @returns  { activeTab, setActiveTab, activeFilter, setActiveFilter, data, isLoading, error }
+ * @processes Expone activeTab, activeFilter, data mock y setters. Mock hasta conectar backend:
+ *           recurrentes vive en estado propio (no en AgendaData) para poder crear/editar/eliminar.
+ * @returns  { activeTab, setActiveTab, activeFilter, setActiveFilter, data, recurrentes,
+ *            recurrenteActions, isLoading, error }
  */
-import { useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { colors } from '@shared/styles';
-import type { AgendaTab, AgendaFilter, AgendaData } from '../types';
+import type {
+  AgendaTab, AgendaFilter, AgendaData, RecurrenteDisplay,
+  CreateRecurrenteData, SaveRecurrenteData, RecurrenteActions,
+} from '../types';
+
+const RECURRENTE_ICON: Record<AgendaFilter, { iconName: RecurrenteDisplay['iconName']; iconColor: string; iconBg: string }> = {
+  gastos:   { iconName: 'receipt-long', iconColor: colors.tertiary,      iconBg: colors.tertiary + '15' },
+  ingresos: { iconName: 'attach-money', iconColor: colors.emeraldSuccess, iconBg: colors.emeraldSuccess + '15' },
+  deudas:   { iconName: 'credit-card',  iconColor: colors.alertOrange,   iconBg: colors.alertOrange + '1A' },
+};
 
 const MOCK_DATA: AgendaData = {
   totalGastos: 1737.98,
@@ -55,23 +66,50 @@ const MOCK_DATA: AgendaData = {
       items: [{ id: 'li5', name: 'Zapatos Deportivos', isChecked: false }],
     },
   ],
-  recurrentes: [
-    { id: 'r1', iconName: 'home', iconColor: colors.emeraldSuccess, iconBg: colors.emeraldSuccess + '15', name: 'Alquiler Hogar', day: 5, amount: 800, filter: 'gastos' },
-    { id: 'r2', iconName: 'tv', iconColor: colors.alertOrange, iconBg: colors.alertOrange + '1A', name: 'Netflix', day: 20, amount: 15, filter: 'gastos' },
-    { id: 'r3', iconName: 'restaurant', iconColor: colors.secondary, iconBg: colors.secondaryContainer + '40', name: 'Suscripción Comida', day: 25, amount: 50, filter: 'gastos' },
-    { id: 'r4', iconName: 'work', iconColor: colors.emeraldSuccess, iconBg: colors.emeraldSuccess + '15', name: 'Sueldo Empresa X', day: 1, amount: 2000, filter: 'ingresos' },
-    { id: 'r5', iconName: 'laptop', iconColor: colors.primary, iconBg: colors.primary + '15', name: 'Pago Freelance', day: 10, amount: 150, filter: 'ingresos' },
-    { id: 'r6', iconName: 'star', iconColor: colors.goldDreams, iconBg: colors.goldDreams + '20', name: 'Bono Proyecto', day: 15, amount: 625, filter: 'ingresos' },
-    { id: 'r7', iconName: 'credit-card', iconColor: colors.alertOrange, iconBg: colors.alertOrange + '1A', name: 'Tarjeta Visa', day: 15, amount: 300, filter: 'deudas' },
-    { id: 'r8', iconName: 'person', iconColor: colors.secondary, iconBg: colors.secondaryContainer + '40', name: 'Préstamo Mamá', day: 28, amount: 100, filter: 'deudas' },
-  ],
 };
+
+const INITIAL_RECURRENTES: RecurrenteDisplay[] = [
+  { id: 'r1', iconName: 'home', iconColor: colors.emeraldSuccess, iconBg: colors.emeraldSuccess + '15', name: 'Alquiler Hogar', day: 5, amount: 800, filter: 'gastos' },
+  { id: 'r2', iconName: 'tv', iconColor: colors.alertOrange, iconBg: colors.alertOrange + '1A', name: 'Netflix', day: 20, amount: 15, filter: 'gastos' },
+  { id: 'r3', iconName: 'restaurant', iconColor: colors.secondary, iconBg: colors.secondaryContainer + '40', name: 'Suscripción Comida', day: 25, amount: 50, filter: 'gastos' },
+  { id: 'r4', iconName: 'work', iconColor: colors.emeraldSuccess, iconBg: colors.emeraldSuccess + '15', name: 'Sueldo Empresa X', day: 1, amount: 2000, filter: 'ingresos' },
+  { id: 'r5', iconName: 'laptop', iconColor: colors.primary, iconBg: colors.primary + '15', name: 'Pago Freelance', day: 10, amount: 150, filter: 'ingresos' },
+  { id: 'r6', iconName: 'star', iconColor: colors.goldDreams, iconBg: colors.goldDreams + '20', name: 'Bono Proyecto', day: 15, amount: 625, filter: 'ingresos' },
+  { id: 'r7', iconName: 'credit-card', iconColor: colors.alertOrange, iconBg: colors.alertOrange + '1A', name: 'Tarjeta Visa', day: 15, amount: 300, filter: 'deudas' },
+  { id: 'r8', iconName: 'person', iconColor: colors.secondary, iconBg: colors.secondaryContainer + '40', name: 'Préstamo Mamá', day: 28, amount: 100, filter: 'deudas' },
+];
 
 export function useAgenda() {
   const [activeTab, setActiveTab] = useState<AgendaTab>('mi-mes');
   const [activeFilter, setActiveFilter] = useState<AgendaFilter>('gastos');
+  const [recurrentes, setRecurrentes] = useState<RecurrenteDisplay[]>(INITIAL_RECURRENTES);
   const [isLoading] = useState(false);
   const [error] = useState<string | null>(null);
 
-  return { activeTab, setActiveTab, activeFilter, setActiveFilter, data: MOCK_DATA, isLoading, error };
+  const handleCreateRecurrente = useCallback((data: CreateRecurrenteData) => {
+    const icon = RECURRENTE_ICON[data.filter];
+    const item: RecurrenteDisplay = { id: `r_${Date.now()}`, ...icon, ...data };
+    setRecurrentes((prev) => [...prev, item]);
+  }, []);
+
+  const handleSaveRecurrente = useCallback((data: SaveRecurrenteData) => {
+    const icon = RECURRENTE_ICON[data.filter];
+    setRecurrentes((prev) => prev.map((r) => r.id === data.id ? { ...r, ...icon, ...data } : r));
+  }, []);
+
+  const handleDeleteRecurrente = useCallback((id: string) => {
+    setRecurrentes((prev) => prev.filter((r) => r.id !== id));
+  }, []);
+
+  const recurrenteActions: RecurrenteActions = useMemo(() => ({
+    onCreate: handleCreateRecurrente,
+    onSave: handleSaveRecurrente,
+    onDelete: handleDeleteRecurrente,
+  }), [handleCreateRecurrente, handleSaveRecurrente, handleDeleteRecurrente]);
+
+  return {
+    activeTab, setActiveTab, activeFilter, setActiveFilter,
+    data: MOCK_DATA, recurrentes, recurrenteActions,
+    isLoading, error,
+  };
 }
