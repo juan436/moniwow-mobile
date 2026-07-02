@@ -22,3 +22,4 @@ export type JarDisplay = {
 };
 
 export type CreateJarData = { name: string; emoji: string };
+export type SaveJarData   = CreateJarData & { id: string };

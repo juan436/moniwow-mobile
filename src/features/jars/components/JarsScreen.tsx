@@ -1,15 +1,16 @@
 /**
  * JarsScreen — Component (Screen)
  *
- * @what     Lista completa de jarras con saldo total, grid 2 columnas y creación de jarras.
+ * @what     Lista completa de jarras con saldo total, grid 2 columnas, crear/editar/eliminar/
+ *           transferir.
  * @receives —
- * @processes Carga jars desde useJars, combina con jarras creadas localmente (custom, sin
- *           backend aún). Calcula saldo total acumulado sobre el combinado. Si el total es impar,
+ * @processes Carga jars + CRUD desde useJars (dueño real del estado). Si el total es impar,
  *           agrega un ítem invisible (FILLER_ID) para que la última card no estire flex:1 sobre
- *           las 2 columnas — sin esto, una fila con un solo item ocupa todo el ancho. Tocar la
- *           jarra Ahorro navega a Sueños (/suenos) — nunca resta directo. Cualquier otra jarra
- *           abre JarDetailModal.
- * @returns  JSX — FlatList 2 columnas con JarsListHeader + CreateJarModal + JarDetailModal.
+ *           las 2 columnas. Tocar la jarra Ahorro navega a Sueños (/suenos) — nunca resta directo.
+ *           Cualquier otra abre JarDetailModal, que a su vez puede abrir TransferSheet o EditJarModal
+ *           sobre la misma jarra activa (`activeJar` + `mode`).
+ * @returns  JSX — FlatList 2 columnas + JarsListHeader + CreateJarModal + JarDetailModal +
+ *           TransferSheet + EditJarModal.
  * @props    —
  */
 import { useCallback, useMemo, useState } from 'react';
@@ -22,24 +23,26 @@ import { JarItem } from './JarItem';
 import { JarsListHeader } from './JarsListHeader';
 import { CreateJarModal } from './CreateJarModal';
 import { JarDetailModal } from './JarDetailModal';
+import { TransferSheet } from './TransferSheet';
+import { EditJarModal } from './EditJarModal';
 import { useJars } from '../hooks/useJars';
 import { useTransactions } from '@features/transactions/hooks/useTransactions';
-import type { JarDisplay, CreateJarData } from '../types';
+import type { JarDisplay } from '../types';
 
 const FILLER_ID = '__filler__';
+type Mode = 'detail' | 'edit' | 'transfer' | null;
 
 function handleBack() { router.back(); }
 function RowSeparator() { return <View style={styles.rowSep} />; }
 
 export function JarsScreen() {
-  const { jars: baseJars } = useJars();
-  const { transactions }   = useTransactions();
-  const insets   = useSafeAreaInsets();
-  const [customJars, setCustomJars]     = useState<JarDisplay[]>([]);
+  const { jars, handleCreate, handleSave, handleDelete, handleTransfer } = useJars();
+  const { transactions } = useTransactions();
+  const insets = useSafeAreaInsets();
   const [isCreateVisible, setIsCreateVisible] = useState(false);
-  const [selectedJar, setSelectedJar]   = useState<JarDisplay | null>(null);
+  const [activeJar, setActiveJar] = useState<JarDisplay | null>(null);
+  const [mode, setMode] = useState<Mode>(null);
 
-  const jars  = useMemo(() => [...baseJars, ...customJars], [baseJars, customJars]);
   const total = useMemo(() => jars.reduce((s, j) => s + j.balance, 0), [jars]);
 
   const gridJars = useMemo(() => {
@@ -49,22 +52,17 @@ export function JarsScreen() {
 
   const handleOpenCreate  = useCallback(() => setIsCreateVisible(true), []);
   const handleCloseCreate = useCallback(() => setIsCreateVisible(false), []);
-  const handleCreate = useCallback((data: CreateJarData) => {
-    setCustomJars((prev) => [...prev, {
-      id: `custom-${Date.now()}`,
-      name: data.name,
-      emoji: data.emoji,
-      balance: 0,
-      iconBg: colors.emeraldTint,
-      iconColor: colors.emeraldSuccess,
-    }]);
-  }, []);
 
   const handleJarPress = useCallback((jar: JarDisplay) => {
     if (jar.id === 'ahorro') router.push('/suenos');
-    else setSelectedJar(jar);
+    else { setActiveJar(jar); setMode('detail'); }
   }, []);
-  const handleCloseDetail = useCallback(() => setSelectedJar(null), []);
+  const handleCloseModals = useCallback(() => setMode(null), []);
+  const handleOpenTransfer = useCallback(() => setMode('transfer'), []);
+  const handleOpenEdit     = useCallback(() => setMode('edit'), []);
+  const handleConfirmTransfer = useCallback((toId: string, amount: number) => {
+    if (activeJar) handleTransfer(activeJar.id, toId, amount);
+  }, [activeJar, handleTransfer]);
 
   const renderItem = useCallback(
     ({ item }: { item: JarDisplay }) =>
@@ -93,7 +91,27 @@ export function JarsScreen() {
       />
       <View style={[styles.statusBarCover, { height: insets.top }]} />
       <CreateJarModal visible={isCreateVisible} onClose={handleCloseCreate} onCreate={handleCreate} />
-      <JarDetailModal item={selectedJar} transactions={transactions} onClose={handleCloseDetail} />
+      <JarDetailModal
+        item={mode === 'detail' ? activeJar : null}
+        transactions={transactions}
+        onClose={handleCloseModals}
+        onTransfer={handleOpenTransfer}
+        onEdit={handleOpenEdit}
+      />
+      <TransferSheet
+        visible={mode === 'transfer'}
+        fromJar={activeJar}
+        jars={jars}
+        onClose={handleCloseModals}
+        onTransfer={handleConfirmTransfer}
+      />
+      <EditJarModal
+        visible={mode === 'edit'}
+        jar={activeJar}
+        onClose={handleCloseModals}
+        onSave={handleSave}
+        onDelete={handleDelete}
+      />
     </View>
   );
 }

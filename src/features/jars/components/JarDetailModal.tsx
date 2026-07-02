@@ -3,17 +3,19 @@
  *
  * @what     Modal de detalle de jarra: ícono/emoji, monto héroe, barra de progreso + breakdown
  *           meta/restante si tiene targetAmount, preview de últimos movimientos de esa jarra.
- * @receives 3 props: item, transactions, onClose
+ * @receives 5 props: item, transactions, onClose, onTransfer?, onEdit?
  * @processes Layout monto-primero, mismo patrón que LeakDetailModal/DebtDetailModal/GoalDetailModal.
  *           Filtra transactions por jarId, muestra hasta 3 (igual que preview de LeakDetailModal).
+ *           onTransfer/onEdit opcionales — dashboard/ no los pasa (solo lectura), JarsScreen sí.
  * @returns  JSX — Modal fade centrado, sin scroll anidado.
- * @props    3: item, transactions, onClose
+ * @props    5: item, transactions, onClose, onTransfer?, onEdit?
  */
 import { Modal, Pressable, View, Text, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
 
 import { colors, typography, spacing, radius, sizes, shadows } from '@shared/styles';
+import { MoniButton } from '@shared/components';
 import type { JarDisplay } from '../types';
 import type { TransactionDisplay } from '@features/transactions/types';
 
@@ -23,9 +25,11 @@ type Props = {
   item: JarDisplay | null;
   transactions: TransactionDisplay[];
   onClose: () => void;
+  onTransfer?: () => void;
+  onEdit?: () => void;
 };
 
-export function JarDetailModal({ item, transactions, onClose }: Props) {
+export function JarDetailModal({ item, transactions, onClose, onTransfer, onEdit }: Props) {
   const insets = useSafeAreaInsets();
   const preview = item ? transactions.filter((t) => t.jarId === item.id).slice(0, 3) : [];
 
@@ -102,6 +106,9 @@ export function JarDetailModal({ item, transactions, onClose }: Props) {
               </View>
             </>
           )}
+
+          {onTransfer && <MoniButton label="Transferir" onPress={onTransfer} variant="secondary" />}
+          {onEdit && <MoniButton label="Editar jarra" onPress={onEdit} />}
 
         </Pressable>
       </Pressable>

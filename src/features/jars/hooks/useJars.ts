@@ -1,15 +1,18 @@
 /**
  * useJars — Hook
  *
- * @what     Provee datos de presentación de jarras. Mock hasta conectar backend.
+ * @what     Provee datos de presentación de jarras + CRUD local. Mock hasta conectar backend.
  * @receives Ninguno.
- * @processes Retorna la lista de jarras. Dueño real de los datos de jarras — dashboard/ ya no los inventa.
- * @returns  { jars, isLoading, error }
+ * @processes Dueño real de los datos de jarras — dashboard/ ya no los inventa. handleTransfer resta
+ *           de origen y suma a destino (misma regla que core/use-cases/TransferFunds.ts, sin
+ *           conectar aún — mismo patrón mock-stage que useGoals/useAgenda).
+ * @returns  { jars, isLoading, error, handleCreate, handleSave, handleDelete, handleTransfer }
  */
+import { useCallback, useState } from 'react';
 import { colors } from '@shared/styles';
-import type { JarDisplay } from '../types';
+import type { JarDisplay, CreateJarData, SaveJarData } from '../types';
 
-const MOCK_JARS: JarDisplay[] = [
+const INITIAL_JARS: JarDisplay[] = [
   { id: 'libre', name: 'Libre', balance: 1285.50, iconName: 'account-balance-wallet', iconBg: colors.primary + '1A', iconColor: colors.primary },
   { id: 'hogar', name: 'Hogar', balance: 1200.00, iconName: 'home', iconBg: colors.inversePrimary + '33', iconColor: colors.primary, progress: 80, targetAmount: 1500 },
   { id: 'ahorro', name: 'Ahorro Blindado', balance: 3000.00, iconName: 'savings', iconBg: colors.goldDreams + '1A', iconColor: colors.goldDreams, isBlindado: true },
@@ -29,9 +32,37 @@ const MOCK_JARS: JarDisplay[] = [
 ];
 
 export function useJars() {
+  const [jars, setJars] = useState<JarDisplay[]>(INITIAL_JARS);
+
+  const handleCreate = useCallback((data: CreateJarData) => {
+    setJars((prev) => [...prev, {
+      id: `custom-${Date.now()}`,
+      name: data.name,
+      emoji: data.emoji,
+      balance: 0,
+      iconBg: colors.emeraldTint,
+      iconColor: colors.emeraldSuccess,
+    }]);
+  }, []);
+
+  const handleSave = useCallback((data: SaveJarData) => {
+    setJars((prev) => prev.map((j) => j.id === data.id ? { ...j, name: data.name, emoji: data.emoji } : j));
+  }, []);
+
+  const handleDelete = useCallback((id: string) => {
+    setJars((prev) => prev.filter((j) => j.id !== id));
+  }, []);
+
+  const handleTransfer = useCallback((fromId: string, toId: string, amount: number) => {
+    setJars((prev) => prev.map((j) => {
+      if (j.id === fromId) return { ...j, balance: j.balance - amount };
+      if (j.id === toId)   return { ...j, balance: j.balance + amount };
+      return j;
+    }));
+  }, []);
+
   return {
-    jars: MOCK_JARS,
-    isLoading: false,
-    error: null as string | null,
+    jars, isLoading: false, error: null as string | null,
+    handleCreate, handleSave, handleDelete, handleTransfer,
   };
 }
