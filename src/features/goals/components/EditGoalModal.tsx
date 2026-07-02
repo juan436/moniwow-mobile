@@ -1,11 +1,11 @@
 /**
- * AnadirSuenoModal — Component
+ * EditGoalModal — Component
  *
- * @what     Modal bottom sheet para crear nueva meta de ahorro (M10).
- * @receives 3 props: visible, onClose, onCreate
- * @processes Form local: nombre, emoji, monto objetivo. Valida nombre + emoji + monto > 0.
- * @returns  JSX — bottom sheet con campos, emoji grid y CTA.
- * @props    3: visible, onClose, onCreate
+ * @what     Modal bottom sheet para editar o eliminar una meta existente (M10).
+ * @receives 5 props: visible, goal, onClose, onSave, onDelete
+ * @processes Pre-llena form con goal activo. Valida nombre + emoji + monto > 0.
+ * @returns  JSX — bottom sheet con campos pre-llenados, CTA guardar y botón eliminar peligro.
+ * @props    5: visible, goal, onClose, onSave, onDelete
  */
 import { useState, useEffect } from 'react';
 import { Modal, View, Text, Pressable, ScrollView, Keyboard, Platform, StyleSheet } from 'react-native';
@@ -14,7 +14,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { colors, typography, spacing, radius } from '@shared/styles';
 import { MoniInput, MoniButton } from '@shared/components';
-import type { CreateGoalData } from '../types';
+import type { GoalItem, SaveGoalData } from '../types';
 
 const EMOJI_SIZE = 48;
 const EMOJI_GAP  = 8;
@@ -28,16 +28,25 @@ const GOAL_EMOJIS = [
 ];
 
 type Form = { nombre: string; emoji: string; monto: string };
-function emptyForm(): Form { return { nombre: '', emoji: '', monto: '' }; }
 
-type Props = { visible: boolean; onClose: () => void; onCreate: (data: CreateGoalData) => void };
+type Props = {
+  visible: boolean;
+  goal: GoalItem | null;
+  onClose: () => void;
+  onSave: (data: SaveGoalData) => void;
+  onDelete: (id: string) => void;
+};
 
-export function AnadirSuenoModal({ visible, onClose, onCreate }: Props) {
+export function EditGoalModal({ visible, goal, onClose, onSave, onDelete }: Props) {
   const insets = useSafeAreaInsets();
-  const [form, setForm] = useState<Form>(emptyForm);
+  const [form, setForm] = useState<Form>({ nombre: '', emoji: '', monto: '' });
   const [kbHeight, setKbHeight] = useState(0);
 
-  useEffect(() => { if (visible) setForm(emptyForm()); }, [visible]);
+  useEffect(() => {
+    if (visible && goal) {
+      setForm({ nombre: goal.name, emoji: goal.emoji, monto: goal.target.toString() });
+    }
+  }, [visible, goal]);
 
   useEffect(() => {
     const show = Keyboard.addListener(
@@ -59,8 +68,14 @@ export function AnadirSuenoModal({ visible, onClose, onCreate }: Props) {
   const canSave = form.nombre.trim() !== '' && form.emoji !== '' && !isNaN(parsedMonto) && parsedMonto > 0;
 
   function handleSave() {
-    if (!canSave) return;
-    onCreate({ name: form.nombre.trim(), icon: form.emoji, targetAmount: parsedMonto });
+    if (!canSave || !goal) return;
+    onSave({ id: goal.id, name: form.nombre.trim(), icon: form.emoji, targetAmount: parsedMonto });
+    onClose();
+  }
+
+  function handleDelete() {
+    if (!goal) return;
+    onDelete(goal.id);
     onClose();
   }
 
@@ -70,7 +85,7 @@ export function AnadirSuenoModal({ visible, onClose, onCreate }: Props) {
         <View style={[styles.sheet, { marginBottom: kbHeight }]} onStartShouldSetResponder={() => true}>
           <View style={styles.handle} />
           <View style={styles.header}>
-            <Text style={styles.title}>Nuevo sueño</Text>
+            <Text style={styles.title}>Editar sueño</Text>
             <Pressable onPress={onClose} hitSlop={8}>
               <MaterialIcons name="close" size={24} color={colors.slateGray} />
             </Pressable>
@@ -81,19 +96,8 @@ export function AnadirSuenoModal({ visible, onClose, onCreate }: Props) {
             keyboardShouldPersistTaps="handled"
             automaticallyAdjustKeyboardInsets
           >
-            <MoniInput
-              label="Nombre del sueño"
-              value={form.nombre}
-              onChangeText={(v) => setField('nombre', v)}
-              placeholder="ej. Mi Carro Nuevo"
-            />
-            <MoniInput
-              label="Monto objetivo ($)"
-              value={form.monto}
-              onChangeText={(v) => setField('monto', v)}
-              placeholder="10000"
-              inputType="numeric"
-            />
+            <MoniInput label="Nombre del sueño" value={form.nombre} onChangeText={(v) => setField('nombre', v)} placeholder="ej. Mi Carro Nuevo" />
+            <MoniInput label="Monto objetivo ($)" value={form.monto} onChangeText={(v) => setField('monto', v)} placeholder="10000" inputType="numeric" />
             <View style={styles.block}>
               <Text style={styles.fieldLabel}>Elige un emoji</Text>
               <ScrollView style={styles.emojiGridScroll} showsVerticalScrollIndicator={false} nestedScrollEnabled>
@@ -110,7 +114,8 @@ export function AnadirSuenoModal({ visible, onClose, onCreate }: Props) {
                 </View>
               </ScrollView>
             </View>
-            <MoniButton label="Añadir" onPress={handleSave} disabled={!canSave} variant="secondary" />
+            <MoniButton label="Guardar cambios" onPress={handleSave} disabled={!canSave} variant="secondary" />
+            <MoniButton label="Eliminar sueño" onPress={handleDelete} variant="danger" />
           </ScrollView>
         </View>
       </Pressable>
@@ -120,10 +125,10 @@ export function AnadirSuenoModal({ visible, onClose, onCreate }: Props) {
 }
 
 const styles = StyleSheet.create({
-  backdrop:    { flex: 1, justifyContent: 'flex-end', backgroundColor: `${colors.navyDark}8C` },
-  sheet:       { backgroundColor: colors.pureWhite, borderTopLeftRadius: radius.card * 2, borderTopRightRadius: radius.card * 2, maxHeight: '90%' },
-  navBarCover: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: colors.black },
-  handle:      { width: 40, height: 4, borderRadius: 2, backgroundColor: colors.outlineVariant, alignSelf: 'center', marginTop: spacing.stackMd, marginBottom: spacing.stackSm },
+  backdrop:        { flex: 1, justifyContent: 'flex-end', backgroundColor: `${colors.navyDark}8C` },
+  sheet:           { backgroundColor: colors.pureWhite, borderTopLeftRadius: radius.card * 2, borderTopRightRadius: radius.card * 2, maxHeight: '90%' },
+  navBarCover:     { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: colors.black },
+  handle:          { width: 40, height: 4, borderRadius: 2, backgroundColor: colors.outlineVariant, alignSelf: 'center', marginTop: spacing.stackMd, marginBottom: spacing.stackSm },
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: spacing.marginPage, paddingTop: spacing.stackSm, paddingBottom: spacing.stackMd,

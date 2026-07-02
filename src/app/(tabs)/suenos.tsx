@@ -1,10 +1,10 @@
 /**
  * SuenosTab — Layout (app route)
  *
- * @what Wrapper expo-router del tab Sueños. Renderiza SuenosScreen.
+ * @what Wrapper expo-router del tab Sueños. Renderiza GoalsScreen.
  */
-import { SuenosScreen } from '@features/goals/components/SuenosScreen';
+import { GoalsScreen } from '@features/goals/components/GoalsScreen';
 
 export default function SuenosTab() {
-  return <SuenosScreen />;
+  return <GoalsScreen />;
 }

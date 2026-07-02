@@ -1,5 +1,5 @@
 /**
- * SuenosScreen — Component (Screen)
+ * GoalsScreen — Component (Screen)
  *
  * @what     M10 — Proyectos de Vida: resumen compacto + lista de metas + hide-on-scroll.
  * @receives —
@@ -14,11 +14,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppTopBar } from '@shared/components';
 import { colors, typography, spacing, radius, shadows } from '@shared/styles';
 import { GoalCard } from './GoalCard';
-import { AnadirSuenoModal } from './AnadirSuenoModal';
-import { EditarSuenoModal } from './EditarSuenoModal';
+import { CreateGoalModal } from './CreateGoalModal';
+import { EditGoalModal } from './EditGoalModal';
 import { useGoals } from '../hooks/useGoals';
 
-export function SuenosScreen() {
+export function GoalsScreen() {
   const insets = useSafeAreaInsets();
   const {
     goals, isAddVisible, selectedGoal, ahorroTotal,
@@ -70,8 +70,8 @@ export function SuenosScreen() {
         </View>
       </Animated.ScrollView>
 
-      <AnadirSuenoModal visible={isAddVisible} onClose={handleCloseAdd} onCreate={handleCreate} />
-      <EditarSuenoModal visible={selectedGoal !== null} goal={selectedGoal} onClose={handleCloseEdit} onSave={handleSave} onDelete={handleDelete} />
+      <CreateGoalModal visible={isAddVisible} onClose={handleCloseAdd} onCreate={handleCreate} />
+      <EditGoalModal visible={selectedGoal !== null} goal={selectedGoal} onClose={handleCloseEdit} onSave={handleSave} onDelete={handleDelete} />
 
       <View style={[styles.statusBarBg, { height: insets.top }]} />
       <Animated.View
