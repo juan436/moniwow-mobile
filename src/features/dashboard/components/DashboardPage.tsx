@@ -3,7 +3,9 @@
  *
  * @what     Página principal del dashboard: saldo libre + jarras + vencimientos + movimientos.
  * @receives 3 props: data, scrollY, topOffset
- * @processes Renderiza secciones verticales.
+ * @processes Renderiza secciones verticales. JarCard/JarDisplay vienen de features/jars/ — única
+ *           excepción documentada a "features no se conocen entre sí" (dashboard = composition
+ *           root del home, unidireccional, ver clean_architecture.md).
  * @returns  JSX — ScrollView vertical con todas las secciones.
  * @props    3: data, scrollY, topOffset
  */
@@ -14,12 +16,13 @@ import { router } from 'expo-router';
 
 import { colors, typography, spacing, radius, shadows } from '@shared/styles';
 import { HeroBalance } from './HeroBalance';
-import { JarCard } from './JarCard';
+import { JarCard } from '@features/jars/components/JarCard';
 import { TransactionItem } from './TransactionItem';
 import { TransactionDetailModal } from './TransactionDetailModal';
 import { UpcomingItem } from './UpcomingItem';
 import { UpcomingDetailModal } from './UpcomingDetailModal';
-import type { JarDisplay, TransactionDisplay, UpcomingExpense } from '../types';
+import type { JarDisplay } from '@features/jars/types';
+import type { TransactionDisplay, UpcomingExpense } from '../types';
 
 type Data = {
   saldoLibre: number;

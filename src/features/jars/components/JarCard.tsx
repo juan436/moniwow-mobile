@@ -12,7 +12,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 
 import { colors, typography, spacing, radius, shadows } from '@shared/styles';
 import { truncateLabel } from '@shared/utils';
-import type { JarDisplay } from '../../types';
+import type { JarDisplay } from '../types';
 
 type Props = {
   jar: JarDisplay;

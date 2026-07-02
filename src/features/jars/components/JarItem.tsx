@@ -12,7 +12,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 
 import { colors, typography, spacing, radius, shadows, sizes } from '@shared/styles';
-import type { JarDisplay } from '../../types';
+import type { JarDisplay } from '../types';
 
 type Props = { jar: JarDisplay };
 
