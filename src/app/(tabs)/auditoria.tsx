@@ -2,10 +2,10 @@
  * RevisionTab — Screen
  *
  * @what     Tab Revisión: carrusel Moni-AI + Auditoría + Mundo Paralelo + Mis Sueños.
- * @returns  JSX — RevisionScreen.
+ * @returns  JSX — AuditScreen.
  */
-import { RevisionScreen } from '@features/audit/components/shared/RevisionScreen';
+import { AuditScreen } from '@features/audit/components/shared/AuditScreen';
 
 export default function RevisionTab() {
-  return <RevisionScreen />;
+  return <AuditScreen />;
 }

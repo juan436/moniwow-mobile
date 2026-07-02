@@ -1,5 +1,5 @@
 /**
- * AuditoriaPage — Component
+ * OverviewPage — Component
  *
  * @what     Página izquierda del carrusel: análisis mensual con barras visuales y fugas.
  * @receives 1 prop: data
@@ -14,21 +14,21 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { colors, typography, spacing, radius, shadows, sizes } from '@shared/styles';
 import { truncateLabel } from '@shared/utils';
 import { PageIndicator } from '@shared/components';
-import { FugaDetailModal } from './FugaDetailModal';
-import type { BarChartEntry, FugaDisplay, DistributionEntry } from '../../types';
+import { LeakDetailModal } from './LeakDetailModal';
+import type { BarChartEntry, LeakDisplay, DistributionEntry } from '../../types';
 
 type Data = {
   barChart: BarChartEntry[];
-  fugas: FugaDisplay[];
+  fugas: LeakDisplay[];
   distribution: DistributionEntry[];
 };
 type Indicator = { count: number; active: number };
 type Props = { data: Data; indicator: Indicator; scrollY: Animated.Value; topOffset: number };
 
-export function AuditoriaPage({ data, indicator, scrollY, topOffset }: Props) {
+export function OverviewPage({ data, indicator, scrollY, topOffset }: Props) {
   const { barChart, fugas, distribution } = data;
-  const [selectedFuga, setSelectedFuga]     = useState<FugaDisplay | null>(null);
-  const handleFugaLongPress  = useCallback((fuga: FugaDisplay) => setSelectedFuga(fuga), []);
+  const [selectedFuga, setSelectedFuga]     = useState<LeakDisplay | null>(null);
+  const handleFugaLongPress  = useCallback((fuga: LeakDisplay) => setSelectedFuga(fuga), []);
   const handleFugaModalClose = useCallback(() => setSelectedFuga(null), []);
 
   const maxAmount = useMemo(
@@ -94,7 +94,7 @@ export function AuditoriaPage({ data, indicator, scrollY, topOffset }: Props) {
           </View>
         ))}
       </View>
-      <FugaDetailModal item={selectedFuga} onClose={handleFugaModalClose} />
+      <LeakDetailModal item={selectedFuga} onClose={handleFugaModalClose} />
     </Animated.ScrollView>
   );
 }

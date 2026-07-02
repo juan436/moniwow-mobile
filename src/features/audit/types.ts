@@ -13,18 +13,18 @@ export type BarChartEntry = {
   amount: number;
 };
 
-export type FugaItem = {
+export type LeakItem = {
   description: string;
   amount: number;
   date: string;
 };
 
-export type FugaDisplay = {
+export type LeakDisplay = {
   id: string;
   iconName: IconName;
   name: string;
   amount: number;
-  items: FugaItem[];
+  items: LeakItem[];
 };
 
 export type GoalDisplay = {

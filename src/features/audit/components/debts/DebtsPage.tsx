@@ -1,9 +1,9 @@
 /**
- * MundoParaleloPage — Component
+ * DebtsPage — Component
  *
  * @what     Página del carrusel: patrimonio real + deuda total con donut y barras.
  * @receives 1 prop: data
- * @processes Renderiza card patrimonio + DeudaCard con visualización SVG.
+ * @processes Renderiza card patrimonio + DebtCard con visualización SVG.
  * @returns  JSX — ScrollView vertical con 2 cards.
  * @props    1: data
  */
@@ -13,7 +13,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { colors, typography, spacing, radius, shadows } from '@shared/styles';
 import { PageIndicator } from '@shared/components';
 import type { DebtBreakdown } from '../../types';
-import { DeudaCard } from './DeudaCard';
+import { DebtCard } from './DebtCard';
 
 type Data = {
   patrimonio: number;
@@ -25,7 +25,7 @@ type Data = {
 type Indicator = { count: number; active: number };
 type Props = { data: Data; indicator: Indicator; scrollY: Animated.Value; topOffset: number };
 
-export function MundoParaleloPage({ data, indicator, scrollY, topOffset }: Props) {
+export function DebtsPage({ data, indicator, scrollY, topOffset }: Props) {
   const { patrimonio, deudaTotal, deudaPagada, deudaBreakdown } = data;
   const dineroTotal = patrimonio + deudaTotal;
   const isPositive = patrimonio >= 0;
@@ -69,7 +69,7 @@ export function MundoParaleloPage({ data, indicator, scrollY, topOffset }: Props
         </View>
       </View>
 
-      <DeudaCard
+      <DebtCard
         deudaTotal={deudaTotal}
         deudaPagada={deudaPagada}
         deudaBreakdown={deudaBreakdown}

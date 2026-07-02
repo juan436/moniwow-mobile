@@ -1,7 +1,7 @@
 /**
- * RevisionScreen — Component (Screen)
+ * AuditScreen — Component (Screen)
  *
- * @what     Pantalla Revisión: header hide-on-scroll + carrusel 4 páginas (Auditoría, MoniAI, Mundo Paralelo, Mis Sueños).
+ * @what     Pantalla Revisión: header hide-on-scroll + carrusel 4 páginas (Auditoría, MoniAI, Deudas, Resumen Sueños).
  * @receives Ninguna prop — screen raíz del tab Revisión.
  * @processes scrollY compartido entre páginas. Header se oculta al bajar y reaparece al subir.
  *           Al cambiar página, scrollY se resetea a 0 y header reaparece. `pageProps`/`indicator`/
@@ -17,21 +17,21 @@ import PagerView from 'react-native-pager-view';
 
 import { colors } from '@shared/styles';
 import { AppTopBar } from '@shared/components';
-import { useRevision } from '../../hooks/useRevision';
-import { AuditoriaPage } from '../auditoria/AuditoriaPage';
+import { useAudit } from '../../hooks/useAudit';
+import { OverviewPage } from '../overview/OverviewPage';
 import { MoniAIPage } from '../moni-ai/MoniAIPage';
-import { MundoParaleloPage } from '../mundo-paralelo/MundoParaleloPage';
-import { MisSuenosPage } from '../mis-suenos/MisSuenosPage';
+import { DebtsPage } from '../debts/DebtsPage';
+import { GoalsSummaryPage } from '../goals-summary/GoalsSummaryPage';
 
 const PAGE_COUNT   = 4;
 const INITIAL_PAGE = 1;
 
-export function RevisionScreen() {
+export function AuditScreen() {
   const insets = useSafeAreaInsets();
   const [activePage, setActivePage]     = useState(INITIAL_PAGE);
   const [headerHeight, setHeaderHeight] = useState(0);
   const scrollY = useRef(new Animated.Value(0)).current;
-  const data    = useRevision();
+  const data    = useAudit();
 
   const headerTranslateY = scrollY.interpolate({
     inputRange:  [0, headerHeight],
@@ -68,16 +68,16 @@ export function RevisionScreen() {
         onPageSelected={(e) => handlePageSelected(e.nativeEvent.position)}
       >
         <View key="0" style={styles.page}>
-          <AuditoriaPage data={auditoriaData} indicator={indicator} {...pageProps} />
+          <OverviewPage data={auditoriaData} indicator={indicator} {...pageProps} />
         </View>
         <View key="1" style={styles.page}>
           <MoniAIPage indicator={indicator} {...pageProps} />
         </View>
         <View key="2" style={styles.page}>
-          <MundoParaleloPage data={mundoParaleloData} indicator={indicator} {...pageProps} />
+          <DebtsPage data={mundoParaleloData} indicator={indicator} {...pageProps} />
         </View>
         <View key="3" style={styles.page}>
-          <MisSuenosPage data={misSuenosData} indicator={indicator} {...pageProps} />
+          <GoalsSummaryPage data={misSuenosData} indicator={indicator} {...pageProps} />
         </View>
       </PagerView>
 

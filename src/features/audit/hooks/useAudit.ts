@@ -1,5 +1,5 @@
 /**
- * useRevision — Hook
+ * useAudit — Hook
  *
  * @what     Provee datos de presentación para el tab Revisión (carrusel 4 páginas). Mock hasta backend.
  * @receives Ninguno.
@@ -8,7 +8,7 @@
  */
 import { colors } from '@shared/styles';
 import type {
-  BarChartEntry, FugaDisplay, FugaItem,
+  BarChartEntry, LeakDisplay, LeakItem,
   GoalDisplay, DebtBreakdown, DistributionEntry,
 } from '../types';
 
@@ -21,7 +21,7 @@ const MOCK_BAR_CHART: BarChartEntry[] = [
   { month: 'Jun', amount: 950 },
 ];
 
-const MOCK_FUGAS: FugaDisplay[] = [
+const MOCK_FUGAS: LeakDisplay[] = [
   {
     id: 'f1', iconName: 'local-cafe', name: 'Café y Bebidas Fuera de Casa', amount: 120,
     items: [
@@ -33,7 +33,7 @@ const MOCK_FUGAS: FugaDisplay[] = [
       { description: 'Café Americano aeropuerto', amount: 4.00, date: '06 Jun' },
       { description: 'Jugo natural esquina', amount: 2.50, date: '04 Jun' },
       { description: 'Café Illy oficina externa', amount: 3.80, date: '02 Jun' },
-    ] satisfies FugaItem[],
+    ] satisfies LeakItem[],
   },
   {
     id: 'f2', iconName: 'directions-car', name: 'Uber y Transporte Privado', amount: 85,
@@ -44,7 +44,7 @@ const MOCK_FUGAS: FugaDisplay[] = [
       { description: 'Cabify reunión cliente', amount: 11.00, date: '07 Jun' },
       { description: 'Bolt regreso tarde', amount: 9.20, date: '05 Jun' },
       { description: 'Uber médico urgente', amount: 18.00, date: '03 Jun' },
-    ] satisfies FugaItem[],
+    ] satisfies LeakItem[],
   },
   {
     id: 'f3', iconName: 'fastfood', name: 'Comida Rápida y Delivery', amount: 200,
@@ -53,7 +53,7 @@ const MOCK_FUGAS: FugaDisplay[] = [
       { description: 'Pizza Hut Familiar', amount: 32.00, date: '11 Jun' },
       { description: "McDonald's Delivery", amount: 18.90, date: '09 Jun' },
       { description: 'KFC Combo Familiar', amount: 12.50, date: '05 Jun' },
-    ] satisfies FugaItem[],
+    ] satisfies LeakItem[],
   },
   {
     id: 'f4', iconName: 'receipt', name: 'Propinas y Comisiones', amount: 40,
@@ -61,7 +61,7 @@ const MOCK_FUGAS: FugaDisplay[] = [
       { description: 'Propina restaurante', amount: 8.00, date: '13 Jun' },
       { description: 'Comisión transferencia banco', amount: 5.50, date: '10 Jun' },
       { description: 'Propina delivery', amount: 3.00, date: '08 Jun' },
-    ] satisfies FugaItem[],
+    ] satisfies LeakItem[],
   },
   {
     id: 'f5', iconName: 'cookie', name: 'Snacks y Golosinas', amount: 55,
@@ -69,7 +69,7 @@ const MOCK_FUGAS: FugaDisplay[] = [
       { description: 'Snacks noche Oxxo', amount: 6.30, date: '14 Jun' },
       { description: 'Chocolates supermercado', amount: 4.80, date: '12 Jun' },
       { description: 'Pringles kiosco', amount: 3.50, date: '09 Jun' },
-    ] satisfies FugaItem[],
+    ] satisfies LeakItem[],
   },
   {
     id: 'f6', iconName: 'sports-bar', name: 'Salidas Nocturnas', amount: 90,
@@ -77,7 +77,7 @@ const MOCK_FUGAS: FugaDisplay[] = [
       { description: 'Bar La Zona — copas', amount: 28.00, date: '14 Jun' },
       { description: 'Club Rooftop entrada', amount: 15.00, date: '07 Jun' },
       { description: 'Uber de regreso', amount: 12.00, date: '07 Jun' },
-    ] satisfies FugaItem[],
+    ] satisfies LeakItem[],
   },
 ];
 
@@ -107,7 +107,7 @@ const MOCK_DISTRIBUTION: DistributionEntry[] = [
   { id: 'dist6', label: 'Otros', pct: 3, color: colors.slateGray },
 ];
 
-export function useRevision() {
+export function useAudit() {
   return {
     barChart:      MOCK_BAR_CHART,
     fugas:         MOCK_FUGAS,

@@ -1,5 +1,5 @@
 /**
- * DeudaCard — Component
+ * DebtCard — Component
  *
  * @what     Card deuda total: donut SVG por categoría + lista de ítems con long-press modal.
  * @receives 3 props: deudaTotal, deudaPagada, deudaBreakdown
@@ -44,7 +44,7 @@ function arc(start: number, end: number): string {
   return `M${s.x},${s.y} A${R_OUT},${R_OUT},0,${lg},1,${e.x},${e.y} L${si.x},${si.y} A${R_IN},${R_IN},0,${lg},0,${ei.x},${ei.y} Z`;
 }
 
-export function DeudaCard({ deudaTotal, deudaPagada, deudaBreakdown }: Props) {
+export function DebtCard({ deudaTotal, deudaPagada, deudaBreakdown }: Props) {
   const [selected, setSelected] = useState<DebtBreakdown | null>(null);
 
   const totalAmount = useMemo(() => deudaBreakdown.reduce((s, d) => s + d.amount, 0), [deudaBreakdown]);

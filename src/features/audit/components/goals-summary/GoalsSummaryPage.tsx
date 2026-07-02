@@ -1,5 +1,5 @@
 /**
- * MisSuenosPage — Component
+ * GoalsSummaryPage — Component
  *
  * @what     Página extrema derecha del carrusel: progreso global de metas y sueños activos.
  * @receives 1 prop: data
@@ -26,7 +26,7 @@ type Data = {
 type Indicator = { count: number; active: number };
 type Props = { data: Data; indicator: Indicator; scrollY: Animated.Value; topOffset: number };
 
-export function MisSuenosPage({ data, indicator, scrollY, topOffset }: Props) {
+export function GoalsSummaryPage({ data, indicator, scrollY, topOffset }: Props) {
   const { goalProgress, ahorroTotal, metaGlobal, goals } = data;
 
   const [selectedGoal, setSelectedGoal]     = useState<GoalDisplay | null>(null);

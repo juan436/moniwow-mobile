@@ -1,5 +1,5 @@
 /**
- * FugaDetailModal — Component
+ * LeakDetailModal — Component
  *
  * @what     Modal de detalle de fuga: monto héroe, preview de últimos 3 movimientos y botón a pantalla completa.
  * @receives 2 props: item, onClose
@@ -12,16 +12,16 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 
 import { colors, typography, spacing, radius, sizes, shadows } from '@shared/styles';
-import type { FugaDisplay } from '../../types';
+import type { LeakDisplay } from '../../types';
 
 function stopPropagation() { return true; }
 
 type Props = {
-  item: FugaDisplay | null;
+  item: LeakDisplay | null;
   onClose: () => void;
 };
 
-export function FugaDetailModal({ item, onClose }: Props) {
+export function LeakDetailModal({ item, onClose }: Props) {
   const insets = useSafeAreaInsets();
   const preview = item?.items.slice(0, 3) ?? [];
 
