@@ -26,8 +26,8 @@ const LEFT_TABS: TabCfg[]  = [
   { name: 'agenda', icon: 'event-note', label: 'Agenda'   },
 ];
 const RIGHT_TABS: TabCfg[] = [
-  { name: 'suenos',    icon: 'star',      label: 'Sueños'   },
-  { name: 'auditoria', icon: 'bar-chart', label: 'Revisión' },
+  { name: 'jarras',    icon: 'account-balance-wallet', label: 'Jarras'   },
+  { name: 'auditoria', icon: 'bar-chart',              label: 'Revisión' },
 ];
 
 const FAB_SIZE    = sizes.iconFab;   // 52

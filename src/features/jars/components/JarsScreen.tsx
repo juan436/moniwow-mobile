@@ -6,7 +6,8 @@
  * @processes Carga jars desde useJars, combina con jarras creadas localmente (custom, sin
  *           backend aún). Calcula saldo total acumulado sobre el combinado. Si el total es impar,
  *           agrega un ítem invisible (FILLER_ID) para que la última card no estire flex:1 sobre
- *           las 2 columnas — sin esto, una fila con un solo item ocupa todo el ancho.
+ *           las 2 columnas — sin esto, una fila con un solo item ocupa todo el ancho. Tocar la
+ *           jarra Ahorro navega a Sueños (/suenos) — nunca resta directo, solo abre las metas.
  * @returns  JSX — FlatList 2 columnas con JarsListHeader + CreateJarModal.
  * @props    —
  */
@@ -25,6 +26,7 @@ import type { JarDisplay, CreateJarData } from '../types';
 const FILLER_ID = '__filler__';
 
 function handleBack() { router.back(); }
+function handleJarPress(id: string) { if (id === 'ahorro') router.push('/suenos'); }
 function RowSeparator() { return <View style={styles.rowSep} />; }
 
 export function JarsScreen() {
@@ -56,7 +58,9 @@ export function JarsScreen() {
 
   const renderItem = useCallback(
     ({ item }: { item: JarDisplay }) =>
-      item.id === FILLER_ID ? <View style={styles.filler} /> : <JarItem jar={item} />,
+      item.id === FILLER_ID
+        ? <View style={styles.filler} />
+        : <JarItem jar={item} onPress={() => handleJarPress(item.id)} />,
     []
   );
 

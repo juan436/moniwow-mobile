@@ -2,23 +2,23 @@
  * JarItem — Component
  *
  * @what     Card de jarra para grid 2 columnas en pantalla Mis Jarras.
- * @receives 1 prop: jar
+ * @receives 2 props: jar, onPress?
  * @processes Muestra icono o emoji (jarras creadas por el usuario), nombre, saldo, barra de
- *           progreso y badge Blindado.
+ *           progreso y badge Blindado. onPress opcional — Ahorro navega a Sueños (JarsScreen decide).
  * @returns  JSX — card flex:1 compatible con FlatList numColumns={2}.
- * @props    1: jar
+ * @props    2: jar, onPress?
  */
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 
 import { colors, typography, spacing, radius, shadows, sizes } from '@shared/styles';
 import type { JarDisplay } from '../types';
 
-type Props = { jar: JarDisplay };
+type Props = { jar: JarDisplay; onPress?: () => void };
 
-export function JarItem({ jar }: Props) {
+export function JarItem({ jar, onPress }: Props) {
   return (
-    <View style={[styles.card, shadows.card]}>
+    <Pressable style={({ pressed }) => [styles.card, shadows.card, pressed && styles.pressed]} onPress={onPress}>
       <View style={styles.top}>
         <View style={[styles.icon, { backgroundColor: jar.iconBg }]}>
           {jar.emoji
@@ -39,12 +39,13 @@ export function JarItem({ jar }: Props) {
           <View style={[styles.fill, { width: `${jar.progress}%` as `${number}%`, backgroundColor: jar.iconColor }]} />
         </View>
       )}
-    </View>
+    </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
   card:  { flex: 1, backgroundColor: colors.pureWhite, borderRadius: radius.card, padding: spacing.cardPadding, gap: spacing.stackSm },
+  pressed: { opacity: 0.9, transform: [{ scale: 0.98 }] },
   top:   { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
   icon:  { width: sizes.iconSm, height: sizes.iconSm, borderRadius: radius.lg, alignItems: 'center', justifyContent: 'center' },
   emoji: { fontSize: sizes.emojiFontMd },
