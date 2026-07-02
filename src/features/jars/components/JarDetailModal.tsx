@@ -1,7 +1,8 @@
 /**
  * JarDetailModal — Component
  *
- * @what     Modal de detalle de jarra: ícono/emoji, monto héroe, barra de progreso si aplica.
+ * @what     Modal de detalle de jarra: ícono/emoji, monto héroe, barra de progreso + breakdown
+ *           meta/restante si tiene targetAmount.
  * @receives 2 props: item, onClose
  * @processes Layout monto-primero, mismo patrón que LeakDetailModal/DebtDetailModal/GoalDetailModal.
  * @returns  JSX — Modal fade centrado, sin scroll anidado.
@@ -61,6 +62,21 @@ export function JarDetailModal({ item, onClose }: Props) {
                 </View>
                 <Text style={styles.progressLabel}>{item.progress}% del objetivo</Text>
               </View>
+              {item.targetAmount !== undefined && (
+                <View style={styles.breakdown}>
+                  <View style={styles.breakdownItem}>
+                    <Text style={styles.breakdownLabel}>Meta</Text>
+                    <Text style={styles.breakdownValue}>$ {item.targetAmount.toLocaleString('es')}</Text>
+                  </View>
+                  <View style={styles.breakdownSep} />
+                  <View style={styles.breakdownItem}>
+                    <Text style={styles.breakdownLabel}>Restante</Text>
+                    <Text style={[styles.breakdownValue, styles.restColor]}>
+                      $ {(item.targetAmount - item.balance).toLocaleString('es')}
+                    </Text>
+                  </View>
+                </View>
+              )}
             </>
           )}
 
@@ -87,5 +103,11 @@ const styles = StyleSheet.create({
   barTrack: { height: sizes.trackSm, width: '100%', backgroundColor: colors.surfaceContainerHigh, borderRadius: radius.full, overflow: 'hidden' },
   barFill:  { height: '100%', borderRadius: radius.full },
   progressLabel: { ...typography.labelSm, color: colors.slateGray, textAlign: 'center' },
+  breakdown: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', width: '100%' },
+  breakdownItem: { flex: 1, alignItems: 'center', gap: spacing.stackXs },
+  breakdownSep:  { width: 1, height: 32, backgroundColor: colors.surfaceContainerLow },
+  breakdownLabel: { ...typography.labelSm, color: colors.slateGray },
+  breakdownValue: { ...typography.labelMd, color: colors.navyDark },
+  restColor: { color: colors.alertOrange },
   navBarCover: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: colors.black },
 });

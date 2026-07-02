@@ -17,6 +17,7 @@ export type JarDisplay = {
   iconName?: IconName;
   emoji?: string;
   progress?: number;
+  targetAmount?: number;
   isBlindado?: boolean;
 };
 
