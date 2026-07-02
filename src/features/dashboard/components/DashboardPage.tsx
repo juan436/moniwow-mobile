@@ -3,11 +3,11 @@
  *
  * @what     Página principal del dashboard: saldo libre + jarras + vencimientos + movimientos.
  * @receives 3 props: data, scrollY, topOffset
- * @processes Renderiza secciones verticales. JarCard/JarDisplay/JarDetailModal vienen de
- *           features/jars/, TransactionDisplay de features/transactions/ — excepciones
+ * @processes Renderiza secciones verticales. JarCard/JarDisplay/JarDetailModal/AhorroDetailModal
+ *           vienen de features/jars/, TransactionDisplay de features/transactions/ — excepciones
  *           documentadas a "features no se conocen entre sí" (dashboard = composition root del
- *           home, unidireccional, ver clean_architecture.md). Tap en jarra Ahorro navega a
- *           /suenos; cualquier otra abre JarDetailModal con su historial filtrado.
+ *           home, unidireccional, ver clean_architecture.md). Tap en jarra Ahorro abre
+ *           AhorroDetailModal; cualquier otra abre JarDetailModal con su historial filtrado.
  * @returns  JSX — ScrollView vertical con todas las secciones.
  * @props    3: data, scrollY, topOffset
  */
@@ -20,6 +20,7 @@ import { colors, typography, spacing, radius, shadows } from '@shared/styles';
 import { HeroBalance } from './HeroBalance';
 import { JarCard } from '@features/jars/components/JarCard';
 import { JarDetailModal } from '@features/jars/components/JarDetailModal';
+import { AhorroDetailModal } from '@features/jars/components/AhorroDetailModal';
 import { TransactionItem } from './TransactionItem';
 import { TransactionDetailModal } from './TransactionDetailModal';
 import { UpcomingItem } from './UpcomingItem';
@@ -52,11 +53,9 @@ export function DashboardPage({ data, scrollY, topOffset }: Props) {
   const handleUpcomingModalClose = useCallback(() => setSelectedUpcoming(null), []);
 
   const [selectedJar, setSelectedJar] = useState<JarDisplay | null>(null);
-  const handleJarPress = useCallback((jar: JarDisplay) => {
-    if (jar.id === 'ahorro') router.push('/suenos');
-    else setSelectedJar(jar);
-  }, []);
+  const handleJarPress = useCallback((jar: JarDisplay) => setSelectedJar(jar), []);
   const handleJarModalClose = useCallback(() => setSelectedJar(null), []);
+  const isAhorroSelected = selectedJar?.id === 'ahorro';
 
   return (
     <Animated.ScrollView
@@ -103,7 +102,8 @@ export function DashboardPage({ data, scrollY, topOffset }: Props) {
       </View>
       <TransactionDetailModal item={selectedTx} onClose={handleTxModalClose} />
       <UpcomingDetailModal item={selectedUpcoming} onClose={handleUpcomingModalClose} />
-      <JarDetailModal item={selectedJar} transactions={transactions} onClose={handleJarModalClose} />
+      <AhorroDetailModal item={isAhorroSelected ? selectedJar : null} onClose={handleJarModalClose} />
+      <JarDetailModal item={!isAhorroSelected ? selectedJar : null} transactions={transactions} onClose={handleJarModalClose} />
     </Animated.ScrollView>
   );
 }

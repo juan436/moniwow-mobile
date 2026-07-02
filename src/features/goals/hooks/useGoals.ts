@@ -3,13 +3,21 @@
  *
  * @what     Estado y datos mock de la feature Sueños (M10): lista de metas + modales crear/editar.
  * @receives —
- * @processes Mock hasta conectar backend. CRUD local: crear, editar, eliminar meta.
+ * @processes Mock hasta conectar backend. CRUD local: crear, editar, eliminar meta. handleWithdraw
+ *           (Slider de Sacrificio) y handleDeposit (Aportar) resta/suma `current`, recalculan
+ *           `progress` — autocontenido, no toca el balance real de Libre (mismo límite mock-stage
+ *           que TransferSheet de jars/, ver [[planes/psicologia-ux]]).
  * @returns  { goals, isAddVisible, selectedGoal, ahorroTotal, handleAnadir, handleCloseAdd,
- *            handleCreate, handleCardPress, handleCloseEdit, handleSave, handleDelete }
+ *            handleCreate, handleCardPress, handleCloseEdit, handleSave, handleDelete,
+ *            handleWithdraw, handleDeposit }
  */
 import { useCallback, useState } from 'react';
 
 import type { GoalItem, CreateGoalData, SaveGoalData } from '../types';
+
+function recalc(goal: GoalItem, current: number): GoalItem {
+  return { ...goal, current, progress: Math.min(100, Math.round((current / goal.target) * 100)) };
+}
 
 const AHORRO_TOTAL = 29500;
 
@@ -39,9 +47,17 @@ export function useGoals() {
   }, []);
   const handleDelete    = useCallback((id: string) => setGoals((g) => g.filter((x) => x.id !== id)), []);
 
+  const handleWithdraw = useCallback((id: string, amount: number) => {
+    setGoals((g) => g.map((x) => x.id === id ? recalc(x, Math.max(0, x.current - amount)) : x));
+  }, []);
+  const handleDeposit = useCallback((id: string, amount: number) => {
+    setGoals((g) => g.map((x) => x.id === id ? recalc(x, x.current + amount) : x));
+  }, []);
+
   return {
     goals, isAddVisible, selectedGoal, ahorroTotal: AHORRO_TOTAL,
     handleAnadir, handleCloseAdd, handleCreate,
     handleCardPress, handleCloseEdit, handleSave, handleDelete,
+    handleWithdraw, handleDeposit,
   };
 }

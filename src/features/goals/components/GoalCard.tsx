@@ -2,13 +2,15 @@
  * GoalCard — Component
  *
  * @what     Card premium de meta individual: accent bar esmeralda + porcentaje prominente + progreso.
- * @receives 2 props: goal, onPress
- * @processes Calcula estrellas (progress/20 cap 5). Muestra badge si stars===0. Llama onPress(goal) al tap.
+ * @receives 3 props: goal, onPress, onDeposit
+ * @processes Calcula estrellas (progress/20 cap 5). Muestra badge si stars===0. Llama onPress(goal) al
+ *           tap de la card, onDeposit(goal) al tap del botón "+" (Pressable anidado — no burbujea).
  * @returns  JSX — Pressable card con accent bar izquierda, barra de progreso gruesa, StarRow y montos.
- * @props    2: goal, onPress
+ * @props    3: goal, onPress, onDeposit
  */
 import { useCallback } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { MaterialIcons } from '@expo/vector-icons';
 
 import { colors, typography, spacing, radius, shadows, sizes } from '@shared/styles';
 import { StarRow } from './StarRow';
@@ -18,12 +20,13 @@ function calcStars(progress: number): number {
   return Math.min(Math.floor(progress / 20), 5);
 }
 
-type Props = { goal: GoalItem; onPress: (goal: GoalItem) => void };
+type Props = { goal: GoalItem; onPress: (goal: GoalItem) => void; onDeposit: (goal: GoalItem) => void };
 
-export function GoalCard({ goal, onPress }: Props) {
+export function GoalCard({ goal, onPress, onDeposit }: Props) {
   const stars      = calcStars(goal.progress);
   const showBadge  = stars === 0;
-  const handlePress = useCallback(() => onPress(goal), [onPress, goal]);
+  const handlePress  = useCallback(() => onPress(goal), [onPress, goal]);
+  const handleDeposit = useCallback(() => onDeposit(goal), [onDeposit, goal]);
 
   return (
     <Pressable onPress={handlePress} style={({ pressed }) => [styles.card, shadows.card, pressed && styles.pressed]}>
@@ -39,6 +42,9 @@ export function GoalCard({ goal, onPress }: Props) {
             <Text style={styles.statusLabel}>{goal.statusLabel}</Text>
           </View>
           <Text style={styles.pctLabel}>{goal.progress}%</Text>
+          <Pressable onPress={handleDeposit} hitSlop={8} style={styles.depositBtn}>
+            <MaterialIcons name="add" size={16} color={colors.emeraldSuccess} />
+          </Pressable>
         </View>
 
         <View style={styles.progressTrack}>
@@ -77,6 +83,10 @@ const styles = StyleSheet.create({
     gap: spacing.stackSm,
   },
   cardTop:    { flexDirection: 'row', alignItems: 'center', gap: spacing.stackSm },
+  depositBtn: {
+    width: sizes.iconSm, height: sizes.iconSm, borderRadius: radius.full,
+    backgroundColor: colors.emeraldTint, alignItems: 'center', justifyContent: 'center',
+  },
   emojiWrap: {
     width: sizes.iconSm,
     height: sizes.iconSm,
