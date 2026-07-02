@@ -3,17 +3,17 @@
  *
  * @what     M10 — Proyectos de Vida: resumen compacto + lista de metas + hide-on-scroll.
  * @receives —
- * @processes AppTopBar se oculta al hacer scroll down y reaparece al subir. Estado/CRUD de metas
- *           vive en useGoals — este componente solo orquesta presentación.
- * @returns  JSX — header flotante animado + ScrollView con summary card + cards.
+ * @processes GoalsHeader (back + título) se oculta al hacer scroll down y reaparece al subir.
+ *           Estado/CRUD de metas vive en useGoals — este componente solo orquesta presentación.
+ * @returns  JSX — GoalsHeader flotante animado + ScrollView con summary card + cards.
  * @props    —
  */
 import { useRef, useState } from 'react';
 import { View, Text, Pressable, StyleSheet, Animated } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { AppTopBar } from '@shared/components';
 import { colors, typography, spacing, radius, shadows } from '@shared/styles';
 import { GoalCard } from './GoalCard';
+import { GoalsHeader } from './GoalsHeader';
 import { CreateGoalModal } from './CreateGoalModal';
 import { EditGoalModal } from './EditGoalModal';
 import { useGoals } from '../hooks/useGoals';
@@ -78,7 +78,7 @@ export function GoalsScreen() {
         style={[styles.headerFloat, { transform: [{ translateY: headerTranslateY }] }]}
         onLayout={(e) => setHeaderHeight(e.nativeEvent.layout.height)}
       >
-        <AppTopBar />
+        <GoalsHeader topInset={insets.top} />
       </Animated.View>
     </View>
   );
