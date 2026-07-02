@@ -4,7 +4,9 @@
  * @what     Lista completa de jarras con saldo total, grid 2 columnas y creación de jarras.
  * @receives —
  * @processes Carga jars desde useJars, combina con jarras creadas localmente (custom, sin
- *           backend aún). Calcula saldo total acumulado sobre el combinado.
+ *           backend aún). Calcula saldo total acumulado sobre el combinado. Si el total es impar,
+ *           agrega un ítem invisible (FILLER_ID) para que la última card no estire flex:1 sobre
+ *           las 2 columnas — sin esto, una fila con un solo item ocupa todo el ancho.
  * @returns  JSX — FlatList 2 columnas con JarsListHeader + CreateJarModal.
  * @props    —
  */
@@ -20,6 +22,8 @@ import { CreateJarModal } from './CreateJarModal';
 import { useJars } from '../hooks/useJars';
 import type { JarDisplay, CreateJarData } from '../types';
 
+const FILLER_ID = '__filler__';
+
 function handleBack() { router.back(); }
 function RowSeparator() { return <View style={styles.rowSep} />; }
 
@@ -31,6 +35,11 @@ export function JarsScreen() {
 
   const jars  = useMemo(() => [...baseJars, ...customJars], [baseJars, customJars]);
   const total = useMemo(() => jars.reduce((s, j) => s + j.balance, 0), [jars]);
+
+  const gridJars = useMemo(() => {
+    if (jars.length % 2 === 0) return jars;
+    return [...jars, { id: FILLER_ID } as JarDisplay];
+  }, [jars]);
 
   const handleOpenCreate  = useCallback(() => setIsCreateVisible(true), []);
   const handleCloseCreate = useCallback(() => setIsCreateVisible(false), []);
@@ -46,7 +55,8 @@ export function JarsScreen() {
   }, []);
 
   const renderItem = useCallback(
-    ({ item }: { item: JarDisplay }) => <JarItem jar={item} />,
+    ({ item }: { item: JarDisplay }) =>
+      item.id === FILLER_ID ? <View style={styles.filler} /> : <JarItem jar={item} />,
     []
   );
 
@@ -57,7 +67,7 @@ export function JarsScreen() {
   return (
     <View style={styles.screen}>
       <FlatList
-        data={jars}
+        data={gridJars}
         keyExtractor={(j) => j.id}
         numColumns={2}
         ListHeaderComponent={ListHeader}
@@ -78,5 +88,6 @@ const styles = StyleSheet.create({
   content:        { paddingHorizontal: spacing.marginPage, paddingBottom: spacing.stackLg * 3 },
   row:            { gap: spacing.stackMd },
   rowSep:         { height: spacing.stackMd },
+  filler:         { flex: 1 },
   statusBarCover: { position: 'absolute', top: 0, left: 0, right: 0, backgroundColor: colors.pureWhite },
 });
