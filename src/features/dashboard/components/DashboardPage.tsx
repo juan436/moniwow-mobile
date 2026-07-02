@@ -3,10 +3,10 @@
  *
  * @what     Página principal del dashboard: saldo libre + jarras + vencimientos + movimientos.
  * @receives 3 props: data, scrollY, topOffset
- * @processes Renderiza secciones verticales. JarCard/JarDisplay vienen de features/jars/ — única
- *           excepción documentada a "features no se conocen entre sí" (dashboard = composition
- *           root del home, unidireccional, ver clean_architecture.md). Tap en jarra Ahorro navega
- *           a /suenos (mismo comportamiento que en JarsScreen).
+ * @processes Renderiza secciones verticales. JarCard/JarDisplay/JarDetailModal vienen de
+ *           features/jars/ — única excepción documentada a "features no se conocen entre sí"
+ *           (dashboard = composition root del home, unidireccional, ver clean_architecture.md).
+ *           Tap en jarra Ahorro navega a /suenos; cualquier otra abre JarDetailModal.
  * @returns  JSX — ScrollView vertical con todas las secciones.
  * @props    3: data, scrollY, topOffset
  */
@@ -18,6 +18,7 @@ import { router } from 'expo-router';
 import { colors, typography, spacing, radius, shadows } from '@shared/styles';
 import { HeroBalance } from './HeroBalance';
 import { JarCard } from '@features/jars/components/JarCard';
+import { JarDetailModal } from '@features/jars/components/JarDetailModal';
 import { TransactionItem } from './TransactionItem';
 import { TransactionDetailModal } from './TransactionDetailModal';
 import { UpcomingItem } from './UpcomingItem';
@@ -37,7 +38,6 @@ function handleAddPress() { router.push('/add-income'); }
 function handleVerJarras() { router.push('/jarras'); }
 function handleFiltroMovimientos() { router.push('/movimientos'); }
 function handleVerAgenda() { router.push('/agenda'); }
-function handleJarPress(id: string) { if (id === 'ahorro') router.push('/suenos'); }
 
 export function DashboardPage({ data, scrollY, topOffset }: Props) {
   const { saldoLibre, jars, transactions, upcoming } = data;
@@ -48,6 +48,13 @@ export function DashboardPage({ data, scrollY, topOffset }: Props) {
   const [selectedUpcoming, setSelectedUpcoming] = useState<UpcomingExpense | null>(null);
   const handleUpcomingLongPress  = useCallback((item: UpcomingExpense) => setSelectedUpcoming(item), []);
   const handleUpcomingModalClose = useCallback(() => setSelectedUpcoming(null), []);
+
+  const [selectedJar, setSelectedJar] = useState<JarDisplay | null>(null);
+  const handleJarPress = useCallback((jar: JarDisplay) => {
+    if (jar.id === 'ahorro') router.push('/suenos');
+    else setSelectedJar(jar);
+  }, []);
+  const handleJarModalClose = useCallback(() => setSelectedJar(null), []);
 
   return (
     <Animated.ScrollView
@@ -67,7 +74,7 @@ export function DashboardPage({ data, scrollY, topOffset }: Props) {
           <Pressable hitSlop={8} onPress={handleVerJarras}><Text style={styles.sectionLink}>Ver todas</Text></Pressable>
         </View>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.jarsRow}>
-          {jars.map((jar) => <JarCard key={jar.id} jar={jar} onPress={() => handleJarPress(jar.id)} />)}
+          {jars.map((jar) => <JarCard key={jar.id} jar={jar} onPress={() => handleJarPress(jar)} />)}
         </ScrollView>
       </View>
 
@@ -94,6 +101,7 @@ export function DashboardPage({ data, scrollY, topOffset }: Props) {
       </View>
       <TransactionDetailModal item={selectedTx} onClose={handleTxModalClose} />
       <UpcomingDetailModal item={selectedUpcoming} onClose={handleUpcomingModalClose} />
+      <JarDetailModal item={selectedJar} onClose={handleJarModalClose} />
     </Animated.ScrollView>
   );
 }

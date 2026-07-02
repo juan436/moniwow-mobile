@@ -7,8 +7,9 @@
  *           backend aún). Calcula saldo total acumulado sobre el combinado. Si el total es impar,
  *           agrega un ítem invisible (FILLER_ID) para que la última card no estire flex:1 sobre
  *           las 2 columnas — sin esto, una fila con un solo item ocupa todo el ancho. Tocar la
- *           jarra Ahorro navega a Sueños (/suenos) — nunca resta directo, solo abre las metas.
- * @returns  JSX — FlatList 2 columnas con JarsListHeader + CreateJarModal.
+ *           jarra Ahorro navega a Sueños (/suenos) — nunca resta directo. Cualquier otra jarra
+ *           abre JarDetailModal.
+ * @returns  JSX — FlatList 2 columnas con JarsListHeader + CreateJarModal + JarDetailModal.
  * @props    —
  */
 import { useCallback, useMemo, useState } from 'react';
@@ -20,13 +21,13 @@ import { colors, spacing } from '@shared/styles';
 import { JarItem } from './JarItem';
 import { JarsListHeader } from './JarsListHeader';
 import { CreateJarModal } from './CreateJarModal';
+import { JarDetailModal } from './JarDetailModal';
 import { useJars } from '../hooks/useJars';
 import type { JarDisplay, CreateJarData } from '../types';
 
 const FILLER_ID = '__filler__';
 
 function handleBack() { router.back(); }
-function handleJarPress(id: string) { if (id === 'ahorro') router.push('/suenos'); }
 function RowSeparator() { return <View style={styles.rowSep} />; }
 
 export function JarsScreen() {
@@ -34,6 +35,7 @@ export function JarsScreen() {
   const insets   = useSafeAreaInsets();
   const [customJars, setCustomJars]     = useState<JarDisplay[]>([]);
   const [isCreateVisible, setIsCreateVisible] = useState(false);
+  const [selectedJar, setSelectedJar]   = useState<JarDisplay | null>(null);
 
   const jars  = useMemo(() => [...baseJars, ...customJars], [baseJars, customJars]);
   const total = useMemo(() => jars.reduce((s, j) => s + j.balance, 0), [jars]);
@@ -56,12 +58,18 @@ export function JarsScreen() {
     }]);
   }, []);
 
+  const handleJarPress = useCallback((jar: JarDisplay) => {
+    if (jar.id === 'ahorro') router.push('/suenos');
+    else setSelectedJar(jar);
+  }, []);
+  const handleCloseDetail = useCallback(() => setSelectedJar(null), []);
+
   const renderItem = useCallback(
     ({ item }: { item: JarDisplay }) =>
       item.id === FILLER_ID
         ? <View style={styles.filler} />
-        : <JarItem jar={item} onPress={() => handleJarPress(item.id)} />,
-    []
+        : <JarItem jar={item} onPress={() => handleJarPress(item)} />,
+    [handleJarPress]
   );
 
   const ListHeader = useMemo(() => (
@@ -83,6 +91,7 @@ export function JarsScreen() {
       />
       <View style={[styles.statusBarCover, { height: insets.top }]} />
       <CreateJarModal visible={isCreateVisible} onClose={handleCloseCreate} onCreate={handleCreate} />
+      <JarDetailModal item={selectedJar} onClose={handleCloseDetail} />
     </View>
   );
 }
