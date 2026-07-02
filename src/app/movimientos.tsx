@@ -13,10 +13,10 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { colors, typography, spacing, radius, shadows } from '@shared/styles';
-import { useDashboard } from '@features/dashboard/hooks/useDashboard';
+import { useTransactions } from '@features/transactions/hooks/useTransactions';
 import { TransactionItem } from '@features/dashboard/components/TransactionItem';
 import { TransactionDetailModal } from '@features/dashboard/components/TransactionDetailModal';
-import type { TransactionDisplay } from '@features/dashboard/types';
+import type { TransactionDisplay } from '@features/transactions/types';
 
 type FilterTipo = 'todos' | 'ingresos' | 'gastos';
 
@@ -30,7 +30,7 @@ const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto'
 function keyExtractor(item: TransactionDisplay) { return item.id; }
 
 export default function MovimientosScreen() {
-  const { transactions } = useDashboard();
+  const { transactions } = useTransactions();
   const insets = useSafeAreaInsets();
   const [filterTipo, setFilterTipo] = useState<FilterTipo>('todos');
   const [navMonth,   setNavMonth]   = useState(() => new Date().getMonth());

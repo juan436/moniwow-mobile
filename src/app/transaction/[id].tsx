@@ -3,7 +3,7 @@
  *
  * @what     Detalle completo de transacción: héroe de monto, ítems individuales y factura.
  * @receives id param de expo-router (transaction.id).
- * @processes Busca la transacción en useDashboard, renderiza ítems y abre factura si existe.
+ * @processes Busca la transacción en useTransactions, renderiza ítems y abre factura si existe.
  * @returns  JSX — pantalla con header, ScrollView de ítems y ReceiptViewerModal.
  */
 import { useState } from 'react';
@@ -13,12 +13,12 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { colors, typography, spacing, radius, shadows } from '@shared/styles';
-import { useDashboard } from '@features/dashboard/hooks/useDashboard';
+import { useTransactions } from '@features/transactions/hooks/useTransactions';
 import { ReceiptViewerModal } from '@features/dashboard/components/ReceiptViewerModal';
 
 export default function TransactionDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { transactions } = useDashboard();
+  const { transactions } = useTransactions();
   const tx = transactions.find((t) => t.id === id) ?? null;
   const insets = useSafeAreaInsets();
 

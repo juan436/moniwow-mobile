@@ -8,26 +8,6 @@ import type { MaterialIcons } from '@expo/vector-icons';
 
 type IconName = ComponentProps<typeof MaterialIcons>['name'];
 
-export type TransactionItem = {
-  description: string;
-  amount: number;
-};
-
-export type TransactionDisplay = {
-  id: string;
-  description: string;
-  amount: number;
-  isIncome: boolean;
-  categoryLabel: string;
-  time: string;
-  iconName: IconName;
-  iconBg: string;
-  iconColor: string;
-  isLast?: boolean;
-  items?: TransactionItem[];
-  receiptUri?: string;
-};
-
 export type UpcomingExpense = {
   id: string;
   name: string;

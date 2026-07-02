@@ -2,11 +2,12 @@
  * JarDetailModal — Component
  *
  * @what     Modal de detalle de jarra: ícono/emoji, monto héroe, barra de progreso + breakdown
- *           meta/restante si tiene targetAmount.
- * @receives 2 props: item, onClose
+ *           meta/restante si tiene targetAmount, preview de últimos movimientos de esa jarra.
+ * @receives 3 props: item, transactions, onClose
  * @processes Layout monto-primero, mismo patrón que LeakDetailModal/DebtDetailModal/GoalDetailModal.
+ *           Filtra transactions por jarId, muestra hasta 3 (igual que preview de LeakDetailModal).
  * @returns  JSX — Modal fade centrado, sin scroll anidado.
- * @props    2: item, onClose
+ * @props    3: item, transactions, onClose
  */
 import { Modal, Pressable, View, Text, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -14,16 +15,19 @@ import { MaterialIcons } from '@expo/vector-icons';
 
 import { colors, typography, spacing, radius, sizes, shadows } from '@shared/styles';
 import type { JarDisplay } from '../types';
+import type { TransactionDisplay } from '@features/transactions/types';
 
 function handlePopupPress() {}
 
 type Props = {
   item: JarDisplay | null;
+  transactions: TransactionDisplay[];
   onClose: () => void;
 };
 
-export function JarDetailModal({ item, onClose }: Props) {
+export function JarDetailModal({ item, transactions, onClose }: Props) {
   const insets = useSafeAreaInsets();
+  const preview = item ? transactions.filter((t) => t.jarId === item.id).slice(0, 3) : [];
 
   return (
     <Modal visible={item !== null} transparent animationType="fade" onRequestClose={onClose} statusBarTranslucent navigationBarTranslucent>
@@ -80,6 +84,25 @@ export function JarDetailModal({ item, onClose }: Props) {
             </>
           )}
 
+          {preview.length > 0 && (
+            <>
+              <View style={styles.divider} />
+              <View style={styles.txList}>
+                {preview.map((tx, i) => (
+                  <View key={tx.id}>
+                    <View style={styles.txRow}>
+                      <Text style={styles.txDesc} numberOfLines={1} ellipsizeMode="tail">{tx.description}</Text>
+                      <Text style={[styles.txAmount, tx.isIncome && styles.txAmountIncome]}>
+                        {tx.isIncome ? '+' : '-'}$ {tx.amount.toLocaleString('es')}
+                      </Text>
+                    </View>
+                    {i < preview.length - 1 && <View style={styles.txSep} />}
+                  </View>
+                ))}
+              </View>
+            </>
+          )}
+
         </Pressable>
       </Pressable>
       <View style={[styles.navBarCover, { height: insets.bottom }]} />
@@ -109,5 +132,11 @@ const styles = StyleSheet.create({
   breakdownLabel: { ...typography.labelSm, color: colors.slateGray },
   breakdownValue: { ...typography.labelMd, color: colors.navyDark },
   restColor: { color: colors.alertOrange },
+  txList:    { gap: spacing.stackSm },
+  txRow:     { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.stackMd, paddingVertical: spacing.stackXs },
+  txDesc:    { ...typography.bodyMd, color: colors.navyDark, flex: 1 },
+  txAmount:  { ...typography.labelMd, color: colors.alertOrange },
+  txAmountIncome: { color: colors.emeraldSuccess },
+  txSep:     { height: 1, backgroundColor: colors.surfaceContainerLow },
   navBarCover: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: colors.black },
 });

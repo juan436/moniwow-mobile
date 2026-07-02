@@ -13,7 +13,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 
 import { colors, typography, spacing, radius, sizes, shadows } from '@shared/styles';
-import type { TransactionDisplay } from '../../types';
+import type { TransactionDisplay } from '@features/transactions/types';
 
 function stopPropagation() { return true; }
 

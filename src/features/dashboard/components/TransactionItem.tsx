@@ -12,7 +12,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 
 import { colors, typography, spacing, radius, sizes } from '@shared/styles';
 import { truncateLabel } from '@shared/utils';
-import type { TransactionDisplay } from '../../types';
+import type { TransactionDisplay } from '@features/transactions/types';
 
 type Props = {
   transaction: TransactionDisplay;

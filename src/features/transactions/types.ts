@@ -11,3 +11,24 @@ export type JarOption = { id: string; name: string; iconColor: string; iconBg: s
 
 /** Distribución de ingreso: monto en $ por id de jarra (dinámico, no fijo a 3). */
 export type IncomeDistribution = Record<string, number>;
+
+export type TransactionItem = {
+  description: string;
+  amount: number;
+};
+
+export type TransactionDisplay = {
+  id: string;
+  jarId: string;
+  description: string;
+  amount: number;
+  isIncome: boolean;
+  categoryLabel: string;
+  time: string;
+  iconName: IconName;
+  iconBg: string;
+  iconColor: string;
+  isLast?: boolean;
+  items?: TransactionItem[];
+  receiptUri?: string;
+};

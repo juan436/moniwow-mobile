@@ -23,6 +23,7 @@ import { JarsListHeader } from './JarsListHeader';
 import { CreateJarModal } from './CreateJarModal';
 import { JarDetailModal } from './JarDetailModal';
 import { useJars } from '../hooks/useJars';
+import { useTransactions } from '@features/transactions/hooks/useTransactions';
 import type { JarDisplay, CreateJarData } from '../types';
 
 const FILLER_ID = '__filler__';
@@ -32,6 +33,7 @@ function RowSeparator() { return <View style={styles.rowSep} />; }
 
 export function JarsScreen() {
   const { jars: baseJars } = useJars();
+  const { transactions }   = useTransactions();
   const insets   = useSafeAreaInsets();
   const [customJars, setCustomJars]     = useState<JarDisplay[]>([]);
   const [isCreateVisible, setIsCreateVisible] = useState(false);
@@ -91,7 +93,7 @@ export function JarsScreen() {
       />
       <View style={[styles.statusBarCover, { height: insets.top }]} />
       <CreateJarModal visible={isCreateVisible} onClose={handleCloseCreate} onCreate={handleCreate} />
-      <JarDetailModal item={selectedJar} onClose={handleCloseDetail} />
+      <JarDetailModal item={selectedJar} transactions={transactions} onClose={handleCloseDetail} />
     </View>
   );
 }

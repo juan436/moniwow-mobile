@@ -13,7 +13,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 
 import { colors, typography, spacing, radius, sizes } from '@shared/styles';
 import { truncateLabel } from '@shared/utils';
-import type { UpcomingExpense } from '../../types';
+import type { UpcomingExpense } from '../types';
 
 type Props = { item: UpcomingExpense; isLast: boolean; onLongPress?: (item: UpcomingExpense) => void };
 

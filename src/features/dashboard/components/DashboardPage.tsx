@@ -4,9 +4,10 @@
  * @what     Página principal del dashboard: saldo libre + jarras + vencimientos + movimientos.
  * @receives 3 props: data, scrollY, topOffset
  * @processes Renderiza secciones verticales. JarCard/JarDisplay/JarDetailModal vienen de
- *           features/jars/ — única excepción documentada a "features no se conocen entre sí"
- *           (dashboard = composition root del home, unidireccional, ver clean_architecture.md).
- *           Tap en jarra Ahorro navega a /suenos; cualquier otra abre JarDetailModal.
+ *           features/jars/, TransactionDisplay de features/transactions/ — excepciones
+ *           documentadas a "features no se conocen entre sí" (dashboard = composition root del
+ *           home, unidireccional, ver clean_architecture.md). Tap en jarra Ahorro navega a
+ *           /suenos; cualquier otra abre JarDetailModal con su historial filtrado.
  * @returns  JSX — ScrollView vertical con todas las secciones.
  * @props    3: data, scrollY, topOffset
  */
@@ -24,7 +25,8 @@ import { TransactionDetailModal } from './TransactionDetailModal';
 import { UpcomingItem } from './UpcomingItem';
 import { UpcomingDetailModal } from './UpcomingDetailModal';
 import type { JarDisplay } from '@features/jars/types';
-import type { TransactionDisplay, UpcomingExpense } from '../types';
+import type { TransactionDisplay } from '@features/transactions/types';
+import type { UpcomingExpense } from '../types';
 
 type Data = {
   saldoLibre: number;
@@ -101,7 +103,7 @@ export function DashboardPage({ data, scrollY, topOffset }: Props) {
       </View>
       <TransactionDetailModal item={selectedTx} onClose={handleTxModalClose} />
       <UpcomingDetailModal item={selectedUpcoming} onClose={handleUpcomingModalClose} />
-      <JarDetailModal item={selectedJar} onClose={handleJarModalClose} />
+      <JarDetailModal item={selectedJar} transactions={transactions} onClose={handleJarModalClose} />
     </Animated.ScrollView>
   );
 }
