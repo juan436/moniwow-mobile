@@ -6,7 +6,8 @@
  * @processes GoalsHeader (back + título) se oculta al hacer scroll down y reaparece al subir.
  *           Estado/CRUD de metas vive en useGoals — este componente solo orquesta presentación.
  *           Con ?mode=withdraw (llegado desde AhorroDetailModal → Transferir), tap en una card abre
- *           SacrificeModal en vez de EditGoalModal — ver [[planes/psicologia-ux]].
+ *           SacrificeModal en vez de EditGoalModal, y se ocultan "Añadir"/"+" Aportar — pantalla de
+ *           selector puro. Ver [[planes/psicologia-ux]].
  * @returns  JSX — GoalsHeader flotante animado + ScrollView con summary card + cards.
  * @props    —
  */
@@ -70,7 +71,7 @@ export function GoalsScreen() {
         )}
         scrollEventThrottle={16}
       >
-        <GoalsSummaryCard ahorroTotal={ahorroTotal} onAdd={handleAnadir} />
+        <GoalsSummaryCard ahorroTotal={ahorroTotal} onAdd={isWithdrawMode ? undefined : handleAnadir} />
 
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>{isWithdrawMode ? '¿De qué sueño retirás?' : 'Mis proyectos'}</Text>
@@ -81,7 +82,7 @@ export function GoalsScreen() {
 
         <View style={styles.cardList}>
           {goals.map((goal) => (
-            <GoalCard key={goal.id} goal={goal} onPress={handleGoalTap} onDeposit={setDepositGoal} />
+            <GoalCard key={goal.id} goal={goal} onPress={handleGoalTap} onDeposit={isWithdrawMode ? undefined : setDepositGoal} />
           ))}
         </View>
       </Animated.ScrollView>

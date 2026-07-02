@@ -1,17 +1,17 @@
 /**
  * GoalsSummaryCard — Component
  *
- * @what     Card resumen de GoalsScreen: ahorro total acumulado + botón "Añadir" sueño.
- * @receives 2 props: ahorroTotal, onAdd
- * @processes Ninguno — presentación pura.
- * @returns  JSX — Card blanca con monto destacado y CTA.
- * @props    2: ahorroTotal, onAdd
+ * @what     Card resumen de GoalsScreen: ahorro total acumulado + botón "Añadir" sueño opcional.
+ * @receives 2 props: ahorroTotal, onAdd?
+ * @processes Sin onAdd (modo retirar), el botón no se renderiza — pantalla de selector puro.
+ * @returns  JSX — Card blanca con monto destacado y CTA opcional.
+ * @props    2: ahorroTotal, onAdd?
  */
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 
 import { colors, typography, spacing, radius, shadows } from '@shared/styles';
 
-type Props = { ahorroTotal: number; onAdd: () => void };
+type Props = { ahorroTotal: number; onAdd?: () => void };
 
 export function GoalsSummaryCard({ ahorroTotal, onAdd }: Props) {
   return (
@@ -20,9 +20,11 @@ export function GoalsSummaryCard({ ahorroTotal, onAdd }: Props) {
         <Text style={styles.label}>Ahorro total acumulado</Text>
         <Text style={styles.amount}>$ {ahorroTotal.toLocaleString('es')}.00</Text>
       </View>
-      <Pressable style={styles.btnNew} onPress={onAdd}>
-        <Text style={styles.btnNewText}>Añadir</Text>
-      </Pressable>
+      {onAdd && (
+        <Pressable style={styles.btnNew} onPress={onAdd}>
+          <Text style={styles.btnNewText}>Añadir</Text>
+        </Pressable>
+      )}
     </View>
   );
 }

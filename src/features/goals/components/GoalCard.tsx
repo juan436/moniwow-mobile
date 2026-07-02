@@ -2,11 +2,12 @@
  * GoalCard — Component
  *
  * @what     Card premium de meta individual: accent bar esmeralda + porcentaje prominente + progreso.
- * @receives 3 props: goal, onPress, onDeposit
+ * @receives 3 props: goal, onPress, onDeposit?
  * @processes Calcula estrellas (progress/20 cap 5). Muestra badge si stars===0. Llama onPress(goal) al
  *           tap de la card, onDeposit(goal) al tap del botón "+" (Pressable anidado — no burbujea).
+ *           Sin onDeposit (modo retirar), el botón "+" no se renderiza.
  * @returns  JSX — Pressable card con accent bar izquierda, barra de progreso gruesa, StarRow y montos.
- * @props    3: goal, onPress, onDeposit
+ * @props    3: goal, onPress, onDeposit?
  */
 import { useCallback } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
@@ -20,13 +21,13 @@ function calcStars(progress: number): number {
   return Math.min(Math.floor(progress / 20), 5);
 }
 
-type Props = { goal: GoalItem; onPress: (goal: GoalItem) => void; onDeposit: (goal: GoalItem) => void };
+type Props = { goal: GoalItem; onPress: (goal: GoalItem) => void; onDeposit?: (goal: GoalItem) => void };
 
 export function GoalCard({ goal, onPress, onDeposit }: Props) {
   const stars      = calcStars(goal.progress);
   const showBadge  = stars === 0;
-  const handlePress  = useCallback(() => onPress(goal), [onPress, goal]);
-  const handleDeposit = useCallback(() => onDeposit(goal), [onDeposit, goal]);
+  const handlePress   = useCallback(() => onPress(goal), [onPress, goal]);
+  const handleDeposit = useCallback(() => onDeposit?.(goal), [onDeposit, goal]);
 
   return (
     <Pressable onPress={handlePress} style={({ pressed }) => [styles.card, shadows.card, pressed && styles.pressed]}>
@@ -42,9 +43,11 @@ export function GoalCard({ goal, onPress, onDeposit }: Props) {
             <Text style={styles.statusLabel}>{goal.statusLabel}</Text>
           </View>
           <Text style={styles.pctLabel}>{goal.progress}%</Text>
-          <Pressable onPress={handleDeposit} hitSlop={8} style={styles.depositBtn}>
-            <MaterialIcons name="add" size={16} color={colors.emeraldSuccess} />
-          </Pressable>
+          {onDeposit && (
+            <Pressable onPress={handleDeposit} hitSlop={8} style={styles.depositBtn}>
+              <MaterialIcons name="add" size={16} color={colors.emeraldSuccess} />
+            </Pressable>
+          )}
         </View>
 
         <View style={styles.progressTrack}>
