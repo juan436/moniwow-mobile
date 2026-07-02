@@ -1,7 +1,7 @@
 /**
- * useAgenda — Hook
+ * usePlanner — Hook
  *
- * @what     Estado y datos mock de la feature Agenda + CRUD local de compromisos recurrentes.
+ * @what     Estado y datos mock de la feature Planner + CRUD local de compromisos recurrentes.
  * @receives —
  * @processes Expone activeTab, activeFilter, data mock y setters. Mock hasta conectar backend:
  *           recurrentes vive en estado propio (no en AgendaData) para poder crear/editar/eliminar.
@@ -12,11 +12,11 @@ import { useCallback, useMemo, useState } from 'react';
 
 import { colors } from '@shared/styles';
 import type {
-  AgendaTab, AgendaFilter, AgendaData, RecurrenteDisplay,
-  CreateRecurrenteData, SaveRecurrenteData, RecurrenteActions,
+  AgendaTab, AgendaFilter, AgendaData, RecurringDisplay,
+  CreateRecurringData, SaveRecurringData, RecurringActions,
 } from '../types';
 
-const RECURRENTE_ICON: Record<AgendaFilter, { iconName: RecurrenteDisplay['iconName']; iconColor: string; iconBg: string }> = {
+const RECURRENTE_ICON: Record<AgendaFilter, { iconName: RecurringDisplay['iconName']; iconColor: string; iconBg: string }> = {
   gastos:   { iconName: 'receipt-long', iconColor: colors.tertiary,      iconBg: colors.tertiary + '15' },
   ingresos: { iconName: 'attach-money', iconColor: colors.emeraldSuccess, iconBg: colors.emeraldSuccess + '15' },
   deudas:   { iconName: 'credit-card',  iconColor: colors.alertOrange,   iconBg: colors.alertOrange + '1A' },
@@ -68,7 +68,7 @@ const MOCK_DATA: AgendaData = {
   ],
 };
 
-const INITIAL_RECURRENTES: RecurrenteDisplay[] = [
+const INITIAL_RECURRENTES: RecurringDisplay[] = [
   { id: 'r1', iconName: 'home', iconColor: colors.emeraldSuccess, iconBg: colors.emeraldSuccess + '15', name: 'Alquiler Hogar', day: 5, amount: 800, filter: 'gastos' },
   { id: 'r2', iconName: 'tv', iconColor: colors.alertOrange, iconBg: colors.alertOrange + '1A', name: 'Netflix', day: 20, amount: 15, filter: 'gastos' },
   { id: 'r3', iconName: 'restaurant', iconColor: colors.secondary, iconBg: colors.secondaryContainer + '40', name: 'Suscripción Comida', day: 25, amount: 50, filter: 'gastos' },
@@ -79,20 +79,20 @@ const INITIAL_RECURRENTES: RecurrenteDisplay[] = [
   { id: 'r8', iconName: 'person', iconColor: colors.secondary, iconBg: colors.secondaryContainer + '40', name: 'Préstamo Mamá', day: 28, amount: 100, filter: 'deudas' },
 ];
 
-export function useAgenda() {
+export function usePlanner() {
   const [activeTab, setActiveTab] = useState<AgendaTab>('mi-mes');
   const [activeFilter, setActiveFilter] = useState<AgendaFilter>('gastos');
-  const [recurrentes, setRecurrentes] = useState<RecurrenteDisplay[]>(INITIAL_RECURRENTES);
+  const [recurrentes, setRecurrentes] = useState<RecurringDisplay[]>(INITIAL_RECURRENTES);
   const [isLoading] = useState(false);
   const [error] = useState<string | null>(null);
 
-  const handleCreateRecurrente = useCallback((data: CreateRecurrenteData) => {
+  const handleCreateRecurrente = useCallback((data: CreateRecurringData) => {
     const icon = RECURRENTE_ICON[data.filter];
-    const item: RecurrenteDisplay = { id: `r_${Date.now()}`, ...icon, ...data };
+    const item: RecurringDisplay = { id: `r_${Date.now()}`, ...icon, ...data };
     setRecurrentes((prev) => [...prev, item]);
   }, []);
 
-  const handleSaveRecurrente = useCallback((data: SaveRecurrenteData) => {
+  const handleSaveRecurrente = useCallback((data: SaveRecurringData) => {
     const icon = RECURRENTE_ICON[data.filter];
     setRecurrentes((prev) => prev.map((r) => r.id === data.id ? { ...r, ...icon, ...data } : r));
   }, []);
@@ -101,7 +101,7 @@ export function useAgenda() {
     setRecurrentes((prev) => prev.filter((r) => r.id !== id));
   }, []);
 
-  const recurrenteActions: RecurrenteActions = useMemo(() => ({
+  const recurrenteActions: RecurringActions = useMemo(() => ({
     onCreate: handleCreateRecurrente,
     onSave: handleSaveRecurrente,
     onDelete: handleDeleteRecurrente,

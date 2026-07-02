@@ -1,5 +1,5 @@
 /**
- * MiMesDayCell — Component
+ * MonthDayCell — Component
  *
  * @what     Celda individual del calendario Mi Mes: número de día + dot si tiene ítems.
  * @receives 5 props: day, isSelected, hasItems, dotColor, onPress
@@ -20,7 +20,7 @@ type Props = {
   onPress: (day: number) => void;
 };
 
-export function MiMesDayCell({ day, isSelected, hasItems, dotColor, onPress }: Props) {
+export function MonthDayCell({ day, isSelected, hasItems, dotColor, onPress }: Props) {
   const handlePress = useCallback(() => onPress(day), [day, onPress]);
 
   return (

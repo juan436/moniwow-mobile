@@ -1,5 +1,5 @@
 /**
- * MiMesCalendar — Component
+ * MonthCalendar — Component
  *
  * @what     Vista calendario del mes actual para Mi Mes. Grid 7 columnas + ítems del día seleccionado.
  * @receives 3 props: items, activeFilter, onAction
@@ -11,8 +11,8 @@ import { useState, useCallback, useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 
 import { colors, typography, spacing, radius, shadows } from '@shared/styles';
-import { AgendaItem } from '../shared/AgendaItem';
-import { MiMesDayCell } from './MiMesDayCell';
+import { PlannerItem } from '../shared/PlannerItem';
+import { MonthDayCell } from './MonthDayCell';
 import type { AgendaFilter, AgendaItemDisplay } from '../../types';
 
 type Props = {
@@ -39,7 +39,7 @@ function buildGrid(year: number, month: number): (number | null)[] {
   return grid;
 }
 
-export function MiMesCalendar({ items, activeFilter, onAction }: Props) {
+export function MonthCalendar({ items, activeFilter, onAction }: Props) {
   const now   = useMemo(() => new Date(), []);
   const year  = now.getFullYear();
   const month = now.getMonth();
@@ -77,7 +77,7 @@ export function MiMesCalendar({ items, activeFilter, onAction }: Props) {
         {weeks.map((week, wi) => (
           <View key={wi} style={styles.week}>
             {week.map((day, di) => day !== null ? (
-              <MiMesDayCell
+              <MonthDayCell
                 key={di}
                 day={day}
                 isSelected={selectedDay === day}
@@ -95,7 +95,7 @@ export function MiMesCalendar({ items, activeFilter, onAction }: Props) {
       {selectedItems.length > 0 && (
         <View style={styles.itemsList}>
           {selectedItems.map((item) => (
-            <AgendaItem key={item.id} item={item} onAction={onAction} />
+            <PlannerItem key={item.id} item={item} onAction={onAction} />
           ))}
         </View>
       )}

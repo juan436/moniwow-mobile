@@ -1,5 +1,5 @@
 /**
- * RecurrenteItem — Component
+ * RecurringItem — Component
  *
  * @what     Fila de compromiso recurrente: ícono (MaterialIcons), nombre → monto → día, botón Editar.
  * @receives 2 props: item, onEdit
@@ -12,14 +12,14 @@ import { MaterialIcons } from '@expo/vector-icons';
 
 import { colors, typography, spacing, radius, shadows, sizes } from '@shared/styles';
 import { truncateLabel } from '@shared/utils';
-import type { RecurrenteDisplay } from '../../types';
+import type { RecurringDisplay } from '../../types';
 
 type Props = {
-  item: RecurrenteDisplay;
+  item: RecurringDisplay;
   onEdit: (id: string) => void;
 };
 
-export function RecurrenteItem({ item, onEdit }: Props) {
+export function RecurringItem({ item, onEdit }: Props) {
   function handleEdit() { onEdit(item.id); }
 
   return (

@@ -1,7 +1,7 @@
 /**
- * CompromisoFormFields — Component
+ * RecurringFormFields — Component
  *
- * @what     Campos de formulario compartidos por Anadir/EditarCompromisoModal.
+ * @what     Campos de formulario compartidos por Create/EditRecurringModal.
  * @receives 2 props: form, onChange
  * @processes Campos condicionales: cuotas solo si tipo=deudas o frecuencia=cuotas; frecuencia solo si tipo≠deudas.
  * @returns  JSX — Fragment: selector tipo, nombre, monto, día/mes, cuotas o frecuencia, jarra.
@@ -11,11 +11,11 @@ import { View, Text, Pressable, TextInput, ScrollView, StyleSheet } from 'react-
 
 import { colors, typography, spacing, radius } from '@shared/styles';
 import { MoniInput, StepperInput } from '@shared/components';
-import type { AgendaFilter, NuevoCompromisoForm, CompromisoFrecuencia, CompromisoJarra } from '../../types';
+import type { AgendaFilter, RecurringForm, RecurringFrequency, RecurringJar } from '../../types';
 
 const TIPOS: AgendaFilter[] = ['ingresos', 'gastos', 'deudas'];
 const TIPO_LABEL: Record<AgendaFilter, string> = { ingresos: 'Ingreso', gastos: 'Gasto', deudas: 'Deuda' };
-const JARRAS: { key: CompromisoJarra; label: string }[] = [
+const JARRAS: { key: RecurringJar; label: string }[] = [
   { key: 'hogar',       label: '🏠 Hogar'       },
   { key: 'ahorro',      label: '💰 Ahorro'      },
   { key: 'libre',       label: '🍃 Libre'       },
@@ -26,17 +26,17 @@ const JARRAS: { key: CompromisoJarra; label: string }[] = [
   { key: 'emergencias', label: '🛡️ Emergencias' },
   { key: 'ocio',        label: '🎮 Ocio'        },
 ];
-const FRECUENCIAS: { key: CompromisoFrecuencia; label: string }[] = [
+const FRECUENCIAS: { key: RecurringFrequency; label: string }[] = [
   { key: 'indefinido', label: 'Indefinido'  },
   { key: 'cuotas',     label: 'Por cuotas' },
 ];
 
 type Props = {
-  form: NuevoCompromisoForm;
-  onChange: <K extends keyof NuevoCompromisoForm>(key: K, val: NuevoCompromisoForm[K]) => void;
+  form: RecurringForm;
+  onChange: <K extends keyof RecurringForm>(key: K, val: RecurringForm[K]) => void;
 };
 
-export function CompromisoFormFields({ form, onChange }: Props) {
+export function RecurringFormFields({ form, onChange }: Props) {
   const isDeuda    = form.tipo === 'deudas';
   const showCuotas = !isDeuda && form.frecuencia === 'cuotas';
 

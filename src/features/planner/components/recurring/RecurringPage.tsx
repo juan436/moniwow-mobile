@@ -1,10 +1,10 @@
 /**
- * RecurrentesPage — Component
+ * RecurringPage — Component
  *
  * @what     Tab Recurrentes: filtros scrollables + header sección + lista de compromisos + modales añadir/editar.
  * @receives 5 props: recurrentes, activeFilter, onFilterChange, layout, actions
- * @processes Filtra recurrentes por activeFilter. Gestiona showAddModal + editingItem locales. AgendaFilterChips dentro del scroll.
- * @returns  JSX — Fragment: ScrollView vertical con chips + sectionHeader + lista + AnadirCompromisoModal + EditarCompromisoModal.
+ * @processes Filtra recurrentes por activeFilter. Gestiona showAddModal + editingItem locales. PlannerFilterChips dentro del scroll.
+ * @returns  JSX — Fragment: ScrollView vertical con chips + sectionHeader + lista + CreateRecurringModal + EditRecurringModal.
  * @props    5: recurrentes, activeFilter, onFilterChange, layout, actions
  */
 import { useState, useCallback } from 'react';
@@ -12,25 +12,25 @@ import { Animated, View, Text, StyleSheet } from 'react-native';
 
 import { colors, typography, spacing } from '@shared/styles';
 import { MoniButton } from '@shared/components';
-import { AgendaFilterChips } from '../shared/AgendaFilterChips';
-import { RecurrenteItem } from './RecurrenteItem';
-import { AnadirCompromisoModal } from './AnadirCompromisoModal';
-import { EditarCompromisoModal } from './EditarCompromisoModal';
-import type { RecurrenteDisplay, AgendaFilter, RecurrenteActions } from '../../types';
+import { PlannerFilterChips } from '../shared/PlannerFilterChips';
+import { RecurringItem } from './RecurringItem';
+import { CreateRecurringModal } from './CreateRecurringModal';
+import { EditRecurringModal } from './EditRecurringModal';
+import type { RecurringDisplay, AgendaFilter, RecurringActions } from '../../types';
 
 type Props = {
-  recurrentes: RecurrenteDisplay[];
+  recurrentes: RecurringDisplay[];
   activeFilter: AgendaFilter;
   onFilterChange: (filter: AgendaFilter) => void;
   layout: { scrollY: Animated.Value; topOffset: number };
-  actions: RecurrenteActions;
+  actions: RecurringActions;
 };
 
-export function RecurrentesPage({ recurrentes, activeFilter, onFilterChange, layout, actions }: Props) {
+export function RecurringPage({ recurrentes, activeFilter, onFilterChange, layout, actions }: Props) {
   const { scrollY, topOffset } = layout;
   const items = recurrentes.filter((r) => r.filter === activeFilter);
   const [showAddModal, setShowAddModal] = useState(false);
-  const [editingItem, setEditingItem]   = useState<RecurrenteDisplay | null>(null);
+  const [editingItem, setEditingItem]   = useState<RecurringDisplay | null>(null);
 
   const handleEdit      = useCallback((id: string) => {
     const found = recurrentes.find((r) => r.id === id);
@@ -49,7 +49,7 @@ export function RecurrentesPage({ recurrentes, activeFilter, onFilterChange, lay
         onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], { useNativeDriver: true })}
         scrollEventThrottle={16}
       >
-        <AgendaFilterChips activeFilter={activeFilter} onFilterChange={onFilterChange} />
+        <PlannerFilterChips activeFilter={activeFilter} onFilterChange={onFilterChange} />
 
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Compromisos activos</Text>
@@ -60,18 +60,18 @@ export function RecurrentesPage({ recurrentes, activeFilter, onFilterChange, lay
 
         <View style={styles.list}>
           {items.map((item) => (
-            <RecurrenteItem key={item.id} item={item} onEdit={handleEdit} />
+            <RecurringItem key={item.id} item={item} onEdit={handleEdit} />
           ))}
         </View>
       </Animated.ScrollView>
 
-      <AnadirCompromisoModal
+      <CreateRecurringModal
         visible={showAddModal}
         initialType={activeFilter}
         onClose={handleCloseAdd}
         onCreate={actions.onCreate}
       />
-      <EditarCompromisoModal
+      <EditRecurringModal
         visible={editingItem !== null}
         item={editingItem}
         onClose={handleCloseEdit}

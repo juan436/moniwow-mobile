@@ -1,5 +1,5 @@
 /**
- * AgendaHeader — Component
+ * MonthHeader — Component
  *
  * @what     Card resumen de totales para Mi Mes: label, monto grande, badge y toggle de vista.
  * @receives 4 props: totalAmount, activeFilter, viewMode, onToggleView
@@ -29,7 +29,7 @@ type Props = {
   onToggleView: () => void;
 };
 
-export function AgendaHeader({ totalAmount, activeFilter, viewMode, onToggleView }: Props) {
+export function MonthHeader({ totalAmount, activeFilter, viewMode, onToggleView }: Props) {
   const { label, badge } = FILTER_CONFIG[activeFilter];
   const toggleIcon = viewMode === 'list' ? 'calendar-month' : 'view-list';
 

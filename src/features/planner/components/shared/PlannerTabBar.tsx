@@ -1,5 +1,5 @@
 /**
- * AgendaTabBar — Component
+ * PlannerTabBar — Component
  *
  * @what     Carrusel horizontal de tabs: MI MES | LISTAS | RECURRENTES.
  * @receives 2 props: activeTab, onTabChange
@@ -44,7 +44,7 @@ type Props = {
   onTabChange: (tab: AgendaTab) => void;
 };
 
-export function AgendaTabBar({ activeTab, onTabChange }: Props) {
+export function PlannerTabBar({ activeTab, onTabChange }: Props) {
   return (
     <View style={styles.wrapper}>
       <ScrollView

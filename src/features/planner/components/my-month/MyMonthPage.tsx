@@ -1,20 +1,20 @@
 /**
- * MiMesPage — Component
+ * MyMonthPage — Component
  *
  * @what     Tab Mi Mes: filtros + resumen + lista o calendario de compromisos del mes.
  * @receives 5 props: data, activeFilter, onFilterChange, scrollY, topOffset
  * @processes viewMode local toggle lista/calendario. Filtra ítems por activeFilter.
- * @returns  JSX — ScrollView con chips + header + lista o MiMesCalendar.
+ * @returns  JSX — ScrollView con chips + header + lista o MonthCalendar.
  * @props    5: data, activeFilter, onFilterChange, scrollY, topOffset
  */
 import { useCallback, useState } from 'react';
 import { Animated, View, StyleSheet } from 'react-native';
 
 import { colors, spacing } from '@shared/styles';
-import { AgendaHeader } from './AgendaHeader';
-import { AgendaItem } from '../shared/AgendaItem';
-import { AgendaFilterChips } from '../shared/AgendaFilterChips';
-import { MiMesCalendar } from './MiMesCalendar';
+import { MonthHeader } from './MonthHeader';
+import { PlannerItem } from '../shared/PlannerItem';
+import { PlannerFilterChips } from '../shared/PlannerFilterChips';
+import { MonthCalendar } from './MonthCalendar';
 import type { AgendaData, AgendaFilter } from '../../types';
 
 type ViewMode = 'list' | 'calendar';
@@ -33,7 +33,7 @@ type Props = {
   topOffset: number;
 };
 
-export function MiMesPage({ data, activeFilter, onFilterChange, scrollY, topOffset }: Props) {
+export function MyMonthPage({ data, activeFilter, onFilterChange, scrollY, topOffset }: Props) {
   const [allItems, setAllItems] = useState(data.items);
   const [viewMode, setViewMode] = useState<ViewMode>('list');
 
@@ -49,8 +49,8 @@ export function MiMesPage({ data, activeFilter, onFilterChange, scrollY, topOffs
   }, []);
 
   const content = viewMode === 'list'
-    ? <View style={styles.list}>{items.map((item) => <AgendaItem key={item.id} item={item} onAction={handleAction} />)}</View>
-    : <MiMesCalendar items={items} activeFilter={activeFilter} onAction={handleAction} />;
+    ? <View style={styles.list}>{items.map((item) => <PlannerItem key={item.id} item={item} onAction={handleAction} />)}</View>
+    : <MonthCalendar items={items} activeFilter={activeFilter} onAction={handleAction} />;
 
   return (
     <Animated.ScrollView
@@ -60,8 +60,8 @@ export function MiMesPage({ data, activeFilter, onFilterChange, scrollY, topOffs
       onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], { useNativeDriver: true })}
       scrollEventThrottle={16}
     >
-      <AgendaFilterChips activeFilter={activeFilter} onFilterChange={onFilterChange} />
-      <AgendaHeader
+      <PlannerFilterChips activeFilter={activeFilter} onFilterChange={onFilterChange} />
+      <MonthHeader
         totalAmount={totalAmount}
         activeFilter={activeFilter}
         viewMode={viewMode}

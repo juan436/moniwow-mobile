@@ -1,5 +1,5 @@
 /**
- * AnadirListaModal — Component
+ * CreateListModal — Component
  *
  * @what     Modal bottom sheet para crear una nueva lista de compras.
  * @receives 2 props: visible, onClose
@@ -43,7 +43,7 @@ function emptyForm(): Form { return { nombre: '', emoji: '', jarra: 'libre' }; }
 
 type Props = { visible: boolean; onClose: () => void };
 
-export function AnadirListaModal({ visible, onClose }: Props) {
+export function CreateListModal({ visible, onClose }: Props) {
   const insets = useSafeAreaInsets();
   const [form, setForm] = useState<Form>(emptyForm);
 

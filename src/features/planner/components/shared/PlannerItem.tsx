@@ -1,5 +1,5 @@
 /**
- * AgendaItem — Component
+ * PlannerItem — Component
  *
  * @what     Card compacta de ítem para Mi Mes. Layout row: emoji + info + botón acción.
  * @receives 2 props: item, onAction
@@ -37,7 +37,7 @@ const AMOUNT_STYLE: Record<AgendaFilter, { color: string }> = {
   deudas:   { color: colors.alertOrange },
 };
 
-export function AgendaItem({ item, onAction }: Props) {
+export function PlannerItem({ item, onAction }: Props) {
   const btnLabel    = item.isPaid ? BTN_LABEL_DONE[item.filter] : BTN_LABEL[item.filter];
   const handlePress = useCallback(() => onAction(item.id), [item.id, onAction]);
 

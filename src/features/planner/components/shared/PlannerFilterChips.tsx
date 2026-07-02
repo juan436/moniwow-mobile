@@ -1,5 +1,5 @@
 /**
- * AgendaFilterChips — Component
+ * PlannerFilterChips — Component
  *
  * @what     Chips de filtro: 💸 Ingresos | 🛍️ Gastos | 🏦 Deudas.
  * @receives 2 props: activeFilter, onFilterChange
@@ -24,7 +24,7 @@ type Props = {
   onFilterChange: (filter: AgendaFilter) => void;
 };
 
-export function AgendaFilterChips({ activeFilter, onFilterChange }: Props) {
+export function PlannerFilterChips({ activeFilter, onFilterChange }: Props) {
   const handlers = useMemo<Record<AgendaFilter, () => void>>(
     () => ({
       gastos:   () => onFilterChange('gastos'),

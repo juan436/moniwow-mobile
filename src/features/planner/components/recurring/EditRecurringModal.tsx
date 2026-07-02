@@ -1,10 +1,10 @@
 /**
- * EditarCompromisoModal — Component
+ * EditRecurringModal — Component
  *
  * @what     Modal formulario para editar o eliminar un recurrente existente.
  * @receives 5 props: visible, item, onClose, onSave, onDelete
- * @processes Pre-llena form con item activo. Campos vía CompromisoFormFields.
- * @returns  JSX — bottom sheet slide-up con CompromisoFormFields, CTA y eliminar.
+ * @processes Pre-llena form con item activo. Campos vía RecurringFormFields.
+ * @returns  JSX — bottom sheet slide-up con RecurringFormFields, CTA y eliminar.
  * @props    5: visible, item, onClose, onSave, onDelete
  */
 import { useState, useEffect } from 'react';
@@ -14,28 +14,28 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { colors, typography, spacing, radius } from '@shared/styles';
 import { MoniButton } from '@shared/components';
-import { CompromisoFormFields } from './CompromisoFormFields';
-import type { NuevoCompromisoForm, RecurrenteDisplay, SaveRecurrenteData } from '../../types';
+import { RecurringFormFields } from './RecurringFormFields';
+import type { RecurringForm, RecurringDisplay, SaveRecurringData } from '../../types';
 
-function formFromItem(item: RecurrenteDisplay): NuevoCompromisoForm {
+function formFromItem(item: RecurringDisplay): RecurringForm {
   return { tipo: item.filter, nombre: item.name, monto: item.amount.toString(), dia: item.day, mes: 1, frecuencia: 'indefinido', cuotasTotales: 12, cuotasPagadas: 0, jarra: 'libre' };
 }
 
 type Props = {
   visible: boolean;
-  item: RecurrenteDisplay | null;
+  item: RecurringDisplay | null;
   onClose: () => void;
-  onSave: (data: SaveRecurrenteData) => void;
+  onSave: (data: SaveRecurringData) => void;
   onDelete: (id: string) => void;
 };
 
-export function EditarCompromisoModal({ visible, item, onClose, onSave, onDelete }: Props) {
+export function EditRecurringModal({ visible, item, onClose, onSave, onDelete }: Props) {
   const insets = useSafeAreaInsets();
-  const [form, setForm] = useState<NuevoCompromisoForm | null>(null);
+  const [form, setForm] = useState<RecurringForm | null>(null);
 
   useEffect(() => { if (visible && item) setForm(formFromItem(item)); }, [visible, item]);
 
-  function setField<K extends keyof NuevoCompromisoForm>(key: K, val: NuevoCompromisoForm[K]) {
+  function setField<K extends keyof RecurringForm>(key: K, val: RecurringForm[K]) {
     setForm((prev) => prev && ({ ...prev, [key]: val }));
   }
 
@@ -68,7 +68,7 @@ export function EditarCompromisoModal({ visible, item, onClose, onSave, onDelete
             </Pressable>
           </View>
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.body, { paddingBottom: insets.bottom + spacing.stackLg }]} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets>
-            <CompromisoFormFields form={form} onChange={setField} />
+            <RecurringFormFields form={form} onChange={setField} />
             <MoniButton label="Guardar cambios" onPress={handleSave} disabled={!canSave} />
             <MoniButton label="Eliminar compromiso" onPress={handleDelete} variant="danger" />
           </ScrollView>

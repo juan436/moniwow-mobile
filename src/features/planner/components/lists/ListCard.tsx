@@ -1,5 +1,5 @@
 /**
- * ListaCard — Component
+ * ListCard — Component
  *
  * @what     Card de lista: badge-etiqueta en borde superior + header + checklist + añadir ítem.
  * @receives 5 props: lista, onToggle, onAddItem, isSelected?, onLongPress
@@ -12,11 +12,11 @@ import { View, Text, Pressable, StyleSheet } from 'react-native';
 
 import { colors, typography, spacing, radius, shadows, sizes } from '@shared/styles';
 import { truncateLabel } from '@shared/utils';
-import type { ListaDisplay } from '../../types';
-import { ListaItem } from './ListaItem';
+import type { ListDisplay } from '../../types';
+import { ListItem } from './ListItem';
 
 type Props = {
-  lista: ListaDisplay;
+  lista: ListDisplay;
   onToggle: (listaId: string, itemId: string) => void;
   onAddItem: (listaId: string, listaName: string) => void;
   isSelected?: boolean;
@@ -33,7 +33,7 @@ function getBadgeColor(jarLabel: string): string {
   return JAR_COLORS.find(({ key }) => jarLabel.includes(key))?.color ?? colors.navyDark;
 }
 
-export function ListaCard({ lista, onToggle, onAddItem, isSelected = false, onLongPress }: Props) {
+export function ListCard({ lista, onToggle, onAddItem, isSelected = false, onLongPress }: Props) {
   const badgeColor = getBadgeColor(lista.jarLabel);
 
   const handleAddItem  = useCallback(() => onAddItem(lista.id, lista.name), [lista.id, lista.name, onAddItem]);
@@ -54,7 +54,7 @@ export function ListaCard({ lista, onToggle, onAddItem, isSelected = false, onLo
 
         <View style={styles.itemList}>
           {lista.items.map((item) => (
-            <ListaItem
+            <ListItem
               key={item.id}
               item={item}
               listaId={lista.id}

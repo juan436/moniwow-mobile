@@ -1,10 +1,10 @@
 /**
- * AnadirCompromisoModal — Component
+ * CreateRecurringModal — Component
  *
  * @what     Modal formulario para crear un recurrente nuevo: Ingreso, Gasto o Deuda.
  * @receives 4 props: visible, initialType, onClose, onCreate
- * @processes Form local. Tipo pre-seleccionado por initialType. Campos vía CompromisoFormFields.
- * @returns  JSX — bottom sheet slide-up con CompromisoFormFields y CTA.
+ * @processes Form local. Tipo pre-seleccionado por initialType. Campos vía RecurringFormFields.
+ * @returns  JSX — bottom sheet slide-up con RecurringFormFields y CTA.
  * @props    4: visible, initialType, onClose, onCreate
  */
 import { useState, useEffect } from 'react';
@@ -14,22 +14,22 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { colors, typography, spacing, radius } from '@shared/styles';
 import { MoniButton } from '@shared/components';
-import { CompromisoFormFields } from './CompromisoFormFields';
-import type { AgendaFilter, NuevoCompromisoForm, CreateRecurrenteData } from '../../types';
+import { RecurringFormFields } from './RecurringFormFields';
+import type { AgendaFilter, RecurringForm, CreateRecurringData } from '../../types';
 
-function emptyForm(tipo: AgendaFilter): NuevoCompromisoForm {
+function emptyForm(tipo: AgendaFilter): RecurringForm {
   return { tipo, nombre: '', monto: '', dia: 1, mes: 1, frecuencia: 'indefinido', cuotasTotales: 12, cuotasPagadas: 0, jarra: 'libre' };
 }
 
-type Props = { visible: boolean; initialType: AgendaFilter; onClose: () => void; onCreate: (data: CreateRecurrenteData) => void };
+type Props = { visible: boolean; initialType: AgendaFilter; onClose: () => void; onCreate: (data: CreateRecurringData) => void };
 
-export function AnadirCompromisoModal({ visible, initialType, onClose, onCreate }: Props) {
+export function CreateRecurringModal({ visible, initialType, onClose, onCreate }: Props) {
   const insets = useSafeAreaInsets();
-  const [form, setForm] = useState<NuevoCompromisoForm>(() => emptyForm(initialType));
+  const [form, setForm] = useState<RecurringForm>(() => emptyForm(initialType));
 
   useEffect(() => { if (visible) setForm(emptyForm(initialType)); }, [visible, initialType]);
 
-  function setField<K extends keyof NuevoCompromisoForm>(key: K, val: NuevoCompromisoForm[K]) {
+  function setField<K extends keyof RecurringForm>(key: K, val: RecurringForm[K]) {
     setForm((prev) => ({ ...prev, [key]: val }));
   }
 
@@ -54,7 +54,7 @@ export function AnadirCompromisoModal({ visible, initialType, onClose, onCreate 
             </Pressable>
           </View>
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.body, { paddingBottom: insets.bottom + spacing.stackLg }]} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets>
-            <CompromisoFormFields form={form} onChange={setField} />
+            <RecurringFormFields form={form} onChange={setField} />
             <MoniButton label="Programar compromiso" onPress={handleSave} disabled={!canSave} />
           </ScrollView>
         </View>

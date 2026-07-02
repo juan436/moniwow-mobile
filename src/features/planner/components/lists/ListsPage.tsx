@@ -1,5 +1,5 @@
 /**
- * ListasPage — Component
+ * ListsPage — Component
  *
  * @what     Tab Listas: botón nueva lista + mic contextual + tarjetas de listas de compras.
  * @receives 3 props: listas, scrollY, topOffset
@@ -13,20 +13,20 @@ import { MaterialIcons } from '@expo/vector-icons';
 
 import { colors, spacing, radius } from '@shared/styles';
 import { MoniButton } from '@shared/components';
-import { ListaCard } from './ListaCard';
-import { AnadirListaModal } from './AnadirListaModal';
-import { AnadirItemModal } from './AnadirItemModal';
-import type { ListaDisplay } from '../../types';
+import { ListCard } from './ListCard';
+import { CreateListModal } from './CreateListModal';
+import { CreateItemModal } from './CreateItemModal';
+import type { ListDisplay } from '../../types';
 
 const MIC_SIZE = 36;
 
 type Props = {
-  listas: ListaDisplay[];
+  listas: ListDisplay[];
   scrollY: Animated.Value;
   topOffset: number;
 };
 
-export function ListasPage({ listas, scrollY, topOffset }: Props) {
+export function ListsPage({ listas, scrollY, topOffset }: Props) {
   const [allListas, setAllListas]                 = useState(listas);
   const [showAnadirLista, setShowAnadirLista]     = useState(false);
   const [itemTarget, setItemTarget]               = useState<{ listaId: string; listaName: string } | null>(null);
@@ -91,7 +91,7 @@ export function ListasPage({ listas, scrollY, topOffset }: Props) {
         </View>
         <View style={styles.list}>
           {allListas.map((lista) => (
-            <ListaCard
+            <ListCard
               key={lista.id}
               lista={lista}
               onToggle={handleToggle}
@@ -103,8 +103,8 @@ export function ListasPage({ listas, scrollY, topOffset }: Props) {
         </View>
       </Animated.ScrollView>
 
-      <AnadirListaModal visible={showAnadirLista} onClose={handleCloseLista} />
-      <AnadirItemModal
+      <CreateListModal visible={showAnadirLista} onClose={handleCloseLista} />
+      <CreateItemModal
         visible={!!itemTarget}
         listaId={itemTarget?.listaId ?? ''}
         listaName={itemTarget?.listaName ?? ''}

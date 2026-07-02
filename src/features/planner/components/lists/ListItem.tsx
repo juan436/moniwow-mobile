@@ -1,5 +1,5 @@
 /**
- * ListaItem — Component
+ * ListItem — Component
  *
  * @what     Fila de ítem de lista de compras: checkbox + nombre + monto opcional.
  * @receives 3 props: item, listaId, onToggle
@@ -12,15 +12,15 @@ import { View, Text, Pressable, StyleSheet } from 'react-native';
 
 import { colors, typography, spacing, radius, sizes } from '@shared/styles';
 import { truncateLabel } from '@shared/utils';
-import type { ListaItemDisplay } from '../../types';
+import type { ListItemDisplay } from '../../types';
 
 type Props = {
-  item: ListaItemDisplay;
+  item: ListItemDisplay;
   listaId: string;
   onToggle: (listaId: string, itemId: string) => void;
 };
 
-export const ListaItem = memo(function ListaItem({ item, listaId, onToggle }: Props) {
+export const ListItem = memo(function ListItem({ item, listaId, onToggle }: Props) {
   const handlePress = useCallback(
     () => onToggle(listaId, item.id),
     [listaId, item.id, onToggle],
