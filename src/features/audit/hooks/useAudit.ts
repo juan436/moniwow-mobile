@@ -3,7 +3,7 @@
  *
  * @what     Provee datos de presentación para el tab Revisión (carrusel 4 páginas). Mock hasta backend.
  * @receives Ninguno.
- * @processes Retorna datos estáticos para Auditoría, Mundo Paralelo y Mis Sueños.
+ * @processes Retorna datos estáticos para Auditoría, Mundo Paralelo y Mis Metas y Objetivos.
  * @returns  Datos para las 4 páginas del carrusel + isLoading + error.
  */
 import { colors } from '@shared/styles';
@@ -117,7 +117,7 @@ export function useAudit() {
     deudaPagada:   38,
     deudaBreakdown: MOCK_DEBT_BREAKDOWN,
     goalProgress:  42,
-    ahorroTotal:   39800,
+    goalsTotal:    39800,
     metaGlobal:    82500,
     goals:         MOCK_GOALS,
     isLoading: false,

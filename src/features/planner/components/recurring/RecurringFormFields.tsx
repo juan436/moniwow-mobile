@@ -17,7 +17,7 @@ const TIPOS: AgendaFilter[] = ['ingresos', 'gastos', 'deudas'];
 const TIPO_LABEL: Record<AgendaFilter, string> = { ingresos: 'Ingreso', gastos: 'Gasto', deudas: 'Deuda' };
 const JARRAS: { key: RecurringJar; label: string }[] = [
   { key: 'hogar',       label: '🏠 Hogar'       },
-  { key: 'ahorro',      label: '💰 Ahorro'      },
+  { key: 'goals',       label: '💰 Metas'       },
   { key: 'libre',       label: '🍃 Libre'       },
   { key: 'transporte',  label: '🚗 Transporte'  },
   { key: 'salud',       label: '❤️ Salud'       },

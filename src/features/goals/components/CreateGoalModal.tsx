@@ -1,9 +1,12 @@
 /**
  * CreateGoalModal — Component
  *
- * @what     Modal bottom sheet para crear nueva meta de ahorro (M10).
+ * @what     Modal bottom sheet para crear nueva meta (M10).
  * @receives 3 props: visible, onClose, onCreate
- * @processes Form local: nombre, emoji, monto objetivo. Valida nombre + emoji + monto > 0.
+ * @processes Form local: nombre, emoji, monto objetivo. Valida nombre + emoji + monto > 0. Sheet
+ *           fijo abajo (el header nunca sube, para no solaparse con el status bar) — el ScrollView
+ *           interno gana `paddingBottom` extra igual al alto del teclado para poder scrollear el
+ *           campo tapado hasta dejarlo visible, sin mover el sheet.
  * @returns  JSX — bottom sheet con campos, emoji grid y CTA.
  * @props    3: visible, onClose, onCreate
  */
@@ -13,19 +16,8 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { colors, typography, spacing, radius } from '@shared/styles';
-import { MoniInput, MoniButton } from '@shared/components';
+import { MoniInput, MoniButton, EmojiPicker } from '@shared/components';
 import type { CreateGoalData } from '../types';
-
-const EMOJI_SIZE = 48;
-const EMOJI_GAP  = 8;
-
-const GOAL_EMOJIS = [
-  '🚗', '🏠', '✈️', '💻', '📱', '🎓',
-  '💍', '🛳️', '🏖️', '🎸', '📷', '🏋️',
-  '🚀', '🌍', '🎮', '👗', '🎉', '🌱',
-  '🏄', '🎨', '📚', '🐕', '🛵', '💰',
-  '🏡', '🧳', '⛷️', '🎯', '🎻', '🌮',
-];
 
 type Form = { nombre: string; emoji: string; monto: string };
 function emptyForm(): Form { return { nombre: '', emoji: '', monto: '' }; }
@@ -67,22 +59,22 @@ export function CreateGoalModal({ visible, onClose, onCreate }: Props) {
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose} statusBarTranslucent navigationBarTranslucent>
       <Pressable style={styles.backdrop} onPress={onClose}>
-        <View style={[styles.sheet, { marginBottom: kbHeight }]} onStartShouldSetResponder={() => true}>
+        <View style={styles.sheet} onStartShouldSetResponder={() => true}>
           <View style={styles.handle} />
           <View style={styles.header}>
-            <Text style={styles.title}>Nuevo sueño</Text>
+            <Text style={styles.title}>Nueva meta</Text>
             <Pressable onPress={onClose} hitSlop={8}>
               <MaterialIcons name="close" size={24} color={colors.slateGray} />
             </Pressable>
           </View>
           <ScrollView
             showsVerticalScrollIndicator={false}
-            contentContainerStyle={[styles.body, { paddingBottom: insets.bottom + spacing.stackLg }]}
+            contentContainerStyle={[styles.body, { paddingBottom: insets.bottom + spacing.stackLg + kbHeight }]}
             keyboardShouldPersistTaps="handled"
             automaticallyAdjustKeyboardInsets
           >
             <MoniInput
-              label="Nombre del sueño"
+              label="Nombre de la meta"
               value={form.nombre}
               onChangeText={(v) => setField('nombre', v)}
               placeholder="ej. Mi Carro Nuevo"
@@ -94,22 +86,7 @@ export function CreateGoalModal({ visible, onClose, onCreate }: Props) {
               placeholder="10000"
               inputType="numeric"
             />
-            <View style={styles.block}>
-              <Text style={styles.fieldLabel}>Elige un emoji</Text>
-              <ScrollView style={styles.emojiGridScroll} showsVerticalScrollIndicator={false} nestedScrollEnabled>
-                <View style={styles.emojiGrid}>
-                  {GOAL_EMOJIS.map((emoji) => (
-                    <Pressable
-                      key={emoji}
-                      style={[styles.emojiItem, form.emoji === emoji && styles.emojiItemActive]}
-                      onPress={() => setField('emoji', emoji)}
-                    >
-                      <Text style={styles.emojiGlyph}>{emoji}</Text>
-                    </Pressable>
-                  ))}
-                </View>
-              </ScrollView>
-            </View>
+            <EmojiPicker value={form.emoji} onChange={(v) => setField('emoji', v)} accentColor={colors.goldDreams} accentTint={colors.goldTint} />
             <MoniButton label="Añadir" onPress={handleSave} disabled={!canSave} variant="secondary" />
           </ScrollView>
         </View>
@@ -121,21 +98,14 @@ export function CreateGoalModal({ visible, onClose, onCreate }: Props) {
 
 const styles = StyleSheet.create({
   backdrop:    { flex: 1, justifyContent: 'flex-end', backgroundColor: `${colors.navyDark}8C` },
-  sheet:       { backgroundColor: colors.pureWhite, borderTopLeftRadius: radius.card * 2, borderTopRightRadius: radius.card * 2, maxHeight: '90%' },
+  sheet:       { backgroundColor: colors.pureWhite, borderTopLeftRadius: radius.card * 1, borderTopRightRadius: radius.card * 1, maxHeight: '90%' },
   navBarCover: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: colors.black },
-  handle:      { width: 40, height: 4, borderRadius: 2, backgroundColor: colors.outlineVariant, alignSelf: 'center', marginTop: spacing.stackMd, marginBottom: spacing.stackSm },
+  handle:      { width: 40, height: 4, borderRadius: 2, backgroundColor: colors.outlineVariant, alignSelf: 'center', marginTop: spacing.stackSm, marginBottom: spacing.stackXs },
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: spacing.marginPage, paddingTop: spacing.stackSm, paddingBottom: spacing.stackMd,
+    paddingHorizontal: spacing.marginPage, paddingTop: spacing.stackXs, paddingBottom: spacing.stackSm,
     borderBottomWidth: 1, borderBottomColor: colors.outlineVariant + '44',
   },
   title:           { ...typography.headlineMd, color: colors.navyDark },
   body:            { paddingHorizontal: spacing.marginPage, paddingTop: spacing.stackMd, gap: spacing.stackMd },
-  block:           { gap: spacing.stackXs },
-  fieldLabel:      { ...typography.labelSm, color: colors.onSurfaceVariant },
-  emojiGridScroll: { height: EMOJI_SIZE * 2 + EMOJI_GAP },
-  emojiGrid:       { flexDirection: 'row', flexWrap: 'wrap', gap: EMOJI_GAP },
-  emojiItem:       { width: EMOJI_SIZE, height: EMOJI_SIZE, borderRadius: radius.md, borderWidth: 1, borderColor: colors.outlineVariant, alignItems: 'center', justifyContent: 'center' },
-  emojiItemActive: { borderColor: colors.goldDreams, backgroundColor: colors.goldTint },
-  emojiGlyph:      { fontSize: 24, includeFontPadding: false },
 });

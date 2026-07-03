@@ -1,7 +1,7 @@
 /**
  * GoalsSummaryPage — Component
  *
- * @what     Página extrema derecha del carrusel: progreso global de metas y sueños activos.
+ * @what     Página extrema derecha del carrusel: progreso global de metas activas.
  * @receives 1 prop: data
  * @processes Renderiza card de progreso total y lista de goal cards con barras.
  * @returns  JSX — ScrollView vertical.
@@ -18,7 +18,7 @@ import type { GoalDisplay } from '../../types';
 
 type Data = {
   goalProgress: number;
-  ahorroTotal: number;
+  goalsTotal: number;
   metaGlobal: number;
   goals: GoalDisplay[];
 };
@@ -27,7 +27,7 @@ type Indicator = { count: number; active: number };
 type Props = { data: Data; indicator: Indicator; scrollY: Animated.Value; topOffset: number };
 
 export function GoalsSummaryPage({ data, indicator, scrollY, topOffset }: Props) {
-  const { goalProgress, ahorroTotal, metaGlobal, goals } = data;
+  const { goalProgress, goalsTotal, metaGlobal, goals } = data;
 
   const [selectedGoal, setSelectedGoal]     = useState<GoalDisplay | null>(null);
   const handleVerTodos       = useCallback(() => {}, []);
@@ -60,8 +60,8 @@ export function GoalsSummaryPage({ data, indicator, scrollY, topOffset }: Props)
         </View>
         <View style={styles.statsGrid}>
           <View style={styles.statBox}>
-            <Text style={styles.statLabel}>Ahorro total</Text>
-            <Text style={styles.statValue}>$ {ahorroTotal.toLocaleString('es')}</Text>
+            <Text style={styles.statLabel}>Total en Metas</Text>
+            <Text style={styles.statValue}>$ {goalsTotal.toLocaleString('es')}</Text>
           </View>
           <View style={styles.statBox}>
             <Text style={styles.statLabel}>Meta global</Text>
@@ -72,7 +72,7 @@ export function GoalsSummaryPage({ data, indicator, scrollY, topOffset }: Props)
 
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Sueños Activos</Text>
+          <Text style={styles.sectionTitle}>Metas Activas</Text>
           <Pressable hitSlop={8} onPress={handleVerTodos}><Text style={styles.sectionLink}>Ver todos</Text></Pressable>
         </View>
         {goals.map((goal) => (

@@ -1,17 +1,21 @@
 /**
  * useGoals — Hook
  *
- * @what     Estado y datos mock de la feature Sueños (M10): lista de metas + modales crear/editar.
+ * @what     Estado y datos mock de la feature Metas (M10): lista de metas + modales crear/editar.
  * @receives —
- * @processes Mock hasta conectar backend. CRUD local: crear, editar, eliminar meta. handleWithdraw
- *           (Slider de Sacrificio) y handleDeposit (Aportar) resta/suma `current`, recalculan
- *           `progress` — autocontenido, no toca el balance real de Libre (mismo límite mock-stage
- *           que TransferSheet de jars/, ver [[planes/psicologia-ux]]).
- * @returns  { goals, isAddVisible, selectedGoal, ahorroTotal, handleAnadir, handleCloseAdd,
- *            handleCreate, handleCardPress, handleCloseEdit, handleSave, handleDelete,
- *            handleWithdraw, handleDeposit }
+ * @processes Mock hasta conectar backend. CRUD local: crear, editar, eliminar meta. Modelo "pozo
+ *           financiado, luego repartido" (decisión 2026-07-03): `poolTotal` es el saldo de la jarra
+ *           Metas (se financia con Transferir desde Libre — no wireado aún, mismo límite mock-stage
+ *           que TransferSheet de jars/); `asignado` es la suma de `current` de todas las metas;
+ *           `disponible = poolTotal - asignado` es lo que queda para repartir. handleDeposit
+ *           (Aportar) mueve de disponible → una meta (`poolTotal` no cambia, solo se reasigna).
+ *           handleWithdraw (Slider de Sacrificio) saca dinero de una meta Y de `poolTotal` — ese
+ *           dinero sale de Metas hacia Libre de verdad, no vuelve a quedar disponible.
+ * @returns  { goals, isAddVisible, selectedGoal, poolTotal, asignado, disponible, handleAnadir,
+ *            handleCloseAdd, handleCreate, handleCardPress, handleCloseEdit, handleSave,
+ *            handleDelete, handleWithdraw, handleDeposit }
  */
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import type { GoalItem, CreateGoalData, SaveGoalData } from '../types';
 
@@ -19,7 +23,7 @@ function recalc(goal: GoalItem, current: number): GoalItem {
   return { ...goal, current, progress: Math.min(100, Math.round((current / goal.target) * 100)) };
 }
 
-const AHORRO_TOTAL = 29500;
+const POOL_TOTAL_INITIAL = 50000;
 
 const INITIAL_GOALS: GoalItem[] = [
   { id: '1', emoji: '🚗', name: 'Mi Carro Nuevo',   statusLabel: 'Progreso Constante', current: 4000,  target: 10000,  progress: 40 },
@@ -34,8 +38,12 @@ const INITIAL_GOALS: GoalItem[] = [
 
 export function useGoals() {
   const [goals, setGoals] = useState<GoalItem[]>(INITIAL_GOALS);
+  const [poolTotal, setPoolTotal] = useState(POOL_TOTAL_INITIAL);
   const [isAddVisible, setIsAddVisible] = useState(false);
   const [selectedGoal, setSelectedGoal] = useState<GoalItem | null>(null);
+
+  const asignado   = useMemo(() => goals.reduce((sum, g) => sum + g.current, 0), [goals]);
+  const disponible = poolTotal - asignado;
 
   const handleAnadir    = useCallback(() => setIsAddVisible(true), []);
   const handleCloseAdd  = useCallback(() => setIsAddVisible(false), []);
@@ -49,13 +57,14 @@ export function useGoals() {
 
   const handleWithdraw = useCallback((id: string, amount: number) => {
     setGoals((g) => g.map((x) => x.id === id ? recalc(x, Math.max(0, x.current - amount)) : x));
+    setPoolTotal((p) => Math.max(0, p - amount));
   }, []);
   const handleDeposit = useCallback((id: string, amount: number) => {
     setGoals((g) => g.map((x) => x.id === id ? recalc(x, x.current + amount) : x));
   }, []);
 
   return {
-    goals, isAddVisible, selectedGoal, ahorroTotal: AHORRO_TOTAL,
+    goals, isAddVisible, selectedGoal, poolTotal, asignado, disponible,
     handleAnadir, handleCloseAdd, handleCreate,
     handleCardPress, handleCloseEdit, handleSave, handleDelete,
     handleWithdraw, handleDeposit,

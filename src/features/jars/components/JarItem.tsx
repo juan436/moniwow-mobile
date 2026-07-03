@@ -4,7 +4,7 @@
  * @what     Card de jarra para grid 2 columnas en pantalla Mis Jarras.
  * @receives 2 props: jar, onPress?
  * @processes Muestra icono o emoji (jarras creadas por el usuario), nombre, saldo, barra de
- *           progreso y badge Blindado. onPress opcional — Ahorro navega a Sueños (JarsScreen decide).
+ *           progreso y badge Blindado. onPress opcional — Goals navega a Metas (JarsScreen decide).
  * @returns  JSX — card flex:1 compatible con FlatList numColumns={2}.
  * @props    2: jar, onPress?
  */

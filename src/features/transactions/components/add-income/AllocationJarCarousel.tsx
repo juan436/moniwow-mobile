@@ -3,7 +3,7 @@
  *
  * @what     Carrusel horizontal de jarras para distribuir ingreso: páginas de 7.
  * @receives 5 props: jars, distribution, onSelectJar, activePage, onPageChange
- * @processes Ordena jarras base (Libre/Hogar/Ahorro, M03 "inborrables") primero, personalizadas
+ * @processes Ordena jarras base (Libre/Hogar/Fondo Seguridad/Goals, M03 "inborrables") primero, personalizadas
  *           después en su orden original. Agrupa en páginas de PAGE_SIZE — filas son solo
  *           tocables (sin TextInput), así que a diferencia del intento anterior no hay conflicto
  *           de gestos ni problema de teclado. Página controlada desde afuera (no estado propio):
@@ -24,7 +24,7 @@ import type { JarOption, IncomeDistribution, JarId } from '../../types';
 const PAGE_SIZE  = 6;
 const ROW_HEIGHT = 60;
 const PAGE_HEIGHT = PAGE_SIZE * ROW_HEIGHT + (PAGE_SIZE - 1) * spacing.stackXs + spacing.stackMd;
-const BASE_ORDER: JarId[] = ['libre', 'hogar', 'ahorro'];
+const BASE_ORDER: JarId[] = ['libre', 'hogar', 'fondo_seguridad', 'goals'];
 
 function orderJars(jars: JarOption[]): JarOption[] {
   const base = BASE_ORDER

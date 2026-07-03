@@ -1,7 +1,7 @@
 /**
  * AuditScreen — Component (Screen)
  *
- * @what     Pantalla Revisión: header hide-on-scroll + carrusel 4 páginas (Auditoría, MoniAI, Deudas, Resumen Sueños).
+ * @what     Pantalla Revisión: header hide-on-scroll + carrusel 4 páginas (Auditoría, MoniAI, Deudas, Resumen Metas).
  * @receives Ninguna prop — screen raíz del tab Revisión.
  * @processes scrollY compartido entre páginas. Header se oculta al bajar y reaparece al subir.
  *           Al cambiar página, scrollY se resetea a 0 y header reaparece. `pageProps`/`indicator`/
@@ -56,8 +56,8 @@ export function AuditScreen() {
     [data.patrimonio, data.deudaTotal, data.deudaPagada, data.deudaBreakdown]
   );
   const misSuenosData = useMemo(
-    () => ({ goalProgress: data.goalProgress, ahorroTotal: data.ahorroTotal, metaGlobal: data.metaGlobal, goals: data.goals }),
-    [data.goalProgress, data.ahorroTotal, data.metaGlobal, data.goals]
+    () => ({ goalProgress: data.goalProgress, goalsTotal: data.goalsTotal, metaGlobal: data.metaGlobal, goals: data.goals }),
+    [data.goalProgress, data.goalsTotal, data.metaGlobal, data.goals]
   );
 
   return (

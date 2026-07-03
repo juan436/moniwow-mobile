@@ -2,19 +2,24 @@
  * SacrificeSlider — Component
  *
  * @what     Slider "pesado" de confirmación: arrastrar hasta el final y mantener 3s para confirmar.
+ *           Compartido — cualquier jarra Blindado lo usa al transferir (antes exclusivo de Metas).
  * @receives 3 props: progress, onConfirm, disabled?
  * @processes Gesture.Pan + runOnJS(true) → Animated.Value (mismo patrón que ReceiptViewerModal, sin
  *           reanimated worklets, ver adr_gesture_handler). Al llegar a ≥85% del track arranca un
  *           timer de 3s (setTimeout, ya estamos en JS thread); soltar o retroceder lo cancela. La
  *           barra detrás del track se encoge en vivo según el arrastre (feedback visual del retroceso).
+ *           Al cruzar el umbral arranca también un setInterval de 100ms que calcula segundos
+ *           restantes desde un timestamp — el thumb muestra la cuenta regresiva (3→2→1) en vez del
+ *           🔥, y el hint refuerza el mismo número. Sin este contador, soltar antes de los 3s
+ *           parecía un bug (el slider solo rebotaba a 0, sin explicación).
  * @returns  JSX — Track con barra de progreso encogible + thumb 🔥 arrastrable.
  * @props    3: progress, onConfirm, disabled?
  */
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, Animated, StyleSheet } from 'react-native';
 import { GestureDetector, Gesture } from 'react-native-gesture-handler';
 
-import { colors, typography, spacing, radius } from '@shared/styles';
+import { colors, typography, spacing, radius } from '../styles';
 
 const THUMB_SIZE = 48;
 const HOLD_MS = 3000;
@@ -26,12 +31,24 @@ export function SacrificeSlider({ progress, onConfirm, disabled = false }: Props
   const [trackWidth, setTrackWidth] = useState(0);
   const translateX = useRef(new Animated.Value(0)).current;
   const [dragFraction, setDragFraction] = useState(0);
+  const [holdMsLeft, setHoldMsLeft] = useState(HOLD_MS);
   const holdTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const holdInterval = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const maxX = Math.max(1, trackWidth - THUMB_SIZE);
 
   function clearHold() {
     if (holdTimer.current) { clearTimeout(holdTimer.current); holdTimer.current = null; }
+    if (holdInterval.current) { clearInterval(holdInterval.current); holdInterval.current = null; }
+    setHoldMsLeft(HOLD_MS);
+  }
+
+  function startHold() {
+    const startedAt = Date.now();
+    holdTimer.current = setTimeout(onConfirm, HOLD_MS);
+    holdInterval.current = setInterval(() => {
+      setHoldMsLeft(Math.max(0, HOLD_MS - (Date.now() - startedAt)));
+    }, 100);
   }
 
   function handleMove(x: number) {
@@ -39,7 +56,7 @@ export function SacrificeSlider({ progress, onConfirm, disabled = false }: Props
     translateX.setValue(clamped);
     setDragFraction(clamped / maxX);
     if (clamped / maxX >= THRESHOLD) {
-      if (!holdTimer.current) holdTimer.current = setTimeout(onConfirm, HOLD_MS);
+      if (!holdTimer.current) startHold();
     } else {
       clearHold();
     }
@@ -51,6 +68,8 @@ export function SacrificeSlider({ progress, onConfirm, disabled = false }: Props
     Animated.timing(translateX, { toValue: 0, duration: 200, useNativeDriver: false }).start();
   }
 
+  useEffect(() => clearHold, []);
+
   const gesture = useMemo(() => Gesture.Pan()
     .runOnJS(true)
     .enabled(!disabled)
@@ -60,6 +79,13 @@ export function SacrificeSlider({ progress, onConfirm, disabled = false }: Props
   );
 
   const shrunkPct = Math.max(0, progress - progress * dragFraction);
+  const isHolding = dragFraction >= THRESHOLD;
+  const holdSeconds = Math.ceil(holdMsLeft / 1000);
+  const hintText = disabled
+    ? 'Ingresá un monto válido'
+    : isHolding
+      ? `Mantén presionado ${holdSeconds}s sin soltar…`
+      : 'Desliza hasta el final y mantén 3 segundos para confirmar';
 
   return (
     <View style={styles.wrap}>
@@ -70,11 +96,11 @@ export function SacrificeSlider({ progress, onConfirm, disabled = false }: Props
       <View style={styles.track} onLayout={(e) => setTrackWidth(e.nativeEvent.layout.width)}>
         <GestureDetector gesture={gesture}>
           <Animated.View style={[styles.thumb, disabled && styles.thumbDisabled, { transform: [{ translateX }] }]}>
-            <Text style={styles.thumbGlyph}>🔥</Text>
+            <Text style={styles.thumbGlyph}>{isHolding ? holdSeconds : '🔥'}</Text>
           </Animated.View>
         </GestureDetector>
       </View>
-      <Text style={styles.hint}>{disabled ? 'Ingresá un monto válido' : 'Desliza y mantén para confirmar sacrificio'}</Text>
+      <Text style={[styles.hint, isHolding && styles.hintHolding]}>{hintText}</Text>
     </View>
   );
 }
@@ -94,4 +120,5 @@ const styles = StyleSheet.create({
   thumbDisabled: { backgroundColor: colors.outlineVariant },
   thumbGlyph: { fontSize: 22 },
   hint: { ...typography.labelSm, color: colors.slateGray, textAlign: 'center' },
+  hintHolding: { color: colors.alertOrange },
 });

@@ -1,29 +1,34 @@
 /**
  * GoalsSummaryCard — Component
  *
- * @what     Card resumen de GoalsScreen: ahorro total acumulado + botón "Añadir" sueño opcional.
- * @receives 2 props: ahorroTotal, onAdd?
+ * @what     Card resumen de GoalsScreen: total del pozo Metas + disponible sin asignar + botón
+ *           "Añadir" meta opcional.
+ * @receives 3 props: poolTotal, disponible, onAdd?
  * @processes Sin onAdd (modo retirar), el botón no se renderiza — pantalla de selector puro.
- * @returns  JSX — Card blanca con monto destacado y CTA opcional.
- * @props    2: ahorroTotal, onAdd?
+ *           `disponible` es lo que queda sin repartir del pozo (modelo "pozo financiado, luego
+ *           repartido" — ver [[planes/psicologia-ux]]). Aportar a una meta lo consume.
+ * @returns  JSX — Card blanca con monto destacado + disponible + CTA opcional.
+ * @props    3: poolTotal, disponible, onAdd?
  */
-import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 
 import { colors, typography, spacing, radius, shadows } from '@shared/styles';
+import { MoniButton } from '@shared/components';
 
-type Props = { ahorroTotal: number; onAdd?: () => void };
+type Props = { poolTotal: number; disponible: number; onAdd?: () => void };
 
-export function GoalsSummaryCard({ ahorroTotal, onAdd }: Props) {
+export function GoalsSummaryCard({ poolTotal, disponible, onAdd }: Props) {
   return (
     <View style={[styles.card, shadows.card]}>
       <View style={styles.left}>
-        <Text style={styles.label}>Ahorro total acumulado</Text>
-        <Text style={styles.amount}>$ {ahorroTotal.toLocaleString('es')}.00</Text>
+        <Text style={styles.label}>Total acumulado</Text>
+        <Text style={styles.amount}>$ {poolTotal.toLocaleString('es')}.00</Text>
+        <Text style={styles.available} numberOfLines={1}>Disponible: $ {disponible.toLocaleString('es')}</Text>
       </View>
       {onAdd && (
-        <Pressable style={styles.btnNew} onPress={onAdd}>
-          <Text style={styles.btnNewText}>Añadir</Text>
-        </Pressable>
+        <View style={styles.btnWrap}>
+          <MoniButton label="Añadir" onPress={onAdd} variant="secondary" size="sm" />
+        </View>
       )}
     </View>
   );
@@ -40,17 +45,9 @@ const styles = StyleSheet.create({
     borderRadius: radius.xl,
     padding: spacing.cardPadding,
   },
-  left:   { gap: spacing.stackXs },
-  label:  { ...typography.labelMd, color: colors.slateGray },
-  amount: { ...typography.headlineMd, color: colors.goldDreams },
-  btnNew: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.stackXs,
-    backgroundColor: colors.goldDreams,
-    paddingHorizontal: spacing.stackMd,
-    paddingVertical: spacing.stackSm,
-    borderRadius: radius.full,
-  },
-  btnNewText: { ...typography.labelMd, color: colors.pureWhite },
+  left:      { flex: 1, gap: spacing.stackXs, marginRight: spacing.stackMd },
+  label:     { ...typography.labelMd, color: colors.slateGray },
+  amount:    { ...typography.headlineMd, color: colors.goldDreams },
+  available: { ...typography.labelSm, color: colors.slateGray },
+  btnWrap:   { flexShrink: 0 },
 });

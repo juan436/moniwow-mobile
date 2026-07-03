@@ -3,9 +3,9 @@ import type { MaterialIcons } from '@expo/vector-icons';
 
 type IconName = ComponentProps<typeof MaterialIcons>['name'];
 
-export type JarId = 'hogar' | 'ahorro' | 'libre';
+export type JarId = 'hogar' | 'fondo_seguridad' | 'goals' | 'libre';
 
-/** Jarra real del workspace (M03: 3 base + N personalizadas — no solo hogar/ahorro/libre).
+/** Jarra real del workspace (M03: 4 base + N personalizadas — no solo hogar/fondo_seguridad/goals/libre).
  *  iconName o emoji: jarras creadas por el usuario usan emoji en vez de ícono Material. */
 export type JarOption = { id: string; name: string; iconColor: string; iconBg: string; iconName?: IconName; emoji?: string };
 

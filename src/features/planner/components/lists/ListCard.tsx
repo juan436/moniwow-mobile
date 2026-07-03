@@ -26,7 +26,7 @@ type Props = {
 const JAR_COLORS: { key: string; color: string }[] = [
   { key: 'Hogar',  color: colors.tertiary },
   { key: 'Libre',  color: colors.emeraldSuccess },
-  { key: 'Ahorro', color: colors.secondary },
+  { key: 'Metas',  color: colors.secondary },
 ];
 
 function getBadgeColor(jarLabel: string): string {

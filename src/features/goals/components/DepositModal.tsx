@@ -3,13 +3,16 @@
  *
  * @what     Diálogo para aportar plata a una meta. Sin fricción — a diferencia de retirar, nadie
  *           se arrepiente de ahorrar más.
- * @receives 4 props: visible, goal, onClose, onConfirm
- * @processes Valida monto > 0. Al confirmar, llama onConfirm(amount) y cierra.
+ * @receives 5 props: visible, goal, available, onClose, onConfirm
+ * @processes Valida 0 < monto ≤ available. `available` es el disponible sin asignar del pozo Metas
+ *           (modelo "pozo financiado, luego repartido" — ver [[planes/psicologia-ux]]); Aportar
+ *           reasigna de ahí, no saca plata nueva de Libre. Popup centrado sube la mitad del alto
+ *           del teclado al enfocar el input (autoFocus) para no quedar tapado.
  * @returns  JSX — Modal fade centrado, tono positivo.
- * @props    4: visible, goal, onClose, onConfirm
+ * @props    5: visible, goal, available, onClose, onConfirm
  */
 import { useState, useEffect } from 'react';
-import { Modal, Pressable, View, Text, TextInput, StyleSheet } from 'react-native';
+import { Modal, Pressable, View, Text, TextInput, Keyboard, Platform, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { colors, typography, spacing, radius, shadows } from '@shared/styles';
@@ -21,18 +24,32 @@ function handlePopupPress() {}
 type Props = {
   visible: boolean;
   goal: GoalItem | null;
+  available: number;
   onClose: () => void;
   onConfirm: (amount: number) => void;
 };
 
-export function DepositModal({ visible, goal, onClose, onConfirm }: Props) {
+export function DepositModal({ visible, goal, available, onClose, onConfirm }: Props) {
   const insets = useSafeAreaInsets();
   const [monto, setMonto] = useState('');
+  const [kbHeight, setKbHeight] = useState(0);
 
   useEffect(() => { if (visible) setMonto(''); }, [visible]);
 
+  useEffect(() => {
+    const show = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      (e) => setKbHeight(e.endCoordinates.height),
+    );
+    const hide = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+      () => setKbHeight(0),
+    );
+    return () => { show.remove(); hide.remove(); };
+  }, []);
+
   const parsedMonto = parseFloat(monto.replace(',', '.'));
-  const canConfirm = !isNaN(parsedMonto) && parsedMonto > 0;
+  const canConfirm = !isNaN(parsedMonto) && parsedMonto > 0 && parsedMonto <= available;
 
   function handleConfirm() {
     if (!canConfirm) return;
@@ -43,13 +60,13 @@ export function DepositModal({ visible, goal, onClose, onConfirm }: Props) {
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose} statusBarTranslucent navigationBarTranslucent>
       <Pressable style={styles.backdrop} onPress={onClose}>
-        <Pressable style={styles.popup} onPress={handlePopupPress}>
+        <Pressable style={[styles.popup, { marginBottom: kbHeight / 2 }]} onPress={handlePopupPress}>
 
-          <Text style={styles.title}>Aportar a {goal?.emoji} {goal?.name}</Text>
-          <Text style={styles.body}>Sumá plata a tu meta. Se transfiere desde Libre.</Text>
+          <Text style={styles.title}>Aportar a {goal?.name}</Text>
+          <Text style={styles.body}>Asigná plata desde tu disponible en Metas.</Text>
 
           <View style={styles.block}>
-            <Text style={styles.fieldLabel}>Monto a aportar</Text>
+            <Text style={styles.fieldLabel}>Monto a aportar (disponible $ {available.toLocaleString('es')})</Text>
             <TextInput
               style={styles.numInput}
               value={monto}

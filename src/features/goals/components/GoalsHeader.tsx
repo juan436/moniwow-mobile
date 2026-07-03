@@ -1,9 +1,9 @@
 /**
  * GoalsHeader — Component
  *
- * @what     Header de GoalsScreen: flecha de back + título "Mis sueños".
+ * @what     Header de GoalsScreen: flecha de back + título "Mis Metas y Objetivos".
  * @receives 1 prop: topInset
- * @processes Se llega a GoalsScreen empujando desde la jarra Ahorro (push) — no es tab raíz, por
+ * @processes Se llega a GoalsScreen empujando desde la jarra Goals (push) — no es tab raíz, por
  *           eso usa back en vez de AppTopBar.
  * @returns  JSX — Row con backBtn + título.
  * @props    1: topInset
@@ -24,7 +24,7 @@ export function GoalsHeader({ topInset }: Props) {
       <Pressable style={styles.backBtn} onPress={handleBack}>
         <MaterialIcons name="arrow-back" size={24} color={colors.navyDark} />
       </Pressable>
-      <Text style={styles.headerTitle}>Mis sueños</Text>
+      <Text style={styles.headerTitle}>Mis Metas y Objetivos</Text>
     </View>
   );
 }

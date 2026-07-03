@@ -28,7 +28,7 @@ const EMOJIS = [
 
 const JARRAS = [
   { key: 'hogar',       label: '🏠 Hogar'       },
-  { key: 'ahorro',      label: '💰 Ahorro'      },
+  { key: 'goals',       label: '💰 Metas'       },
   { key: 'libre',       label: '🍃 Libre'       },
   { key: 'transporte',  label: '🚗 Transporte'  },
   { key: 'salud',       label: '❤️ Salud'       },
@@ -111,12 +111,12 @@ export function CreateListModal({ visible, onClose }: Props) {
 
 const styles = StyleSheet.create({
   backdrop:    { flex: 1, justifyContent: 'flex-end', backgroundColor: `${colors.navyDark}8C` },
-  sheet:       { backgroundColor: colors.pureWhite, borderTopLeftRadius: radius.card * 2, borderTopRightRadius: radius.card * 2, maxHeight: '90%' },
+  sheet:       { backgroundColor: colors.pureWhite, borderTopLeftRadius: radius.card, borderTopRightRadius: radius.card, maxHeight: '90%' },
   navBarCover: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: colors.black },
-  handle:      { width: 40, height: 4, borderRadius: 2, backgroundColor: colors.outlineVariant, alignSelf: 'center', marginTop: spacing.stackMd, marginBottom: spacing.stackSm },
+  handle:      { width: 40, height: 4, borderRadius: 2, backgroundColor: colors.outlineVariant, alignSelf: 'center', marginTop: spacing.stackSm, marginBottom: spacing.stackXs },
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: spacing.marginPage, paddingTop: spacing.stackSm, paddingBottom: spacing.stackMd,
+    paddingHorizontal: spacing.marginPage, paddingTop: spacing.stackXs, paddingBottom: spacing.stackSm,
     borderBottomWidth: 1, borderBottomColor: colors.outlineVariant + '44',
   },
   title:      { ...typography.headlineMd, color: colors.navyDark },

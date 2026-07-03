@@ -36,7 +36,9 @@ const MOCK_TRANSACTIONS: TransactionDisplay[] = [
   { id: 'tx14', jarId: 'libre', description: 'Pago Freelance App Móvil', amount: 500.00, isIncome: true, categoryLabel: 'Libre 💸', time: '24 Abr 10:00', iconName: 'payments', iconBg: colors.emeraldSuccess + '1A', iconColor: colors.emeraldSuccess },
   { id: 'tx15', jarId: 'hogar', description: 'Electricidad CFE Bimestral', amount: 45.00, isIncome: false, categoryLabel: 'Hogar 🏠', time: '23 Abr 07:00', iconName: 'lightbulb', iconBg: colors.inversePrimary + '33', iconColor: colors.primary },
   { id: 'tx16', jarId: 'salud', description: 'Medicamentos Farmacia', amount: 18.50, isIncome: false, categoryLabel: 'Salud & Médico 💊', time: '22 Abr 16:45', iconName: 'local-pharmacy', iconBg: colors.alertOrange + '1A', iconColor: colors.alertOrange },
-  { id: 'tx17', jarId: 'libre', description: 'Corte de cabello barbería', amount: 12.00, isIncome: false, categoryLabel: 'Hormiga 🐜', time: '20 Abr 12:00', iconName: 'content-cut', iconBg: colors.secondaryContainer + '4D', iconColor: colors.secondary, isLast: true },
+  { id: 'tx17', jarId: 'libre', description: 'Corte de cabello barbería', amount: 12.00, isIncome: false, categoryLabel: 'Hormiga 🐜', time: '20 Abr 12:00', iconName: 'content-cut', iconBg: colors.secondaryContainer + '4D', iconColor: colors.secondary },
+  { id: 'tx18', jarId: 'fondo_seguridad', description: 'Transferencia desde Libre', amount: 500.00, isIncome: true, categoryLabel: 'Fondo Seguridad 🛡️', time: '15 May 09:00', iconName: 'swap-horiz', iconBg: colors.emeraldSuccess + '1A', iconColor: colors.emeraldSuccess },
+  { id: 'tx19', jarId: 'fondo_seguridad', description: 'Retiro por emergencia médica', amount: 200.00, isIncome: false, categoryLabel: 'Fondo Seguridad 🛡️', time: '10 May 18:20', iconName: 'security', iconBg: colors.emeraldSuccess + '1A', iconColor: colors.emeraldSuccess, isLast: true },
 ];
 
 export function useTransactions() {

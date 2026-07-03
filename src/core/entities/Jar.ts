@@ -1,4 +1,4 @@
-export type JarType = 'hogar' | 'ahorro' | 'libre' | 'custom';
+export type JarType = 'hogar' | 'fondo_seguridad' | 'goals' | 'libre' | 'custom';
 
 export interface JarProps {
   id: string;
@@ -27,7 +27,7 @@ export class Jar {
     return this.balance < 0;
   }
 
-  // hogar/ahorro/libre no se pueden eliminar
+  // hogar/fondo_seguridad/goals/libre no se pueden eliminar
   isProtected(): boolean {
     return this.type !== 'custom';
   }

@@ -21,5 +21,5 @@ export type JarDisplay = {
   isBlindado?: boolean;
 };
 
-export type CreateJarData = { name: string; emoji: string };
+export type CreateJarData = { name: string; iconName: IconName; targetAmount?: number; isBlindado?: boolean };
 export type SaveJarData   = CreateJarData & { id: string };

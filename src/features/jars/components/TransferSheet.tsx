@@ -3,19 +3,24 @@
  *
  * @what     Modal bottom sheet para transferir fondos de una jarra a otra.
  * @receives 5 props: visible, fromJar, jars, onClose, onTransfer
- * @processes Selector de jarra destino (excluye origen) + monto. Valida monto > 0 y ≤ saldo origen.
- *           Misma regla que core/use-cases/TransferFunds.ts (resta origen, suma destino), sin
- *           conectar aún — mock-stage.
+ * @processes Selector de jarra destino (excluye origen) + monto. Valida monto > 0 y ≤ saldo origen,
+ *           misma regla que core/use-cases/TransferFunds.ts — mock-stage. Sheet sube con el
+ *           teclado al enfocar Monto (a diferencia de Create/EditJarModal, que quedan fijos).
+ *           Si `fromJar.isBlindado` (Fondo Seguridad, Metas), "Transferir" se reemplaza por
+ *           SacrificeSlider — toda jarra Blindado tiene fricción al salir. GestureHandlerRootView
+ *           propio: el Modal de RN aísla gesture-handler en Android sin su propio root (ver
+ *           adr_gesture_handler).
  * @returns  JSX — bottom sheet con resumen origen, selector destino, input monto y CTA.
  * @props    5: visible, fromJar, jars, onClose, onTransfer
  */
 import { useState, useEffect } from 'react';
-import { Modal, View, Text, Pressable, ScrollView, TextInput, StyleSheet } from 'react-native';
+import { Modal, View, Text, Pressable, ScrollView, TextInput, Keyboard, Platform, StyleSheet } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { colors, typography, spacing, radius } from '@shared/styles';
-import { MoniButton } from '@shared/components';
+import { MoniButton, SacrificeSlider } from '@shared/components';
 import type { JarDisplay } from '../types';
 
 type Props = {
@@ -30,8 +35,21 @@ export function TransferSheet({ visible, fromJar, jars, onClose, onTransfer }: P
   const insets = useSafeAreaInsets();
   const [toId, setToId]     = useState('');
   const [monto, setMonto]   = useState('');
+  const [kbHeight, setKbHeight] = useState(0);
 
   useEffect(() => { if (visible) { setToId(''); setMonto(''); } }, [visible]);
+
+  useEffect(() => {
+    const show = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      (e) => setKbHeight(e.endCoordinates.height),
+    );
+    const hide = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+      () => setKbHeight(0),
+    );
+    return () => { show.remove(); hide.remove(); };
+  }, []);
 
   const destinations = jars.filter((j) => j.id !== fromJar?.id);
   const parsedMonto  = parseFloat(monto.replace(',', '.'));
@@ -46,55 +64,61 @@ export function TransferSheet({ visible, fromJar, jars, onClose, onTransfer }: P
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose} statusBarTranslucent navigationBarTranslucent>
-      <Pressable style={styles.backdrop} onPress={onClose}>
-        <View style={styles.sheet} onStartShouldSetResponder={() => true}>
-          <View style={styles.handle} />
-          <View style={styles.header}>
-            <Text style={styles.title}>Transferir fondos</Text>
-            <Pressable onPress={onClose} hitSlop={8}>
-              <MaterialIcons name="close" size={24} color={colors.slateGray} />
-            </Pressable>
+      <GestureHandlerRootView style={styles.root}>
+        <Pressable style={styles.backdrop} onPress={onClose}>
+          <View style={[styles.sheet, { marginBottom: kbHeight }]} onStartShouldSetResponder={() => true}>
+            <View style={styles.handle} />
+            <View style={styles.header}>
+              <Text style={styles.title}>Transferir fondos</Text>
+              <Pressable onPress={onClose} hitSlop={8}>
+                <MaterialIcons name="close" size={24} color={colors.slateGray} />
+              </Pressable>
+            </View>
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.body, { paddingBottom: insets.bottom + spacing.stackLg }]} keyboardShouldPersistTaps="handled">
+              <View style={styles.fromCard}>
+                <Text style={styles.fromLabel}>Desde</Text>
+                <Text style={styles.fromName}>{fromJar?.name}</Text>
+                <Text style={styles.fromBalance}>$ {fromJar?.balance.toLocaleString('es')} disponible</Text>
+              </View>
+
+              <View style={styles.block}>
+                <Text style={styles.fieldLabel}>Hacia</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.jarRow}>
+                  {destinations.map((j) => (
+                    <Pressable key={j.id} style={[styles.jarChip, toId === j.id && styles.jarChipActive]} onPress={() => setToId(j.id)}>
+                      <Text style={[styles.jarChipText, toId === j.id && styles.jarChipTextActive]}>{j.name}</Text>
+                    </Pressable>
+                  ))}
+                </ScrollView>
+              </View>
+
+              <View style={styles.block}>
+                <Text style={styles.fieldLabel}>Monto</Text>
+                <TextInput style={styles.numInput} value={monto} onChangeText={setMonto} placeholder="$ 0.00" placeholderTextColor={colors.outlineVariant} keyboardType="numeric" />
+              </View>
+
+              {fromJar?.isBlindado
+                ? <SacrificeSlider progress={100} onConfirm={handleTransfer} disabled={!canSave} />
+                : <MoniButton label="Transferir" onPress={handleTransfer} disabled={!canSave} />
+              }
+            </ScrollView>
           </View>
-          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.body, { paddingBottom: insets.bottom + spacing.stackLg }]} keyboardShouldPersistTaps="handled">
-            <View style={styles.fromCard}>
-              <Text style={styles.fromLabel}>Desde</Text>
-              <Text style={styles.fromName}>{fromJar?.name}</Text>
-              <Text style={styles.fromBalance}>$ {fromJar?.balance.toLocaleString('es')} disponible</Text>
-            </View>
-
-            <View style={styles.block}>
-              <Text style={styles.fieldLabel}>Hacia</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.jarRow}>
-                {destinations.map((j) => (
-                  <Pressable key={j.id} style={[styles.jarChip, toId === j.id && styles.jarChipActive]} onPress={() => setToId(j.id)}>
-                    <Text style={[styles.jarChipText, toId === j.id && styles.jarChipTextActive]}>{j.name}</Text>
-                  </Pressable>
-                ))}
-              </ScrollView>
-            </View>
-
-            <View style={styles.block}>
-              <Text style={styles.fieldLabel}>Monto</Text>
-              <TextInput style={styles.numInput} value={monto} onChangeText={setMonto} placeholder="$ 0.00" placeholderTextColor={colors.outlineVariant} keyboardType="numeric" />
-            </View>
-
-            <MoniButton label="Transferir" onPress={handleTransfer} disabled={!canSave} />
-          </ScrollView>
-        </View>
-      </Pressable>
-      <View style={[styles.navBarCover, { height: insets.bottom }]} />
+        </Pressable>
+        <View style={[styles.navBarCover, { height: insets.bottom }]} />
+      </GestureHandlerRootView>
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
+  root:        { flex: 1 },
   backdrop:    { flex: 1, justifyContent: 'flex-end', backgroundColor: `${colors.navyDark}8C` },
-  sheet:       { backgroundColor: colors.pureWhite, borderTopLeftRadius: radius.card * 2, borderTopRightRadius: radius.card * 2, maxHeight: '90%' },
+  sheet:       { backgroundColor: colors.pureWhite, borderTopLeftRadius: radius.card, borderTopRightRadius: radius.card, maxHeight: '90%' },
   navBarCover: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: colors.black },
-  handle:      { width: 40, height: 4, borderRadius: 2, backgroundColor: colors.outlineVariant, alignSelf: 'center', marginTop: spacing.stackMd, marginBottom: spacing.stackSm },
+  handle:      { width: 40, height: 4, borderRadius: 2, backgroundColor: colors.outlineVariant, alignSelf: 'center', marginTop: spacing.stackSm, marginBottom: spacing.stackXs },
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: spacing.marginPage, paddingTop: spacing.stackSm, paddingBottom: spacing.stackMd,
+    paddingHorizontal: spacing.marginPage, paddingTop: spacing.stackXs, paddingBottom: spacing.stackSm,
     borderBottomWidth: 1, borderBottomColor: colors.outlineVariant + '44',
   },
   title: { ...typography.headlineMd, color: colors.navyDark },

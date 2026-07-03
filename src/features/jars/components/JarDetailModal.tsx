@@ -1,12 +1,18 @@
 /**
  * JarDetailModal — Component
  *
- * @what     Modal de detalle de jarra: ícono/emoji, monto héroe, barra de progreso + breakdown
- *           meta/restante si tiene targetAmount, preview de últimos movimientos de esa jarra.
+ * @what     Modal de detalle de jarra: header ícono+nombre+badge, monto héroe, progreso/breakdown
+ *           compacto y preview de últimos 3 movimientos con ícono real (mismo lenguaje visual que
+ *           TransactionItem).
  * @receives 5 props: item, transactions, onClose, onTransfer?, onEdit?
- * @processes Layout monto-primero, mismo patrón que LeakDetailModal/DebtDetailModal/GoalDetailModal.
- *           Filtra transactions por jarId, muestra hasta 3 (igual que preview de LeakDetailModal).
- *           onTransfer/onEdit opcionales — dashboard/ no los pasa (solo lectura), JarsScreen sí.
+ * @processes Filtra transactions por jarId, muestra hasta 3. Un solo divisor (antes de
+ *           movimientos) — progreso/breakdown viven en un bloque `surfaceContainerLow` en vez de
+ *           separarse con líneas, para verse compacto y de una sola pieza (menos "cortado en
+ *           pedazos" que la versión anterior). El progreso es "presupuesto usado" (no meta de
+ *           ahorro) — Hogar y categorías personalizadas con monto objetivo son límites de gasto,
+ *           llegar a 100% es alerta (barra pasa a alertOrange desde 90%), no logro. Distinto de
+ *           GoalsJarModal, que sí es ahorro real. onTransfer/onEdit opcionales — dashboard/ no los
+ *           pasa (solo lectura), JarsScreen sí.
  * @returns  JSX — Modal fade centrado, sin scroll anidado.
  * @props    5: item, transactions, onClose, onTransfer?, onEdit?
  */
@@ -16,6 +22,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 
 import { colors, typography, spacing, radius, sizes, shadows } from '@shared/styles';
 import { MoniButton } from '@shared/components';
+import { truncateLabel } from '@shared/utils';
 import type { JarDisplay } from '../types';
 import type { TransactionDisplay } from '@features/transactions/types';
 
@@ -38,13 +45,14 @@ export function JarDetailModal({ item, transactions, onClose, onTransfer, onEdit
       <Pressable style={styles.backdrop} onPress={onClose}>
         <Pressable style={styles.popup} onPress={handlePopupPress}>
 
-          <View style={styles.metaZone}>
+          <View style={styles.headerRow}>
             <View style={[styles.iconBox, { backgroundColor: item?.iconBg }]}>
               {item?.emoji
                 ? <Text style={styles.emoji}>{item.emoji}</Text>
-                : item?.iconName && <MaterialIcons name={item.iconName} size={22} color={item.iconColor} />
+                : item?.iconName && <MaterialIcons name={item.iconName} size={20} color={item.iconColor} />
               }
             </View>
+            <Text style={styles.jarName} numberOfLines={1}>{item?.name}</Text>
             {item?.isBlindado && (
               <View style={styles.chip}>
                 <Text style={styles.chipLabel}>Blindado</Text>
@@ -52,63 +60,48 @@ export function JarDetailModal({ item, transactions, onClose, onTransfer, onEdit
             )}
           </View>
 
-          <View style={styles.divider} />
-
-          <View style={styles.amountZone}>
-            <Text style={styles.amount} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
-              $ {item?.balance.toLocaleString('es')}
-            </Text>
-            <Text style={styles.jarName} numberOfLines={1}>{item?.name}</Text>
-          </View>
+          <Text style={styles.amount} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
+            $ {item?.balance.toLocaleString('es')}
+          </Text>
 
           {item?.progress !== undefined && (
-            <>
-              <View style={styles.divider} />
-              <View style={styles.progressZone}>
-                <View style={styles.barTrack}>
-                  <View style={[styles.barFill, { width: `${item.progress}%` as `${number}%`, backgroundColor: item.iconColor }]} />
-                </View>
-                <Text style={styles.progressLabel}>{item.progress}% del objetivo</Text>
+            <View style={styles.progressBlock}>
+              <View style={styles.barTrack}>
+                <View style={[styles.barFill, { width: `${item.progress}%` as `${number}%`, backgroundColor: item.progress >= 90 ? colors.alertOrange : item.iconColor }]} />
               </View>
-              {item.targetAmount !== undefined && (
-                <View style={styles.breakdown}>
-                  <View style={styles.breakdownItem}>
-                    <Text style={styles.breakdownLabel}>Meta</Text>
-                    <Text style={styles.breakdownValue}>$ {item.targetAmount.toLocaleString('es')}</Text>
-                  </View>
-                  <View style={styles.breakdownSep} />
-                  <View style={styles.breakdownItem}>
-                    <Text style={styles.breakdownLabel}>Restante</Text>
-                    <Text style={[styles.breakdownValue, styles.restColor]}>
-                      $ {(item.targetAmount - item.balance).toLocaleString('es')}
-                    </Text>
-                  </View>
-                </View>
-              )}
-            </>
+              <View style={styles.progressFooter}>
+                <Text style={styles.progressLabel}>{item.progress}% del presupuesto usado</Text>
+                {item.targetAmount !== undefined && (
+                  <Text style={styles.progressLabel}>
+                    $ {item.targetAmount.toLocaleString('es')} presupuesto · <Text style={styles.restColor}>$ {(item.targetAmount - item.balance).toLocaleString('es')} disponible</Text>
+                  </Text>
+                )}
+              </View>
+            </View>
           )}
 
           {preview.length > 0 && (
             <>
               <View style={styles.divider} />
+              <Text style={styles.sectionLabel}>Últimos movimientos</Text>
               <View style={styles.txList}>
-                {preview.map((tx, i) => (
-                  <View key={tx.id}>
-                    <View style={styles.txRow}>
-                      <Text style={styles.txDesc} numberOfLines={1} ellipsizeMode="tail">{tx.description}</Text>
-                      <Text style={[styles.txAmount, tx.isIncome && styles.txAmountIncome]}>
-                        {tx.isIncome ? '+' : '-'}$ {tx.amount.toLocaleString('es')}
-                      </Text>
+                {preview.map((tx) => (
+                  <View key={tx.id} style={styles.txRow}>
+                    <View style={[styles.txIcon, { backgroundColor: tx.iconBg }]}>
+                      <MaterialIcons name={tx.iconName} size={16} color={tx.iconColor} />
                     </View>
-                    {i < preview.length - 1 && <View style={styles.txSep} />}
+                    <Text style={styles.txDesc} numberOfLines={1} ellipsizeMode="tail">{truncateLabel(tx.description)}</Text>
+                    <Text style={[styles.txAmount, tx.isIncome && styles.txAmountIncome]}>
+                      {tx.isIncome ? '+' : '-'}$ {tx.amount.toLocaleString('es')}
+                    </Text>
                   </View>
                 ))}
               </View>
             </>
           )}
 
-          {onTransfer && <MoniButton label="Transferir" onPress={onTransfer} variant="secondary" />}
-          {onEdit && <MoniButton label="Editar jarra" onPress={onEdit} />}
+          {onTransfer && <MoniButton label="Transferir" onPress={onTransfer} variant="secondary" size="sm" />}
+          {onEdit && <MoniButton label="Editar jarra" onPress={onEdit} size="sm" />}
 
         </Pressable>
       </Pressable>
@@ -119,31 +112,27 @@ export function JarDetailModal({ item, transactions, onClose, onTransfer, onEdit
 
 const styles = StyleSheet.create({
   backdrop: { flex: 1, backgroundColor: `${colors.navyDark}8C`, justifyContent: 'center', alignItems: 'center', paddingHorizontal: spacing.marginPage },
-  popup:    { backgroundColor: colors.pureWhite, borderRadius: radius.card, width: '100%', padding: spacing.cardPadding, gap: spacing.stackMd, ...shadows.modal },
-  metaZone: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  iconBox:  { width: sizes.iconSm, height: sizes.iconSm, borderRadius: radius.lg, alignItems: 'center', justifyContent: 'center' },
+  popup:    { backgroundColor: colors.pureWhite, borderRadius: radius.card, width: '100%', padding: spacing.cardPadding, gap: spacing.stackSm, ...shadows.modal },
+  headerRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.stackSm },
+  iconBox:  { width: sizes.iconSm, height: sizes.iconSm, borderRadius: radius.lg, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
   emoji:    { fontSize: sizes.emojiFontMd },
-  chip:     { paddingHorizontal: spacing.stackMd, paddingVertical: spacing.stackXs, borderRadius: radius.full, backgroundColor: colors.goldTint },
-  chipLabel: { ...typography.labelSm, color: colors.goldDreams },
-  divider:  { height: 1, backgroundColor: colors.surfaceContainerLow },
-  amountZone: { alignItems: 'center', gap: spacing.stackSm, paddingVertical: spacing.stackSm },
-  amount:   { ...typography.headlineLg, color: colors.navyDark, textAlign: 'center' },
-  jarName:  { ...typography.labelMd, color: colors.slateGray, textAlign: 'center' },
-  progressZone: { gap: spacing.stackXs },
-  barTrack: { height: sizes.trackSm, width: '100%', backgroundColor: colors.surfaceContainerHigh, borderRadius: radius.full, overflow: 'hidden' },
+  jarName:  { ...typography.bodyMdBold, color: colors.navyDark, flex: 1 },
+  chip:     { paddingHorizontal: spacing.stackSm, paddingVertical: spacing.stackXxs, borderRadius: radius.full, backgroundColor: colors.goldTint },
+  chipLabel: { ...typography.labelXs, color: colors.goldDreams },
+  amount:   { ...typography.headlineLg, color: colors.navyDark },
+  progressBlock: { backgroundColor: colors.surfaceContainerLow, borderRadius: radius.md, padding: spacing.gutter, gap: spacing.stackXs },
+  barTrack: { height: sizes.trackXs, width: '100%', backgroundColor: colors.surfaceContainerHigh, borderRadius: radius.full, overflow: 'hidden' },
   barFill:  { height: '100%', borderRadius: radius.full },
-  progressLabel: { ...typography.labelSm, color: colors.slateGray, textAlign: 'center' },
-  breakdown: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', width: '100%' },
-  breakdownItem: { flex: 1, alignItems: 'center', gap: spacing.stackXs },
-  breakdownSep:  { width: 1, height: 32, backgroundColor: colors.surfaceContainerLow },
-  breakdownLabel: { ...typography.labelSm, color: colors.slateGray },
-  breakdownValue: { ...typography.labelMd, color: colors.navyDark },
+  progressFooter: { flexDirection: 'row', justifyContent: 'space-between', flexWrap: 'wrap', gap: spacing.stackXs },
+  progressLabel: { ...typography.labelSm, color: colors.slateGray },
   restColor: { color: colors.alertOrange },
-  txList:    { gap: spacing.stackSm },
-  txRow:     { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.stackMd, paddingVertical: spacing.stackXs },
-  txDesc:    { ...typography.bodyMd, color: colors.navyDark, flex: 1 },
+  divider:  { height: 1, backgroundColor: colors.surfaceContainerLow },
+  sectionLabel: { ...typography.labelXs, color: colors.slateGray },
+  txList:    { gap: spacing.stackXs },
+  txRow:     { flexDirection: 'row', alignItems: 'center', gap: spacing.stackSm },
+  txIcon:    { width: sizes.iconSm * 0.7, height: sizes.iconSm * 0.7, borderRadius: radius.full, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
+  txDesc:    { ...typography.labelMd, color: colors.navyDark, flex: 1 },
   txAmount:  { ...typography.labelMd, color: colors.alertOrange },
   txAmountIncome: { color: colors.emeraldSuccess },
-  txSep:     { height: 1, backgroundColor: colors.surfaceContainerLow },
   navBarCover: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: colors.black },
 });

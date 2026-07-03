@@ -1,13 +1,15 @@
 /**
- * AhorroDetailModal — Component
+ * GoalsJarModal — Component
  *
- * @what     Modal de la jarra Ahorro: saldo total + acceso a Sueños/Metas o a transferir de una
- *           meta puntual. Ahorro no es un pozo único, es la suma de metas — por eso "Transferir"
+ * @what     Modal de la jarra Goals: saldo total + acceso a Mis Metas y Objetivos o a transferir de
+ *           una meta puntual. Goals no es un pozo único, es la suma de metas — por eso "Transferir"
  *           primero manda a elegir de cuál.
  * @receives 2 props: item, onClose
- * @processes "Ir a Sueños y Metas" → /suenos. "Transferir" → /suenos?mode=withdraw (GoalsScreen
- *           muestra el selector de meta y lanza el Slider de Sacrificio). Navegación pura, sin
- *           importar features/goals/ — ver [[planes/psicologia-ux]].
+ * @processes "Ir a Mis Metas y Objetivos" → /metas. "Transferir" → /metas-transferir
+ *           (GoalsTransferScreen, pantalla propia con el selector de meta + Slider de Sacrificio).
+ *           Ambos botones llaman onClose() antes de navegar — si no, el modal queda montado
+ *           (visible=true) debajo de la pantalla nueva y da sensación de lentitud/doble transición.
+ *           Navegación pura, sin importar features/goals/ — ver [[planes/psicologia-ux]].
  * @returns  JSX — Modal fade centrado, mismo layout monto-primero que JarDetailModal.
  * @props    2: item, onClose
  */
@@ -20,16 +22,23 @@ import { MoniButton } from '@shared/components';
 import type { JarDisplay } from '../types';
 
 function handlePopupPress() {}
-function handleGoToGoals() { router.push('/suenos'); }
-function handleGoToTransfer() { router.push('/suenos?mode=withdraw'); }
 
 type Props = {
   item: JarDisplay | null;
   onClose: () => void;
 };
 
-export function AhorroDetailModal({ item, onClose }: Props) {
+export function GoalsJarModal({ item, onClose }: Props) {
   const insets = useSafeAreaInsets();
+
+  function handleGoToGoals() {
+    onClose();
+    router.push('/metas');
+  }
+  function handleGoToTransfer() {
+    onClose();
+    router.push('/metas-transferir');
+  }
 
   return (
     <Modal visible={item !== null} transparent animationType="fade" onRequestClose={onClose} statusBarTranslucent navigationBarTranslucent>
@@ -40,12 +49,12 @@ export function AhorroDetailModal({ item, onClose }: Props) {
             <Text style={styles.amount} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
               $ {item?.balance.toLocaleString('es')}
             </Text>
-            <Text style={styles.jarName}>Ahorro</Text>
+            <Text style={styles.jarName}>Metas</Text>
           </View>
 
           <View style={styles.divider} />
 
-          <MoniButton label="Ir a Sueños y Metas" onPress={handleGoToGoals} variant="secondary" />
+          <MoniButton label="Ir a Mis Metas y Objetivos" onPress={handleGoToGoals} variant="secondary" />
           <MoniButton label="Transferir" onPress={handleGoToTransfer} />
 
         </Pressable>

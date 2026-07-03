@@ -3,11 +3,12 @@
  *
  * @what     Página principal del dashboard: saldo libre + jarras + vencimientos + movimientos.
  * @receives 3 props: data, scrollY, topOffset
- * @processes Renderiza secciones verticales. JarCard/JarDisplay/JarDetailModal/AhorroDetailModal
+ * @processes Renderiza secciones verticales. JarCard/JarDisplay/JarDetailModal/GoalsJarModal
  *           vienen de features/jars/, TransactionDisplay de features/transactions/ — excepciones
  *           documentadas a "features no se conocen entre sí" (dashboard = composition root del
- *           home, unidireccional, ver clean_architecture.md). Tap en jarra Ahorro abre
- *           AhorroDetailModal; cualquier otra abre JarDetailModal con su historial filtrado.
+ *           home, unidireccional, ver clean_architecture.md). Tap en jarra Goals abre
+ *           GoalsJarModal; cualquier otra (incluida Fondo Seguridad) abre JarDetailModal con su
+ *           historial filtrado.
  * @returns  JSX — ScrollView vertical con todas las secciones.
  * @props    3: data, scrollY, topOffset
  */
@@ -20,7 +21,7 @@ import { colors, typography, spacing, radius, shadows } from '@shared/styles';
 import { HeroBalance } from './HeroBalance';
 import { JarCard } from '@features/jars/components/JarCard';
 import { JarDetailModal } from '@features/jars/components/JarDetailModal';
-import { AhorroDetailModal } from '@features/jars/components/AhorroDetailModal';
+import { GoalsJarModal } from '@features/jars/components/GoalsJarModal';
 import { TransactionItem } from './TransactionItem';
 import { TransactionDetailModal } from './TransactionDetailModal';
 import { UpcomingItem } from './UpcomingItem';
@@ -40,7 +41,7 @@ type Props = { data: Data; scrollY: Animated.Value; topOffset: number };
 function handleAddPress() { router.push('/add-income'); }
 function handleVerJarras() { router.push('/jarras'); }
 function handleFiltroMovimientos() { router.push('/movimientos'); }
-function handleVerAgenda() { router.push('/agenda'); }
+function handleVerAgenda() { router.push('/agenda?tab=mi-mes&filter=gastos'); }
 
 export function DashboardPage({ data, scrollY, topOffset }: Props) {
   const { saldoLibre, jars, transactions, upcoming } = data;
@@ -55,7 +56,7 @@ export function DashboardPage({ data, scrollY, topOffset }: Props) {
   const [selectedJar, setSelectedJar] = useState<JarDisplay | null>(null);
   const handleJarPress = useCallback((jar: JarDisplay) => setSelectedJar(jar), []);
   const handleJarModalClose = useCallback(() => setSelectedJar(null), []);
-  const isAhorroSelected = selectedJar?.id === 'ahorro';
+  const isGoalsSelected = selectedJar?.id === 'goals';
 
   return (
     <Animated.ScrollView
@@ -102,8 +103,8 @@ export function DashboardPage({ data, scrollY, topOffset }: Props) {
       </View>
       <TransactionDetailModal item={selectedTx} onClose={handleTxModalClose} />
       <UpcomingDetailModal item={selectedUpcoming} onClose={handleUpcomingModalClose} />
-      <AhorroDetailModal item={isAhorroSelected ? selectedJar : null} onClose={handleJarModalClose} />
-      <JarDetailModal item={!isAhorroSelected ? selectedJar : null} transactions={transactions} onClose={handleJarModalClose} />
+      <GoalsJarModal item={isGoalsSelected ? selectedJar : null} onClose={handleJarModalClose} />
+      <JarDetailModal item={!isGoalsSelected ? selectedJar : null} transactions={transactions} onClose={handleJarModalClose} />
     </Animated.ScrollView>
   );
 }

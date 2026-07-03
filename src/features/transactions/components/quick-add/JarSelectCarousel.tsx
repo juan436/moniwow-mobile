@@ -3,7 +3,7 @@
  *
  * @what     Carrusel horizontal para elegir la jarra de origen del gasto: páginas de 8.
  * @receives 3 props: jars, selectedJar, onSelectJar
- * @processes Ordena jarras base (Libre/Hogar/Ahorro, M03 "inborrables") primero, personalizadas
+ * @processes Ordena jarras base (Libre/Hogar/Fondo Seguridad/Goals, M03 "inborrables") primero, personalizadas
  *           después en su orden original. Tocar una fila selecciona al instante — sin numpad,
  *           acá solo se elige de qué jarra sale el gasto (ya viene con monto del Paso 1).
  * @returns  JSX — PagerView con JarSelectRow por jarra + PageIndicator condicional.
@@ -21,7 +21,7 @@ import type { JarOption, JarId } from '../../types';
 const PAGE_SIZE  = 8;
 const ROW_HEIGHT = 64; // 60 de contenido + 4 del borde de selección (2px arriba y abajo)
 const PAGE_HEIGHT = PAGE_SIZE * ROW_HEIGHT + (PAGE_SIZE - 1) * spacing.stackSm + spacing.stackMd;
-const BASE_ORDER: JarId[] = ['libre', 'hogar', 'ahorro'];
+const BASE_ORDER: JarId[] = ['libre', 'hogar', 'fondo_seguridad', 'goals'];
 
 function orderJars(jars: JarOption[]): JarOption[] {
   const base = BASE_ORDER

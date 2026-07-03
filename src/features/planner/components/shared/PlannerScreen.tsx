@@ -6,11 +6,15 @@
  * @processes AppTopBar y PlannerTabBar en el mismo float. Se translada -appBarHeight:
  *           AppTopBar desaparece arriba; PlannerTabBar sube a su lugar y permanece visible siempre.
  *           inputRange usa Math.max(1, appBarHeight) para evitar [0,0] inválido en primer render.
+ *           Lee ?tab=&filter= de la URL (ej. desde "Próximos compromisos" del dashboard) y fuerza
+ *           esos valores — el tab de Agenda no se desmonta al cambiar de tab de la app, así que sin
+ *           esto quedaba pegado en el último tab/filtro que el usuario haya dejado abierto.
  * @returns  JSX — statusBarBg + float animado (AppTopBar + divider + PlannerTabBar) + página activa.
  * @props    0
  */
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { View, Animated, StyleSheet } from 'react-native';
+import { useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppTopBar } from '@shared/components';
@@ -20,12 +24,18 @@ import { PlannerTabBar } from './PlannerTabBar';
 import { MyMonthPage } from '../my-month/MyMonthPage';
 import { ListsPage } from '../lists/ListsPage';
 import { RecurringPage } from '../recurring/RecurringPage';
-import type { AgendaTab } from '../../types';
+import type { AgendaTab, AgendaFilter } from '../../types';
 
 export function PlannerScreen() {
   const insets   = useSafeAreaInsets();
   const { activeTab, setActiveTab, activeFilter, setActiveFilter, data, recurrentes, recurrenteActions } = usePlanner();
+  const { tab: tabParam, filter: filterParam } = useLocalSearchParams<{ tab?: AgendaTab; filter?: AgendaFilter }>();
   const scrollY  = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (tabParam) setActiveTab(tabParam);
+    if (filterParam) setActiveFilter(filterParam);
+  }, [tabParam, filterParam, setActiveTab, setActiveFilter]);
 
   const [appBarHeight, setAppBarHeight] = useState(0);
   const [tabBarHeight, setTabBarHeight] = useState(0);

@@ -6,11 +6,12 @@
  * @receives —
  * @processes Carga jars + CRUD desde useJars (dueño real del estado). Si el total es impar,
  *           agrega un ítem invisible (FILLER_ID) para que la última card no estire flex:1 sobre
- *           las 2 columnas. Tocar la jarra Ahorro abre AhorroDetailModal (Ir a Sueños / Transferir),
- *           nunca resta directo. Cualquier otra abre JarDetailModal, que a su vez puede abrir
- *           TransferSheet o EditJarModal sobre la misma jarra activa (`activeJar` + `mode`).
+ *           las 2 columnas. Tocar la jarra Goals abre GoalsJarModal (Ir a Metas / Transferir),
+ *           nunca resta directo. Cualquier otra (incluida Fondo Seguridad) abre JarDetailModal, que
+ *           a su vez puede abrir TransferSheet o EditJarModal sobre la misma jarra activa
+ *           (`activeJar` + `mode`).
  * @returns  JSX — FlatList 2 columnas + JarsListHeader + CreateJarModal + JarDetailModal +
- *           AhorroDetailModal + TransferSheet + EditJarModal.
+ *           GoalsJarModal + TransferSheet + EditJarModal.
  * @props    —
  */
 import { useCallback, useMemo, useState } from 'react';
@@ -23,7 +24,7 @@ import { JarItem } from './JarItem';
 import { JarsListHeader } from './JarsListHeader';
 import { CreateJarModal } from './CreateJarModal';
 import { JarDetailModal } from './JarDetailModal';
-import { AhorroDetailModal } from './AhorroDetailModal';
+import { GoalsJarModal } from './GoalsJarModal';
 import { TransferSheet } from './TransferSheet';
 import { EditJarModal } from './EditJarModal';
 import { useJars } from '../hooks/useJars';
@@ -31,7 +32,7 @@ import { useTransactions } from '@features/transactions/hooks/useTransactions';
 import type { JarDisplay } from '../types';
 
 const FILLER_ID = '__filler__';
-type Mode = 'detail' | 'edit' | 'transfer' | 'ahorro' | null;
+type Mode = 'detail' | 'edit' | 'transfer' | 'goals' | null;
 
 function handleBack() { router.back(); }
 function RowSeparator() { return <View style={styles.rowSep} />; }
@@ -56,7 +57,7 @@ export function JarsScreen() {
 
   const handleJarPress = useCallback((jar: JarDisplay) => {
     setActiveJar(jar);
-    setMode(jar.id === 'ahorro' ? 'ahorro' : 'detail');
+    setMode(jar.id === 'goals' ? 'goals' : 'detail');
   }, []);
   const handleCloseModals = useCallback(() => setMode(null), []);
   const handleOpenTransfer = useCallback(() => setMode('transfer'), []);
@@ -92,7 +93,7 @@ export function JarsScreen() {
       />
       <View style={[styles.statusBarCover, { height: insets.top }]} />
       <CreateJarModal visible={isCreateVisible} onClose={handleCloseCreate} onCreate={handleCreate} />
-      <AhorroDetailModal item={mode === 'ahorro' ? activeJar : null} onClose={handleCloseModals} />
+      <GoalsJarModal item={mode === 'goals' ? activeJar : null} onClose={handleCloseModals} />
       <JarDetailModal
         item={mode === 'detail' ? activeJar : null}
         transactions={transactions}

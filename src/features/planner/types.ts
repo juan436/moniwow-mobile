@@ -57,7 +57,7 @@ export type RecurringActions = {
 };
 
 export type RecurringFrequency = 'indefinido' | 'cuotas';
-export type RecurringJar       = 'hogar' | 'ahorro' | 'libre' | 'transporte' | 'salud' | 'educacion' | 'viajes' | 'emergencias' | 'ocio';
+export type RecurringJar       = 'hogar' | 'goals' | 'libre' | 'transporte' | 'salud' | 'educacion' | 'viajes' | 'emergencias' | 'ocio';
 
 export type RecurringForm = {
   tipo:          AgendaFilter;

@@ -1,7 +1,7 @@
 /**
  * GoalDetailModal — Component
  *
- * @what     Modal de detalle de sueño: meta héroe, barra progreso, desglose ahorro/restante y emoji.
+ * @what     Modal de detalle de meta: meta héroe, barra progreso, desglose ahorro/restante y emoji.
  * @receives 2 props: item, onClose
  * @processes Calcula restante desde item.target - item.current.
  * @returns  JSX — Modal fade con layout monto-primero alineado a TransactionDetailModal.
@@ -33,7 +33,7 @@ export function GoalDetailModal({ item, onClose }: Props) {
           <View style={styles.metaZone}>
             <View style={styles.typeRow}>
               <View style={styles.dot} />
-              <Text style={styles.typeLabel}>Sueño</Text>
+              <Text style={styles.typeLabel}>Meta</Text>
             </View>
             <View style={styles.chip}>
               <Text style={styles.chipLabel}>{progress}% completado</Text>

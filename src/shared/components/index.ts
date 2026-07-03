@@ -6,3 +6,7 @@ export { MoniLogo } from './MoniLogo';
 export { AppTopBar } from './AppTopBar';
 export { StepperInput } from './StepperInput';
 export { PageIndicator } from './PageIndicator';
+export { EmojiPicker } from './EmojiPicker';
+export { IconPicker } from './IconPicker';
+export { SacrificeSlider } from './SacrificeSlider';
+export { Checkbox } from './Checkbox';
