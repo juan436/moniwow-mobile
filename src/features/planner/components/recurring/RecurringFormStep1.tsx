@@ -51,7 +51,7 @@ export function RecurringFormStep1({ form, onChange }: Props) {
 const styles = StyleSheet.create({
   segRow:     { flexDirection: 'row', gap: spacing.stackSm },
   seg:        { flex: 1, paddingVertical: spacing.stackSm, borderRadius: radius.full, borderWidth: 1, borderColor: colors.outlineVariant, alignItems: 'center' },
-  segActive:     { backgroundColor: colors.navyDark, borderColor: colors.navyDark },
+  segActive:     { backgroundColor: colors.emeraldSuccess, borderColor: colors.emeraldSuccess },
   segText:       { ...typography.labelMd, color: colors.slateGray },
   segTextActive: { color: colors.pureWhite },
   block:      { gap: spacing.stackSm },
