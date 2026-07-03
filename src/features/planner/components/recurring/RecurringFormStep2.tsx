@@ -1,20 +1,19 @@
 /**
- * RecurringFormFields — Component
+ * RecurringFormStep2 — Component
  *
- * @what     Campos de formulario compartidos por Create/EditRecurringModal.
+ * @what     Paso 2 del formulario de compromiso recurrente: día/mes, cuotas o frecuencia, jarra
+ *           de pago. Los detalles de programación, después de lo esencial del Paso 1.
  * @receives 2 props: form, onChange
- * @processes Campos condicionales: cuotas solo si tipo=deudas o frecuencia=cuotas; frecuencia solo si tipo≠deudas.
- * @returns  JSX — Fragment: selector tipo, nombre, monto, día/mes, cuotas o frecuencia, jarra.
+ * @processes Cuotas solo si tipo=deudas o frecuencia=cuotas; frecuencia solo si tipo≠deudas.
+ * @returns  JSX — Fragment: StepperInput día/mes, cuotas o frecuencia, chips de jarra.
  * @props    2: form, onChange
  */
-import { View, Text, Pressable, TextInput, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
 
 import { colors, typography, spacing, radius } from '@shared/styles';
-import { MoniInput, StepperInput } from '@shared/components';
-import type { AgendaFilter, RecurringForm, RecurringFrequency, RecurringJar } from '../../types';
+import { StepperInput } from '@shared/components';
+import type { RecurringForm, RecurringFrequency, RecurringJar } from '../../types';
 
-const TIPOS: AgendaFilter[] = ['ingresos', 'gastos', 'deudas'];
-const TIPO_LABEL: Record<AgendaFilter, string> = { ingresos: 'Ingreso', gastos: 'Gasto', deudas: 'Deuda' };
 const JARRAS: { key: RecurringJar; label: string }[] = [
   { key: 'hogar',       label: '🏠 Hogar'       },
   { key: 'goals',       label: '💰 Metas'       },
@@ -36,29 +35,12 @@ type Props = {
   onChange: <K extends keyof RecurringForm>(key: K, val: RecurringForm[K]) => void;
 };
 
-export function RecurringFormFields({ form, onChange }: Props) {
+export function RecurringFormStep2({ form, onChange }: Props) {
   const isDeuda    = form.tipo === 'deudas';
   const showCuotas = !isDeuda && form.frecuencia === 'cuotas';
 
   return (
     <>
-      <View style={styles.segRow}>
-        {TIPOS.map((t) => (
-          <Pressable key={t} style={[styles.seg, form.tipo === t && styles.segActive]} onPress={() => onChange('tipo', t)}>
-            <Text style={[styles.segText, form.tipo === t && styles.segTextActive]}>{TIPO_LABEL[t]}</Text>
-          </Pressable>
-        ))}
-      </View>
-      <MoniInput
-        label={isDeuda ? 'Acreedor' : 'Nombre'}
-        value={form.nombre}
-        onChangeText={(v) => onChange('nombre', v)}
-        placeholder={isDeuda ? 'ej. Banco Visa' : 'ej. Netflix'}
-      />
-      <View style={styles.block}>
-        <Text style={styles.fieldLabel}>Monto</Text>
-        <TextInput style={styles.numInput} value={form.monto} onChangeText={(v) => onChange('monto', v)} placeholder="$ 0.00" placeholderTextColor={colors.outlineVariant} keyboardType="numeric" />
-      </View>
       <View style={styles.row2}>
         <View style={styles.flex1}>
           <StepperInput label="Día" value={form.dia} min={1} max={31} onChange={(v) => onChange('dia', v)} />
@@ -107,27 +89,14 @@ export function RecurringFormFields({ form, onChange }: Props) {
 }
 
 const styles = StyleSheet.create({
+  row2:       { flexDirection: 'row', gap: spacing.stackMd },
+  flex1:      { flex: 1, gap: spacing.stackXs },
+  block:      { gap: spacing.stackSm },
+  fieldLabel: { ...typography.labelSm, color: colors.onSurfaceVariant },
   segRow:     { flexDirection: 'row', gap: spacing.stackSm },
   seg:        { flex: 1, paddingVertical: spacing.stackSm, borderRadius: radius.full, borderWidth: 1, borderColor: colors.outlineVariant, alignItems: 'center' },
   jarraItem:  { paddingVertical: spacing.stackSm, paddingHorizontal: spacing.gutter, borderRadius: radius.full, borderWidth: 1, borderColor: colors.outlineVariant, alignItems: 'center' },
   segActive:     { backgroundColor: colors.navyDark, borderColor: colors.navyDark },
   segText:       { ...typography.labelMd, color: colors.slateGray },
   segTextActive: { color: colors.pureWhite },
-  row2:      { flexDirection: 'row', gap: spacing.stackMd },
-  flex1:     { flex: 1, gap: spacing.stackXs },
-  block:     { gap: spacing.stackSm },
-  fieldLabel: { ...typography.labelSm, color: colors.onSurfaceVariant },
-  numInput: {
-    height: spacing.inputHeight,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.outlineVariant,
-    paddingHorizontal: spacing.gutter,
-    fontFamily: typography.bodyMd.fontFamily,
-    fontSize: typography.bodyMd.fontSize,
-    color: colors.onSurface,
-    backgroundColor: colors.pureWhite,
-    textAlignVertical: 'center',
-    includeFontPadding: false,
-  },
 });
