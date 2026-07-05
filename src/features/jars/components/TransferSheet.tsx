@@ -3,13 +3,12 @@
  *
  * @what     Modal bottom sheet para transferir fondos de una jarra a otra.
  * @receives 5 props: visible, fromJar, jars, onClose, onTransfer
- * @processes Selector de jarra destino (excluye origen) + monto. Valida monto > 0 y ≤ saldo origen,
- *           misma regla que core/use-cases/TransferFunds.ts — mock-stage. Sheet sube con el
- *           teclado al enfocar Monto (a diferencia de Create/EditJarModal, que quedan fijos).
- *           Si `fromJar.isBlindado` (Fondo Seguridad, Metas), "Transferir" se reemplaza por
- *           SacrificeSlider — toda jarra Blindado tiene fricción al salir. GestureHandlerRootView
- *           propio: el Modal de RN aísla gesture-handler en Android sin su propio root (ver
- *           adr_gesture_handler).
+ * @processes Selector de jarra destino (excluye origen) + monto. Chips usan ícono real
+ *           (`JarDisplay.iconName`) + `emeraldSuccess` al seleccionar — estándar visual de jarra
+ *           en toda la app (antes solo texto + navyDark). Valida monto > 0 y ≤ saldo origen,
+ *           misma regla que TransferFunds.ts — mock-stage. Sheet sube con teclado al enfocar
+ *           Monto. Si `fromJar.isBlindado`, "Transferir" se reemplaza por SacrificeSlider.
+ *           GestureHandlerRootView propio: el Modal de RN aísla gesture-handler en Android.
  * @returns  JSX — bottom sheet con resumen origen, selector destino, input monto y CTA.
  * @props    5: visible, fromJar, jars, onClose, onTransfer
  */
@@ -86,6 +85,7 @@ export function TransferSheet({ visible, fromJar, jars, onClose, onTransfer }: P
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.jarRow}>
                   {destinations.map((j) => (
                     <Pressable key={j.id} style={[styles.jarChip, toId === j.id && styles.jarChipActive]} onPress={() => setToId(j.id)}>
+                      {j.iconName && <MaterialIcons name={j.iconName} size={16} color={toId === j.id ? colors.pureWhite : colors.slateGray} />}
                       <Text style={[styles.jarChipText, toId === j.id && styles.jarChipTextActive]}>{j.name}</Text>
                     </Pressable>
                   ))}
@@ -133,8 +133,8 @@ const styles = StyleSheet.create({
   block:       { gap: spacing.stackXs },
   fieldLabel:  { ...typography.labelSm, color: colors.onSurfaceVariant },
   jarRow:      { flexDirection: 'row', gap: spacing.stackSm },
-  jarChip:     { paddingVertical: spacing.stackSm, paddingHorizontal: spacing.gutter, borderRadius: radius.full, borderWidth: 1, borderColor: colors.outlineVariant, alignItems: 'center' },
-  jarChipActive:    { backgroundColor: colors.navyDark, borderColor: colors.navyDark },
+  jarChip:     { flexDirection: 'row', alignItems: 'center', gap: spacing.stackXs, paddingVertical: spacing.stackSm, paddingHorizontal: spacing.gutter, borderRadius: radius.full, borderWidth: 1, borderColor: colors.outlineVariant },
+  jarChipActive:    { backgroundColor: colors.emeraldSuccess, borderColor: colors.emeraldSuccess },
   jarChipText:      { ...typography.labelMd, color: colors.slateGray },
   jarChipTextActive: { color: colors.pureWhite },
   numInput: {

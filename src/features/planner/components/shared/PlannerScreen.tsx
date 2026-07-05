@@ -64,7 +64,7 @@ export function PlannerScreen() {
         <MyMonthPage data={data} activeFilter={activeFilter} onFilterChange={setActiveFilter} {...pageProps} />
       )}
       {activeTab === 'listas' && (
-        <ListsPage listas={data.listas} {...pageProps} />
+        <ListsPage {...pageProps} />
       )}
       {activeTab === 'recurrentes' && (
         <RecurringPage recurrentes={recurrentes} activeFilter={activeFilter} onFilterChange={setActiveFilter} layout={layout} actions={recurrenteActions} />

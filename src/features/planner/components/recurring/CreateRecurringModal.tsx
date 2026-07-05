@@ -1,17 +1,18 @@
 /**
  * CreateRecurringModal — Component
  *
- * @what     Modal formulario en 2 pasos para crear un recurrente nuevo: Ingreso, Gasto o Deuda.
+ * @what     Modal formulario para crear un recurrente nuevo: Ingreso, Gasto o Deuda. Siempre 4
+ *           pasos, uno por pregunta — más liviano que amontonar toggles en una sola pantalla.
  * @receives 4 props: visible, initialType, onClose, onCreate
- * @processes Paso 1 (RecurringFormStep1): tipo + nombre + monto. Paso 2 (RecurringFormStep2):
- *           día/mes + frecuencia o cuotas + jarra de pago. El ícono del header cambia de "cerrar"
- *           (paso 1) a "atrás" (paso 2) — atrás en paso 2 vuelve a paso 1, no cierra el modal.
- *           Formulario largo dividido para no scrollear 7 campos de una — mismo espíritu que
- *           Quick Add / Registro de Ingreso (monto → destino). Sheet sube con el teclado
- *           (Keyboard listeners + marginBottom), mismo comportamiento que TransferSheet. Cambiar
- *           Tipo resetea nombre/monto/frecuencia/cuotas a su default — "Nombre" y "Acreedor" son
- *           el mismo campo con significado distinto, y el monto tampoco debe sobrevivir al
- *           cambiar de tipo.
+ * @processes Secuencia (mismos 4 pasos, contenido cambia según tipo): RecurringFormStep1 (datos) →
+ *           RecurringDayStep (Ingreso/Gasto, ¿qué día se cobra/paga?) o RecurringPaymentDateStep
+ *           (Deuda, ¿qué día se paga? + link a calendario por mes) → RecurringDurationStep
+ *           (Ingreso/Gasto, ¿tiene fecha de fin?) o RecurringInstallmentsStep (Deuda, ¿cuántas
+ *           cuotas tiene?) → RecurringJarSelector. El ícono del header retrocede un paso; en el
+ *           primero cierra el modal. Sheet sube con el teclado (Keyboard listeners + marginBottom),
+ *           mismo comportamiento que TransferSheet. Cambiar Tipo resetea nombre/monto/frecuencia/
+ *           fecha/cuotas a su default y vuelve al paso 1 — "Nombre" y "Acreedor" son el mismo
+ *           campo con significado distinto.
  * @returns  JSX — bottom sheet slide-up con el paso activo y su CTA.
  * @props    4: visible, initialType, onClose, onCreate
  */
@@ -23,23 +24,30 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, typography, spacing, radius } from '@shared/styles';
 import { MoniButton } from '@shared/components';
 import { RecurringFormStep1 } from './RecurringFormStep1';
-import { RecurringFormStep2 } from './RecurringFormStep2';
+import { RecurringDayStep } from './RecurringDayStep';
+import { RecurringDurationStep } from './RecurringDurationStep';
+import { RecurringPaymentDateStep } from './RecurringPaymentDateStep';
+import { RecurringInstallmentsStep } from './RecurringInstallmentsStep';
+import { RecurringJarSelector } from './RecurringJarSelector';
+import { emptyRecurringForm, resetOnTipoChange, primaryDay } from './recurringFormHelpers';
 import type { AgendaFilter, RecurringForm, CreateRecurringData } from '../../types';
 
-function emptyForm(tipo: AgendaFilter): RecurringForm {
-  return { tipo, nombre: '', monto: '', dia: 1, mes: 1, frecuencia: 'indefinido', cuotasTotales: 12, cuotasPagadas: 0, jarra: 'libre' };
-}
+type StepKey = 'datos' | 'fecha' | 'cuotas' | 'jarra';
+const STEPS: StepKey[] = ['datos', 'fecha', 'cuotas', 'jarra'];
 
 type Props = { visible: boolean; initialType: AgendaFilter; onClose: () => void; onCreate: (data: CreateRecurringData) => void };
 
 export function CreateRecurringModal({ visible, initialType, onClose, onCreate }: Props) {
   const insets = useSafeAreaInsets();
-  const [form, setForm] = useState<RecurringForm>(() => emptyForm(initialType));
-  const [step, setStep] = useState<1 | 2>(1);
+  const [form, setForm] = useState<RecurringForm>(() => emptyRecurringForm(initialType));
+  const [stepIndex, setStepIndex] = useState(0);
   const [kbHeight, setKbHeight] = useState(0);
+  const isDeuda    = form.tipo === 'deudas';
+  const currentKey = STEPS[stepIndex];
+  const lastIndex  = STEPS.length - 1;
 
   useEffect(() => {
-    if (visible) { setForm(emptyForm(initialType)); setStep(1); }
+    if (visible) { setForm(emptyRecurringForm(initialType)); setStepIndex(0); }
   }, [visible, initialType]);
 
   useEffect(() => {
@@ -55,25 +63,21 @@ export function CreateRecurringModal({ visible, initialType, onClose, onCreate }
   }, []);
 
   function setField<K extends keyof RecurringForm>(key: K, val: RecurringForm[K]) {
-    setForm((prev) => {
-      if (key === 'tipo') {
-        return { ...prev, tipo: val as AgendaFilter, nombre: '', monto: '', frecuencia: 'indefinido', cuotasTotales: 12, cuotasPagadas: 0 };
-      }
-      return { ...prev, [key]: val };
-    });
+    if (key === 'tipo') setStepIndex(0);
+    setForm((prev) => key === 'tipo' ? resetOnTipoChange(prev, val as AgendaFilter) : { ...prev, [key]: val });
   }
 
   const parsedMonto  = parseFloat(form.monto.replace(',', '.'));
   const canContinue  = form.nombre.trim() !== '' && !isNaN(parsedMonto) && parsedMonto > 0;
 
   function handleHeaderIcon() {
-    if (step === 2) setStep(1);
+    if (stepIndex > 0) setStepIndex(stepIndex - 1);
     else onClose();
   }
 
   function handleSave() {
     if (!canContinue) return;
-    onCreate({ name: form.nombre.trim(), amount: parsedMonto, day: form.dia, filter: form.tipo });
+    onCreate({ name: form.nombre.trim(), amount: parsedMonto, day: primaryDay(form), filter: form.tipo });
     onClose();
   }
 
@@ -85,16 +89,22 @@ export function CreateRecurringModal({ visible, initialType, onClose, onCreate }
           <View style={styles.sheetHeader}>
             <Text style={styles.sheetTitle}>Programar compromiso</Text>
             <Pressable onPress={handleHeaderIcon} hitSlop={8}>
-              <MaterialIcons name={step === 2 ? 'arrow-back' : 'close'} size={24} color={colors.slateGray} />
+              <MaterialIcons name={stepIndex > 0 ? 'arrow-back' : 'close'} size={24} color={colors.slateGray} />
             </Pressable>
           </View>
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.body, { paddingBottom: insets.bottom + spacing.stackLg }]} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets>
-            {step === 1
-              ? <RecurringFormStep1 form={form} onChange={setField} />
-              : <RecurringFormStep2 form={form} onChange={setField} />
-            }
-            {step === 1
-              ? <MoniButton label="Continuar" onPress={() => setStep(2)} disabled={!canContinue} />
+            {currentKey === 'datos' && <RecurringFormStep1 form={form} onChange={setField} />}
+            {currentKey === 'fecha' && (isDeuda
+              ? <RecurringPaymentDateStep form={form} onChange={setField} />
+              : <RecurringDayStep form={form} onChange={setField} />
+            )}
+            {currentKey === 'cuotas' && (isDeuda
+              ? <RecurringInstallmentsStep form={form} onChange={setField} />
+              : <RecurringDurationStep form={form} onChange={setField} />
+            )}
+            {currentKey === 'jarra' && <RecurringJarSelector jarra={form.jarra} onChange={(v) => setField('jarra', v)} />}
+            {stepIndex < lastIndex
+              ? <MoniButton label="Continuar" onPress={() => setStepIndex(stepIndex + 1)} disabled={!canContinue} />
               : <MoniButton label="Programar compromiso" onPress={handleSave} disabled={!canContinue} />
             }
           </ScrollView>

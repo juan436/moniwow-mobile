@@ -1,15 +1,14 @@
 /**
  * EditRecurringModal — Component
  *
- * @what     Modal formulario en 2 pasos para editar o eliminar un recurrente existente.
+ * @what     Modal formulario para editar o eliminar un recurrente existente. Siempre 4 pasos, uno
+ *           por pregunta — mismo patrón que CreateRecurringModal.
  * @receives 5 props: visible, item, onClose, onSave, onDelete
- * @processes Paso 1 (RecurringFormStep1): tipo + nombre + monto + "Eliminar" (acceso rápido, no
- *           obliga a pasar por el paso 2 solo para borrar). Paso 2 (RecurringFormStep2): día/mes +
- *           frecuencia o cuotas + jarra + "Guardar cambios". Mismo patrón de pasos que
- *           CreateRecurringModal. Sheet sube con el teclado (Keyboard listeners + marginBottom),
- *           mismo comportamiento que TransferSheet. Cambiar Tipo resetea nombre/monto/frecuencia/
- *           cuotas a su default — "Nombre" y "Acreedor" son el mismo campo con significado
- *           distinto, y el monto tampoco debe sobrevivir al cambiar de tipo.
+ * @processes Paso 1: tipo + nombre + monto + "Eliminar" (acceso rápido, no obliga a pasar por los
+ *           pasos siguientes solo para borrar). Mismos 4 pasos que CreateRecurringModal, contenido
+ *           cambia según tipo. Sheet sube con el teclado (Keyboard listeners + marginBottom),
+ *           mismo comportamiento que TransferSheet. Cambiar Tipo resetea el form y vuelve al
+ *           paso 1.
  * @returns  JSX — bottom sheet slide-up con el paso activo y su CTA.
  * @props    5: visible, item, onClose, onSave, onDelete
  */
@@ -21,12 +20,16 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, typography, spacing, radius } from '@shared/styles';
 import { MoniButton } from '@shared/components';
 import { RecurringFormStep1 } from './RecurringFormStep1';
-import { RecurringFormStep2 } from './RecurringFormStep2';
+import { RecurringDayStep } from './RecurringDayStep';
+import { RecurringDurationStep } from './RecurringDurationStep';
+import { RecurringPaymentDateStep } from './RecurringPaymentDateStep';
+import { RecurringInstallmentsStep } from './RecurringInstallmentsStep';
+import { RecurringJarSelector } from './RecurringJarSelector';
+import { recurringFormFromItem, resetOnTipoChange, primaryDay } from './recurringFormHelpers';
 import type { AgendaFilter, RecurringForm, RecurringDisplay, SaveRecurringData } from '../../types';
 
-function formFromItem(item: RecurringDisplay): RecurringForm {
-  return { tipo: item.filter, nombre: item.name, monto: item.amount.toString(), dia: item.day, mes: 1, frecuencia: 'indefinido', cuotasTotales: 12, cuotasPagadas: 0, jarra: 'libre' };
-}
+type StepKey = 'datos' | 'fecha' | 'cuotas' | 'jarra';
+const STEPS: StepKey[] = ['datos', 'fecha', 'cuotas', 'jarra'];
 
 type Props = {
   visible: boolean;
@@ -39,11 +42,11 @@ type Props = {
 export function EditRecurringModal({ visible, item, onClose, onSave, onDelete }: Props) {
   const insets = useSafeAreaInsets();
   const [form, setForm] = useState<RecurringForm | null>(null);
-  const [step, setStep] = useState<1 | 2>(1);
+  const [stepIndex, setStepIndex] = useState(0);
   const [kbHeight, setKbHeight] = useState(0);
 
   useEffect(() => {
-    if (visible && item) { setForm(formFromItem(item)); setStep(1); }
+    if (visible && item) { setForm(recurringFormFromItem(item)); setStepIndex(0); }
   }, [visible, item]);
 
   useEffect(() => {
@@ -59,28 +62,29 @@ export function EditRecurringModal({ visible, item, onClose, onSave, onDelete }:
   }, []);
 
   function setField<K extends keyof RecurringForm>(key: K, val: RecurringForm[K]) {
+    if (key === 'tipo') setStepIndex(0);
     setForm((prev) => {
       if (!prev) return prev;
-      if (key === 'tipo') {
-        return { ...prev, tipo: val as AgendaFilter, nombre: '', monto: '', frecuencia: 'indefinido', cuotasTotales: 12, cuotasPagadas: 0 };
-      }
-      return { ...prev, [key]: val };
+      return key === 'tipo' ? resetOnTipoChange(prev, val as AgendaFilter) : { ...prev, [key]: val };
     });
   }
 
   if (!form) return null;
 
-  const parsedMonto = parseFloat(form.monto.replace(',', '.'));
-  const canContinue = form.nombre.trim() !== '' && !isNaN(parsedMonto) && parsedMonto > 0;
+  const isDeuda      = form.tipo === 'deudas';
+  const currentKey   = STEPS[stepIndex];
+  const lastIndex    = STEPS.length - 1;
+  const parsedMonto  = parseFloat(form.monto.replace(',', '.'));
+  const canContinue  = form.nombre.trim() !== '' && !isNaN(parsedMonto) && parsedMonto > 0;
 
   function handleHeaderIcon() {
-    if (step === 2) setStep(1);
+    if (stepIndex > 0) setStepIndex(stepIndex - 1);
     else onClose();
   }
 
   function handleSave() {
     if (!canContinue || !item || !form) return;
-    onSave({ id: item.id, name: form.nombre.trim(), amount: parsedMonto, day: form.dia, filter: form.tipo });
+    onSave({ id: item.id, name: form.nombre.trim(), amount: parsedMonto, day: primaryDay(form), filter: form.tipo });
     onClose();
   }
 
@@ -98,22 +102,25 @@ export function EditRecurringModal({ visible, item, onClose, onSave, onDelete }:
           <View style={styles.sheetHeader}>
             <Text style={styles.sheetTitle}>Editar compromiso</Text>
             <Pressable onPress={handleHeaderIcon} hitSlop={8}>
-              <MaterialIcons name={step === 2 ? 'arrow-back' : 'close'} size={24} color={colors.slateGray} />
+              <MaterialIcons name={stepIndex > 0 ? 'arrow-back' : 'close'} size={24} color={colors.slateGray} />
             </Pressable>
           </View>
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.body, { paddingBottom: insets.bottom + spacing.stackLg }]} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets>
-            {step === 1 ? (
-              <>
-                <RecurringFormStep1 form={form} onChange={setField} />
-                <MoniButton label="Continuar" onPress={() => setStep(2)} disabled={!canContinue} />
-                <MoniButton label="Eliminar compromiso" onPress={handleDelete} variant="danger" />
-              </>
-            ) : (
-              <>
-                <RecurringFormStep2 form={form} onChange={setField} />
-                <MoniButton label="Guardar cambios" onPress={handleSave} disabled={!canContinue} />
-              </>
+            {currentKey === 'datos' && <RecurringFormStep1 form={form} onChange={setField} lockTipo />}
+            {currentKey === 'fecha' && (isDeuda
+              ? <RecurringPaymentDateStep form={form} onChange={setField} />
+              : <RecurringDayStep form={form} onChange={setField} />
             )}
+            {currentKey === 'cuotas' && (isDeuda
+              ? <RecurringInstallmentsStep form={form} onChange={setField} />
+              : <RecurringDurationStep form={form} onChange={setField} />
+            )}
+            {currentKey === 'jarra' && <RecurringJarSelector jarra={form.jarra} onChange={(v) => setField('jarra', v)} />}
+            {stepIndex < lastIndex
+              ? <MoniButton label="Continuar" onPress={() => setStepIndex(stepIndex + 1)} disabled={!canContinue} />
+              : <MoniButton label="Guardar cambios" onPress={handleSave} disabled={!canContinue} />
+            }
+            {stepIndex === 0 && <MoniButton label="Eliminar compromiso" onPress={handleDelete} variant="danger" />}
           </ScrollView>
         </View>
       </Pressable>

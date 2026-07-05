@@ -6,12 +6,16 @@
  * @processes scrollY compartido entre páginas. Header se oculta al bajar y reaparece al subir.
  *           Al cambiar página, scrollY se resetea a 0 y header reaparece. `pageProps`/`indicator`/
  *           `data` por página van memoizados — objetos inline como prop JSX causan re-render en
- *           cada render del padre (code_rules §2).
+ *           cada render del padre (code_rules §2). Lee `?page=goals` de la URL (ej. desde el
+ *           banner de progreso de metas del dashboard) y salta directo a la página Mis Sueños
+ *           (índice 3) — el tab no se desmonta al cambiar de tab de la app, por eso el salto se
+ *           hace vía ref imperativo (`pagerRef.setPage`), no solo `initialPage`.
  * @returns  JSX — statusBarBg fijo + PagerView + headerFloat animado.
  * @props    —
  */
-import { useCallback, useMemo, useState, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import { View, Animated, StyleSheet } from 'react-native';
+import { useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import PagerView from 'react-native-pager-view';
 
@@ -25,13 +29,24 @@ import { GoalsSummaryPage } from '../goals-summary/GoalsSummaryPage';
 
 const PAGE_COUNT   = 4;
 const INITIAL_PAGE = 1;
+const GOALS_PAGE   = 3;
 
 export function AuditScreen() {
   const insets = useSafeAreaInsets();
-  const [activePage, setActivePage]     = useState(INITIAL_PAGE);
+  const { page: pageParam } = useLocalSearchParams<{ page?: string }>();
+  const startPage = pageParam === 'goals' ? GOALS_PAGE : INITIAL_PAGE;
+  const [activePage, setActivePage]     = useState(startPage);
   const [headerHeight, setHeaderHeight] = useState(0);
-  const scrollY = useRef(new Animated.Value(0)).current;
-  const data    = useAudit();
+  const scrollY  = useRef(new Animated.Value(0)).current;
+  const pagerRef = useRef<PagerView>(null);
+  const data     = useAudit();
+
+  useEffect(() => {
+    if (pageParam === 'goals') {
+      pagerRef.current?.setPage(GOALS_PAGE);
+      setActivePage(GOALS_PAGE);
+    }
+  }, [pageParam]);
 
   const headerTranslateY = scrollY.interpolate({
     inputRange:  [0, headerHeight],
@@ -63,8 +78,9 @@ export function AuditScreen() {
   return (
     <View style={styles.screen}>
       <PagerView
+        ref={pagerRef}
         style={styles.pager}
-        initialPage={INITIAL_PAGE}
+        initialPage={startPage}
         onPageSelected={(e) => handlePageSelected(e.nativeEvent.position)}
       >
         <View key="0" style={styles.page}>

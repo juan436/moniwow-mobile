@@ -3,7 +3,9 @@
  *
  * @what     Modal bottom sheet para crear una nueva lista de compras.
  * @receives 2 props: visible, onClose
- * @processes Form local: nombre, emoji, jarra. Valida nombre no vacío.
+ * @processes Form local: nombre, emoji, jarra. Valida nombre no vacío. Jarra usa
+ *           RecurringJarSelector (MaterialIcons reales) — antes tenía su propio set de emoji
+ *           Unicode embebido en el label, inconsistente con el resto de la app.
  * @returns  JSX — bottom sheet slide-up con campos, selector jarra y CTA.
  * @props    2: visible, onClose
  */
@@ -14,6 +16,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { colors, typography, spacing, radius } from '@shared/styles';
 import { MoniInput, MoniButton } from '@shared/components';
+import { RecurringJarSelector } from '../recurring/RecurringJarSelector';
+import type { RecurringJar } from '../../types';
 
 const EMOJI_SIZE = 48;
 const EMOJI_GAP  = 8;
@@ -26,19 +30,7 @@ const EMOJIS = [
   '🍽️', '🧸', '💡', '🌿', '👶', '🏠',
 ];
 
-const JARRAS = [
-  { key: 'hogar',       label: '🏠 Hogar'       },
-  { key: 'goals',       label: '💰 Metas'       },
-  { key: 'libre',       label: '🍃 Libre'       },
-  { key: 'transporte',  label: '🚗 Transporte'  },
-  { key: 'salud',       label: '❤️ Salud'       },
-  { key: 'educacion',   label: '📚 Educación'   },
-  { key: 'viajes',      label: '✈️ Viajes'      },
-  { key: 'emergencias', label: '🛡️ Emergencias' },
-  { key: 'ocio',        label: '🎮 Ocio'        },
-];
-
-type Form = { nombre: string; emoji: string; jarra: string };
+type Form = { nombre: string; emoji: string; jarra: RecurringJar };
 function emptyForm(): Form { return { nombre: '', emoji: '', jarra: 'libre' }; }
 
 type Props = { visible: boolean; onClose: () => void };
@@ -90,16 +82,7 @@ export function CreateListModal({ visible, onClose }: Props) {
                 </View>
               </ScrollView>
             </View>
-            <View style={styles.block}>
-              <Text style={styles.fieldLabel}>Jarra</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.jarraRow}>
-                {JARRAS.map((j) => (
-                  <Pressable key={j.key} style={[styles.jarraItem, form.jarra === j.key && styles.jarraActive]} onPress={() => setField('jarra', j.key)}>
-                    <Text style={[styles.jarraText, form.jarra === j.key && styles.jarraTextActive]}>{j.label}</Text>
-                  </Pressable>
-                ))}
-              </ScrollView>
-            </View>
+            <RecurringJarSelector jarra={form.jarra} onChange={(v) => setField('jarra', v)} />
             <MoniButton label="Añadir" onPress={handleSave} disabled={!canSave} />
           </ScrollView>
         </View>
@@ -128,9 +111,4 @@ const styles = StyleSheet.create({
   emojiItem:     { width: EMOJI_SIZE, height: EMOJI_SIZE, borderRadius: radius.md, borderWidth: 1, borderColor: colors.outlineVariant, alignItems: 'center', justifyContent: 'center' },
   emojiItemActive: { borderColor: colors.navyDark, backgroundColor: colors.navyDark + '18' },
   emojiGlyph:    { fontSize: 24, includeFontPadding: false },
-  jarraRow:       { flexDirection: 'row', gap: spacing.stackSm },
-  jarraItem:      { paddingVertical: spacing.stackSm, paddingHorizontal: spacing.gutter, borderRadius: radius.full, borderWidth: 1, borderColor: colors.outlineVariant, alignItems: 'center' },
-  jarraActive:    { backgroundColor: colors.navyDark, borderColor: colors.navyDark },
-  jarraText:      { ...typography.labelMd, color: colors.slateGray },
-  jarraTextActive: { color: colors.pureWhite },
 });

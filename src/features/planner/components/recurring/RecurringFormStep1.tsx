@@ -3,10 +3,13 @@
  *
  * @what     Paso 1 del formulario de compromiso recurrente: tipo (Ingreso/Gasto/Deuda) + nombre +
  *           monto. Lo esencial, antes de programar los detalles.
- * @receives 2 props: form, onChange
- * @processes Presentación pura, delega estado al padre (Create/EditRecurringModal).
- * @returns  JSX — Fragment: selector tipo + MoniInput nombre + input monto.
- * @props    2: form, onChange
+ * @receives 3 props: form, onChange, lockTipo
+ * @processes Presentación pura, delega estado al padre (Create/EditRecurringModal). `lockTipo`
+ *           oculta el selector de tipo — no tiene sentido cambiar Ingreso↔Gasto↔Deuda al editar un
+ *           compromiso existente (cada tipo tiene su propia estructura de fecha/cuotas). Solo
+ *           CreateRecurringModal lo deja editable.
+ * @returns  JSX — Fragment: selector tipo (si no lockTipo) + MoniInput nombre + input monto.
+ * @props    3: form, onChange, lockTipo
  */
 import { View, Text, Pressable, TextInput, StyleSheet } from 'react-native';
 
@@ -20,20 +23,23 @@ const TIPO_LABEL: Record<AgendaFilter, string> = { ingresos: 'Ingreso', gastos: 
 type Props = {
   form: RecurringForm;
   onChange: <K extends keyof RecurringForm>(key: K, val: RecurringForm[K]) => void;
+  lockTipo?: boolean;
 };
 
-export function RecurringFormStep1({ form, onChange }: Props) {
+export function RecurringFormStep1({ form, onChange, lockTipo }: Props) {
   const isDeuda = form.tipo === 'deudas';
 
   return (
     <>
-      <View style={styles.segRow}>
-        {TIPOS.map((t) => (
-          <Pressable key={t} style={[styles.seg, form.tipo === t && styles.segActive]} onPress={() => onChange('tipo', t)}>
-            <Text style={[styles.segText, form.tipo === t && styles.segTextActive]}>{TIPO_LABEL[t]}</Text>
-          </Pressable>
-        ))}
-      </View>
+      {!lockTipo && (
+        <View style={styles.segRow}>
+          {TIPOS.map((t) => (
+            <Pressable key={t} style={[styles.seg, form.tipo === t && styles.segActive]} onPress={() => onChange('tipo', t)}>
+              <Text style={[styles.segText, form.tipo === t && styles.segTextActive]}>{TIPO_LABEL[t]}</Text>
+            </Pressable>
+          ))}
+        </View>
+      )}
       <MoniInput
         label={isDeuda ? 'Acreedor' : 'Nombre'}
         value={form.nombre}

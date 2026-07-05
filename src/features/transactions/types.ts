@@ -17,6 +17,22 @@ export type TransactionItem = {
   amount: number;
 };
 
+/** Ítem en borrador durante el alta (Quick Add, paso Detalle): solo nombre, sin precio.
+ *  El precio por ítem llegará con el escaneo IA de recibos (fuera de v1). */
+export type DraftPurchaseItem = {
+  id: string;
+  name: string;
+};
+
+/** Lista planificada, forma neutra para el picker del Quick Add. La feature planner se mapea a
+ *  este tipo en el composition root (app/) — transactions/ no importa planner/ directamente. */
+export type PickableList = {
+  id: string;
+  name: string;
+  emoji: string;
+  itemNames: string[];
+};
+
 export type TransactionDisplay = {
   id: string;
   jarId: string;

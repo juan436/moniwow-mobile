@@ -3,31 +3,31 @@
  *
  * @what     Tab Listas: botón nueva lista + mic contextual + tarjetas de listas de compras.
  * @receives 3 props: listas, scrollY, topOffset
- * @processes Long press card → selección. Mic cambia visual según selección. Tap mic → graba (loop pulso radial).
+ * @processes Long press card → selección. Con lista seleccionada: mic (add por audio) + Limpiar
+ *           (deschulea las casillas para reusar la lista). Tap mic → graba (loop pulso radial).
  * @returns  JSX — ScrollView vertical.
  * @props    3: listas, scrollY, topOffset
  */
 import { useState, useCallback, useRef } from 'react';
-import { Animated, View, Pressable, StyleSheet } from 'react-native';
+import { Animated, View, Text, Pressable, StyleSheet } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 
-import { colors, spacing, radius } from '@shared/styles';
+import { colors, typography, spacing, radius } from '@shared/styles';
 import { MoniButton } from '@shared/components';
 import { ListCard } from './ListCard';
 import { CreateListModal } from './CreateListModal';
 import { CreateItemModal } from './CreateItemModal';
-import type { ListDisplay } from '../../types';
+import { useLists } from '../../hooks/useLists';
 
 const MIC_SIZE = 36;
 
 type Props = {
-  listas: ListDisplay[];
   scrollY: Animated.Value;
   topOffset: number;
 };
 
-export function ListsPage({ listas, scrollY, topOffset }: Props) {
-  const [allListas, setAllListas]                 = useState(listas);
+export function ListsPage({ scrollY, topOffset }: Props) {
+  const { listas, toggleItem, clearList }         = useLists();
   const [showAnadirLista, setShowAnadirLista]     = useState(false);
   const [itemTarget, setItemTarget]               = useState<{ listaId: string; listaName: string } | null>(null);
   const [selectedListaId, setSelectedListaId]     = useState<string | null>(null);
@@ -35,11 +35,6 @@ export function ListsPage({ listas, scrollY, topOffset }: Props) {
   const pulseAnim                                 = useRef(new Animated.Value(0)).current;
   const loopRef                                   = useRef<Animated.CompositeAnimation | null>(null);
 
-  const handleToggle = useCallback((listaId: string, itemId: string) => {
-    setAllListas((prev) => prev.map((lista) => lista.id !== listaId ? lista :
-      { ...lista, items: lista.items.map((item) => item.id !== itemId ? item : { ...item, isChecked: !item.isChecked }) }
-    ));
-  }, []);
   const handleAnadir     = useCallback(() => setShowAnadirLista(true), []);
   const handleAddItem    = useCallback((listaId: string, listaName: string) => setItemTarget({ listaId, listaName }), []);
   const handleCloseLista = useCallback(() => setShowAnadirLista(false), []);
@@ -48,6 +43,10 @@ export function ListsPage({ listas, scrollY, topOffset }: Props) {
   const handleLongPress = useCallback((listaId: string) => {
     setSelectedListaId((prev) => prev === listaId ? null : listaId);
   }, []);
+
+  const handleClear = useCallback(() => {
+    if (selectedListaId !== null) clearList(selectedListaId);
+  }, [selectedListaId, clearList]);
 
   const handleMic = useCallback(() => {
     if (isRecording) {
@@ -77,6 +76,12 @@ export function ListsPage({ listas, scrollY, topOffset }: Props) {
           <View style={styles.btnWrapper}>
             <MoniButton label="Añadir" onPress={handleAnadir} size="sm" />
           </View>
+          {selectedListaId !== null && (
+            <Pressable style={styles.clearBtn} onPress={handleClear} hitSlop={8}>
+              <MaterialIcons name="clear-all" size={18} color={colors.primary} />
+              <Text style={styles.clearText}>Limpiar</Text>
+            </Pressable>
+          )}
           <View style={styles.micWrapper}>
             {isRecording && (
               <Animated.View style={[styles.micPulse, {
@@ -90,11 +95,11 @@ export function ListsPage({ listas, scrollY, topOffset }: Props) {
           </View>
         </View>
         <View style={styles.list}>
-          {allListas.map((lista) => (
+          {listas.map((lista) => (
             <ListCard
               key={lista.id}
               lista={lista}
-              onToggle={handleToggle}
+              onToggle={toggleItem}
               onAddItem={handleAddItem}
               isSelected={selectedListaId === lista.id}
               onLongPress={handleLongPress}
@@ -123,6 +128,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.marginPage,
   },
   btnWrapper: { alignSelf: 'flex-start' },
+  clearBtn: { flexDirection: 'row', alignItems: 'center', gap: spacing.stackXs, paddingHorizontal: spacing.stackSm, paddingVertical: spacing.stackXs, borderRadius: radius.button, borderWidth: 1, borderColor: colors.primary },
+  clearText: { ...typography.labelSm, color: colors.primary },
   btnMic: {
     padding: spacing.stackSm,
     backgroundColor: colors.pureWhite, borderRadius: radius.button,

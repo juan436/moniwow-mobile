@@ -48,24 +48,6 @@ const MOCK_DATA: AgendaData = {
     { id: 'd3', emoji: '🚗', name: 'Cuota Auto (8/36)', day: 5, amount: 180, isPaid: false, filter: 'deudas' },
     { id: 'd4', emoji: '📲', name: 'Tarjeta Débito Plus', day: 20, amount: 75, isPaid: false, filter: 'deudas' },
   ],
-  listas: [
-    {
-      id: 'l1', emoji: '🛒', name: 'SUPERMERCADO', jarLabel: 'Hogar 🏠',
-      items: [
-        { id: 'li1', name: 'Leche', approxAmount: 2.50, isChecked: false },
-        { id: 'li2', name: 'Huevos', approxAmount: 4.00, isChecked: false },
-        { id: 'li3', name: 'Pan', approxAmount: 1.50, isChecked: true },
-      ],
-    },
-    {
-      id: 'l2', emoji: '🛠️', name: 'FERRETERÍA', jarLabel: 'Hogar 🏠',
-      items: [{ id: 'li4', name: 'Bombillo Sala', isChecked: false }],
-    },
-    {
-      id: 'l3', emoji: '👗', name: 'DESEOS', jarLabel: 'Libre 🍃',
-      items: [{ id: 'li5', name: 'Zapatos Deportivos', isChecked: false }],
-    },
-  ],
 };
 
 const INITIAL_RECURRENTES: RecurringDisplay[] = [

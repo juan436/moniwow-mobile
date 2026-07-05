@@ -57,6 +57,7 @@ export type RecurringActions = {
 };
 
 export type RecurringFrequency = 'indefinido' | 'cuotas';
+export type RecurringDateMode  = 'recurrente' | 'personalizada';
 export type RecurringJar       = 'hogar' | 'goals' | 'libre' | 'transporte' | 'salud' | 'educacion' | 'viajes' | 'emergencias' | 'ocio';
 
 export type RecurringForm = {
@@ -66,6 +67,9 @@ export type RecurringForm = {
   dia:           number;
   mes:           number;
   frecuencia:    RecurringFrequency;
+  modoFecha:     RecurringDateMode;
+  diasFijos:     number[];
+  diasPorMes:    Record<number, number[]>;
   cuotasTotales: number;
   cuotasPagadas: number;
   jarra:         RecurringJar;
@@ -76,5 +80,4 @@ export type AgendaData = {
   totalIngresos: number;
   totalDeudas: number;
   items: AgendaItemDisplay[];
-  listas: ListDisplay[];
 };
