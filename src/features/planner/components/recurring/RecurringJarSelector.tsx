@@ -17,7 +17,7 @@ import type { RecurringJar } from '../../types';
 
 type IconName = ComponentProps<typeof MaterialIcons>['name'];
 
-const JARRAS: { key: RecurringJar; label: string; iconName: IconName }[] = [
+export const RECURRING_JARS: { key: RecurringJar; label: string; iconName: IconName }[] = [
   { key: 'hogar',       label: 'Hogar',        iconName: 'home' },
   { key: 'goals',       label: 'Metas',        iconName: 'savings' },
   { key: 'libre',       label: 'Libre',        iconName: 'account-balance-wallet' },
@@ -36,7 +36,7 @@ export function RecurringJarSelector({ jarra, onChange }: Props) {
     <View style={styles.block}>
       <Text style={styles.fieldLabel}>Jarra de pago</Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.segRow}>
-        {JARRAS.map((j) => (
+        {RECURRING_JARS.map((j) => (
           <Pressable key={j.key} style={[styles.jarraItem, jarra === j.key && styles.jarraItemActive]} onPress={() => onChange(j.key)}>
             <MaterialIcons name={j.iconName} size={16} color={jarra === j.key ? colors.pureWhite : colors.slateGray} />
             <Text style={[styles.segText, jarra === j.key && styles.segTextActive]}>{j.label}</Text>

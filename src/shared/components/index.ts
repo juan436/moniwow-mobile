@@ -10,3 +10,4 @@ export { EmojiPicker } from './EmojiPicker';
 export { IconPicker } from './IconPicker';
 export { SacrificeSlider } from './SacrificeSlider';
 export { Checkbox } from './Checkbox';
+export { WizardSheet } from './WizardSheet';
