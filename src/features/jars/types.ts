@@ -5,11 +5,13 @@
  */
 import type { ComponentProps } from 'react';
 import type { MaterialIcons } from '@expo/vector-icons';
+import type { JarType } from '@core/entities/Jar';
 
 type IconName = ComponentProps<typeof MaterialIcons>['name'];
 
 export type JarDisplay = {
   id: string;
+  type: JarType;
   name: string;
   balance: number;
   iconBg: string;

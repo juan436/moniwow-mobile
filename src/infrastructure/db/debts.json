@@ -1,0 +1,7 @@
+[
+  { "id": "debt1", "description": "Tarjeta Visa Platino Banco Nacional", "amount": 400, "dueDate": "2026-07-15T00:00:00.000Z", "cuotas": 1, "paidCuotas": 0, "origin": "tercero", "createdAt": "2026-01-15T00:00:00.000Z", "workspaceId": "ws1" },
+  { "id": "debt2", "description": "Préstamo Personal Banco Central", "amount": 1100, "dueDate": "2026-07-20T00:00:00.000Z", "cuotas": 12, "paidCuotas": 8, "origin": "cuotas", "createdAt": "2025-11-01T00:00:00.000Z", "workspaceId": "ws1" },
+  { "id": "debt3", "description": "Deuda Familiar Préstamo Mamá", "amount": 300, "dueDate": "2026-07-28T00:00:00.000Z", "cuotas": 10, "paidCuotas": 4, "origin": "tercero", "createdAt": "2026-03-28T00:00:00.000Z", "workspaceId": "ws1" },
+  { "id": "debt4", "description": "Tarjeta MasterCard Black", "amount": 620, "dueDate": "2026-07-20T00:00:00.000Z", "cuotas": 1, "paidCuotas": 0, "origin": "tercero", "createdAt": "2026-02-20T00:00:00.000Z", "workspaceId": "ws1" },
+  { "id": "debt5", "description": "Cuotas Laptop 12 meses", "amount": 180, "dueDate": "2026-07-05T00:00:00.000Z", "cuotas": 12, "paidCuotas": 7, "origin": "cuotas", "createdAt": "2025-12-05T00:00:00.000Z", "workspaceId": "ws1" }
+]

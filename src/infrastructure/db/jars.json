@@ -1,0 +1,18 @@
+[
+  { "id": "libre", "name": "Libre", "type": "libre", "balance": 1285.50, "icon": "account-balance-wallet", "isBlindado": false, "workspaceId": "ws1" },
+  { "id": "hogar", "name": "Hogar", "type": "hogar", "balance": 1200.00, "icon": "home", "isBlindado": false, "targetAmount": 1500, "workspaceId": "ws1" },
+  { "id": "fondo_seguridad", "name": "Fondo Seguridad", "type": "fondo_seguridad", "balance": 5000.00, "icon": "security", "isBlindado": true, "workspaceId": "ws1" },
+  { "id": "goals", "name": "Metas", "type": "goals", "balance": 3000.00, "icon": "savings", "isBlindado": true, "workspaceId": "ws1" },
+  { "id": "viaje", "name": "Viaje Europa", "type": "custom", "balance": 500.00, "icon": "flight", "isBlindado": false, "targetAmount": 1500, "workspaceId": "ws1" },
+  { "id": "salud", "name": "Salud & Médico", "type": "custom", "balance": 750.00, "icon": "favorite", "isBlindado": false, "targetAmount": 1500, "workspaceId": "ws1" },
+  { "id": "educacion", "name": "Educación", "type": "custom", "balance": 200.00, "icon": "school", "isBlindado": false, "targetAmount": 1000, "workspaceId": "ws1" },
+  { "id": "ocio", "name": "Ocio & Diversión", "type": "custom", "balance": 320.00, "icon": "sports-esports", "isBlindado": false, "targetAmount": 550, "workspaceId": "ws1" },
+  { "id": "super", "name": "Supermercado", "type": "custom", "balance": 1200.00, "icon": "shopping-cart", "isBlindado": false, "targetAmount": 1500, "workspaceId": "ws1" },
+  { "id": "ropa", "name": "Ropa", "type": "custom", "balance": 500.00, "icon": "shopping-bag", "isBlindado": false, "targetAmount": 1250, "workspaceId": "ws1" },
+  { "id": "transport", "name": "Transporte", "type": "custom", "balance": 200.00, "icon": "directions-bus", "isBlindado": false, "targetAmount": 650, "workspaceId": "ws1" },
+  { "id": "comida", "name": "Comida", "type": "custom", "balance": 300.00, "icon": "restaurant", "isBlindado": false, "targetAmount": 600, "workspaceId": "ws1" },
+  { "id": "casa", "name": "Casa", "type": "custom", "balance": 400.00, "icon": "home", "isBlindado": false, "targetAmount": 650, "workspaceId": "ws1" },
+  { "id": "auto", "name": "Auto", "type": "custom", "balance": 500.00, "icon": "directions-car", "isBlindado": false, "targetAmount": 700, "workspaceId": "ws1" },
+  { "id": "mascotas", "name": "Mascotas", "type": "custom", "balance": 200.00, "icon": "pets", "isBlindado": false, "targetAmount": 500, "workspaceId": "ws1" },
+  { "id": "servicios", "name": "Servicios", "type": "custom", "balance": 300.00, "icon": "build", "isBlindado": false, "targetAmount": 600, "workspaceId": "ws1" }
+]

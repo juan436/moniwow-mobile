@@ -15,16 +15,16 @@ import { spacing } from '@shared/styles';
 import { MoniInput, Checkbox } from '@shared/components';
 
 type Props = {
-  presupuesto: { checked: boolean; monto: string; onToggle: () => void; onChangeMonto: (v: string) => void };
-  blindado: { checked: boolean; onToggle: () => void };
+  presupuesto: { checked: boolean; monto: string; onToggle: () => void; onChangeMonto: (v: string) => void; disabled?: boolean };
+  blindado: { checked: boolean; onToggle: () => void; disabled?: boolean };
 };
 
 export function JarFlagsField({ presupuesto, blindado }: Props) {
   return (
     <>
       <View style={styles.row}>
-        <Checkbox checked={presupuesto.checked} label="Presupuesto" onToggle={presupuesto.onToggle} />
-        <Checkbox checked={blindado.checked} label="Blindado" onToggle={blindado.onToggle} />
+        <Checkbox checked={presupuesto.checked} label="Presupuesto" onToggle={presupuesto.onToggle} disabled={presupuesto.disabled} />
+        <Checkbox checked={blindado.checked} label="Blindado" onToggle={blindado.onToggle} disabled={blindado.disabled} />
       </View>
       {presupuesto.checked && (
         <MoniInput
@@ -33,6 +33,7 @@ export function JarFlagsField({ presupuesto, blindado }: Props) {
           onChangeText={presupuesto.onChangeMonto}
           placeholder="1500"
           inputType="numeric"
+          disabled={presupuesto.disabled}
         />
       )}
     </>

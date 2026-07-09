@@ -73,7 +73,7 @@ export function TransferSheet({ visible, fromJar, jars, onClose, onTransfer }: P
                 <MaterialIcons name="close" size={24} color={colors.slateGray} />
               </Pressable>
             </View>
-            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.body, { paddingBottom: insets.bottom + spacing.stackLg }]} keyboardShouldPersistTaps="handled">
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.body, { paddingBottom: insets.bottom + spacing.stackSm }]} keyboardShouldPersistTaps="handled">
               <View style={styles.fromCard}>
                 <Text style={styles.fromLabel}>Desde</Text>
                 <Text style={styles.fromName}>{fromJar?.name}</Text>

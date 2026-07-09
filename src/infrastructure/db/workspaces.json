@@ -1,0 +1,3 @@
+[
+  { "id": "ws1", "name": "Mi Hogar", "type": "hogar", "ownerId": "u1", "memberIds": ["u1"] }
+]

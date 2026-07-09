@@ -15,7 +15,10 @@
  *           constante entre estados (disabled/idle/holding) sin trucos de píxeles: los 3 textos
  *           llevan `\n` explícito para ocupar siempre exactamente 2 filas (`numberOfLines={2}`),
  *           así el alto natural no cambia al alternar el texto y el modal contenedor no se redimensiona.
- * @returns  JSX — Track con barra de progreso encogible + thumb 🔥 arrastrable.
+ *           El track se llena por detrás del thumb con el color fuego (`alertOrange`) según avanza
+ *           el arrastre (ancho = translateX + THUMB_SIZE, `Animated.add`) — refuerzo psicológico de
+ *           "compromiso creciente" hasta el umbral.
+ * @returns  JSX — Track que se llena de fuego + barra encogible + thumb 🔥 arrastrable.
  * @props    3: progress, onConfirm, disabled?
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -41,6 +44,7 @@ export function SacrificeSlider({ progress, onConfirm, disabled = false }: Props
   const holdInterval = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const maxX = Math.max(1, trackWidth - THUMB_SIZE);
+  const fillWidth = useMemo(() => Animated.add(translateX, THUMB_SIZE), [translateX]);
 
   function clearHold() {
     if (holdTimer.current) { clearTimeout(holdTimer.current); holdTimer.current = null; }
@@ -99,6 +103,7 @@ export function SacrificeSlider({ progress, onConfirm, disabled = false }: Props
       </View>
 
       <View style={styles.track} onLayout={(e) => setTrackWidth(e.nativeEvent.layout.width)}>
+        <Animated.View style={[styles.trackFill, disabled && styles.trackFillDisabled, { width: fillWidth }]} />
         <GestureDetector gesture={gesture}>
           <Animated.View style={[styles.thumb, disabled && styles.thumbDisabled, { transform: [{ translateX }] }]}>
             <Text style={styles.thumbGlyph}>{isHolding ? holdSeconds : '🔥'}</Text>
@@ -116,8 +121,13 @@ const styles = StyleSheet.create({
   miniFill:  { height: '100%', backgroundColor: colors.goldDreams, borderRadius: radius.full },
   track: {
     height: THUMB_SIZE, borderRadius: radius.full, backgroundColor: colors.surfaceContainerHigh,
-    justifyContent: 'center', paddingHorizontal: 2,
+    justifyContent: 'center', paddingHorizontal: 2, overflow: 'hidden',
   },
+  trackFill: {
+    position: 'absolute', left: 0, top: 0, bottom: 0,
+    backgroundColor: colors.alertOrange, borderRadius: radius.full,
+  },
+  trackFillDisabled: { backgroundColor: colors.outlineVariant },
   thumb: {
     width: THUMB_SIZE, height: THUMB_SIZE, borderRadius: radius.full,
     backgroundColor: colors.alertOrange, alignItems: 'center', justifyContent: 'center',

@@ -2,10 +2,11 @@
  * MoniInput — Component
  *
  * @what     Campo de texto estilizado del design system.
- * @receives 5 props: value, onChangeText, placeholder?, label?, inputType?
- * @processes Maneja estado de foco. inputType controla secureTextEntry y keyboardType.
+ * @receives 6 props: value, onChangeText, placeholder?, label?, inputType?, disabled?
+ * @processes Maneja estado de foco. inputType controla secureTextEntry y keyboardType. `disabled`
+ *           bloquea edición y atenúa (para campos que la regla de negocio no permite editar).
  * @returns  JSX — TextInput con label opcional, h=56, radius=16.
- * @props    5: value, onChangeText, placeholder?, label?, inputType?
+ * @props    6: value, onChangeText, placeholder?, label?, inputType?, disabled?
  */
 import { useState } from 'react';
 import { TextInput, View, Text, StyleSheet } from 'react-native';
@@ -19,9 +20,10 @@ type Props = {
   placeholder?: string;
   label?: string;
   inputType?: InputType;
+  disabled?: boolean;
 };
 
-export function MoniInput({ value, onChangeText, placeholder, label, inputType = 'text' }: Props) {
+export function MoniInput({ value, onChangeText, placeholder, label, inputType = 'text', disabled = false }: Props) {
   const [focused, setFocused] = useState(false);
 
   const isPassword = inputType === 'password';
@@ -34,6 +36,7 @@ export function MoniInput({ value, onChangeText, placeholder, label, inputType =
       <TextInput
         value={value}
         onChangeText={onChangeText}
+        editable={!disabled}
         placeholder={placeholder}
         placeholderTextColor={colors.outlineVariant}
         secureTextEntry={isPassword}
@@ -42,7 +45,7 @@ export function MoniInput({ value, onChangeText, placeholder, label, inputType =
         autoCorrect={!isPassword && !isEmail}
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
-        style={[styles.input, focused && styles.inputFocused]}
+        style={[styles.input, focused && styles.inputFocused, disabled && styles.inputDisabled]}
       />
     </View>
   );
@@ -72,5 +75,9 @@ const styles = StyleSheet.create({
   inputFocused: {
     borderWidth: 1.5,
     borderColor: colors.emeraldSuccess,
+  },
+  inputDisabled: {
+    backgroundColor: colors.surfaceContainerLow,
+    color: colors.slateGray,
   },
 });

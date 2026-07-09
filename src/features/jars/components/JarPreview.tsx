@@ -24,6 +24,7 @@ type Props = { name: string; iconName: IconName | null; targetAmount?: number; i
 export function JarPreview({ name, iconName, targetAmount, isBlindado, balance = 0 }: Props) {
   const display: JarDisplay = {
     id: 'preview',
+    type: 'custom',
     name: name.trim() || 'Jarra sin nombre',
     balance,
     iconBg: colors.emeraldTint,

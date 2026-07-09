@@ -15,7 +15,8 @@
  *           el círculo de MaterialIcons — mezclaba dos lenguajes visuales de ícono en un mismo
  *           modal chico, uno para la jarra y otro por transacción, se sentía inconsistente) y con
  *           un poco más de aire vertical entre filas. onTransfer/onEdit opcionales — dashboard/ no
- *           los pasa (solo lectura), JarsScreen sí.
+ *           los pasa (solo lectura), JarsScreen sí. "Editar jarra" solo aparece si la jarra tiene
+ *           alguna capacidad editable (`jarCapabilities`); Libre/Fondo/Metas no editan nada → sin botón.
  * @returns  JSX — Modal fade centrado, sin scroll anidado.
  * @props    5: item, transactions, onClose, onTransfer?, onEdit?
  */
@@ -26,6 +27,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { colors, typography, spacing, radius, sizes, shadows } from '@shared/styles';
 import { MoniButton } from '@shared/components';
 import { truncateLabel } from '@shared/utils';
+import { jarCapabilities } from '@core/entities/Jar';
 import type { JarDisplay } from '../types';
 import type { TransactionDisplay } from '@features/transactions/types';
 
@@ -42,6 +44,9 @@ type Props = {
 export function JarDetailModal({ item, transactions, onClose, onTransfer, onEdit }: Props) {
   const insets = useSafeAreaInsets();
   const preview = item ? transactions.filter((t) => t.jarId === item.id).slice(0, 3) : [];
+  // Sin ninguna capacidad editable (Libre/Fondo/Metas) no hay nada que tocar → ocultar "Editar jarra".
+  const caps = item ? jarCapabilities(item.type) : null;
+  const canEdit = !!caps && (caps.canRename || caps.canEditBudget || caps.canToggleBlindado || caps.canDelete);
 
   return (
     <Modal visible={item !== null} transparent animationType="fade" onRequestClose={onClose} statusBarTranslucent navigationBarTranslucent>
@@ -102,7 +107,7 @@ export function JarDetailModal({ item, transactions, onClose, onTransfer, onEdit
           )}
 
           {onTransfer && <MoniButton label="Transferir" onPress={onTransfer} variant="secondary" size="sm" />}
-          {onEdit && <MoniButton label="Editar jarra" onPress={onEdit} size="sm" />}
+          {onEdit && canEdit && <MoniButton label="Editar jarra" onPress={onEdit} size="sm" />}
 
         </Pressable>
       </Pressable>

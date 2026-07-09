@@ -9,6 +9,7 @@
  */
 import { useState, useCallback, useMemo } from 'react';
 import { View, Text, Animated, Pressable, StyleSheet } from 'react-native';
+import { router } from 'expo-router';
 
 import { colors, typography, spacing, radius, shadows, sizes } from '@shared/styles';
 import { truncateLabel } from '@shared/utils';
@@ -30,7 +31,6 @@ export function GoalsSummaryPage({ data, indicator, scrollY, topOffset }: Props)
   const { goalProgress, goalsTotal, metaGlobal, goals } = data;
 
   const [selectedGoal, setSelectedGoal]     = useState<GoalDisplay | null>(null);
-  const handleVerTodos       = useCallback(() => {}, []);
   const handleGoalLongPress  = useCallback((goal: GoalDisplay) => setSelectedGoal(goal), []);
   const handleGoalModalClose = useCallback(() => setSelectedGoal(null), []);
   const progressFillStyle = useMemo(
@@ -73,7 +73,7 @@ export function GoalsSummaryPage({ data, indicator, scrollY, topOffset }: Props)
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Metas Activas</Text>
-          <Pressable hitSlop={8} onPress={handleVerTodos}><Text style={styles.sectionLink}>Ver todos</Text></Pressable>
+          <Pressable hitSlop={8} onPress={() => router.push('/metas')}><Text style={styles.sectionLink}>Ver todos</Text></Pressable>
         </View>
         {goals.map((goal) => (
           <Pressable key={goal.id} style={[styles.goalCard, shadows.card]} onLongPress={() => handleGoalLongPress(goal)} delayLongPress={400}>

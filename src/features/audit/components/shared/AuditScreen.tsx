@@ -1,16 +1,18 @@
 /**
  * AuditScreen — Component (Screen)
  *
- * @what     Pantalla Revisión: header hide-on-scroll + carrusel 4 páginas (Auditoría, MoniAI, Deudas, Resumen Metas).
+ * @what     Pantalla Revisión: carrusel 4 páginas (Auditoría, MoniAI, Deudas, Resumen Metas).
+ *           Content-first — sin AppTopBar: cada página trae su propio hero + los dots (PageIndicator)
+ *           orientan; un título/barra global aquí sería redundante (el contenido cambia al deslizar).
+ *           La barra global (logo/campanita/avatar) vive solo en Dashboard.
  * @receives Ninguna prop — screen raíz del tab Revisión.
- * @processes scrollY compartido entre páginas. Header se oculta al bajar y reaparece al subir.
- *           Al cambiar página, scrollY se resetea a 0 y header reaparece. `pageProps`/`indicator`/
- *           `data` por página van memoizados — objetos inline como prop JSX causan re-render en
- *           cada render del padre (code_rules §2). Lee `?page=goals` de la URL (ej. desde el
- *           banner de progreso de metas del dashboard) y salta directo a la página Mis Sueños
- *           (índice 3) — el tab no se desmonta al cambiar de tab de la app, por eso el salto se
- *           hace vía ref imperativo (`pagerRef.setPage`), no solo `initialPage`.
- * @returns  JSX — statusBarBg fijo + PagerView + headerFloat animado.
+ * @processes scrollY compartido entre páginas (lo consume el onScroll de cada página). `pageProps`/
+ *           `indicator`/`data` por página van memoizados — objetos inline como prop JSX causan
+ *           re-render en cada render del padre (code_rules §2). Lee `?page=goals` de la URL (ej.
+ *           desde el banner de progreso de metas del dashboard) y salta directo a la página Mis
+ *           Sueños (índice 3) — el tab no se desmonta al cambiar de tab de la app, por eso el salto
+ *           se hace vía ref imperativo (`pagerRef.setPage`), no solo `initialPage`.
+ * @returns  JSX — statusBarBg fijo + PagerView (content-first, sin header).
  * @props    —
  */
 import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
@@ -19,8 +21,7 @@ import { useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import PagerView from 'react-native-pager-view';
 
-import { colors } from '@shared/styles';
-import { AppTopBar } from '@shared/components';
+import { colors, spacing } from '@shared/styles';
 import { useAudit } from '../../hooks/useAudit';
 import { OverviewPage } from '../overview/OverviewPage';
 import { MoniAIPage } from '../moni-ai/MoniAIPage';
@@ -35,8 +36,7 @@ export function AuditScreen() {
   const insets = useSafeAreaInsets();
   const { page: pageParam } = useLocalSearchParams<{ page?: string }>();
   const startPage = pageParam === 'goals' ? GOALS_PAGE : INITIAL_PAGE;
-  const [activePage, setActivePage]     = useState(startPage);
-  const [headerHeight, setHeaderHeight] = useState(0);
+  const [activePage, setActivePage] = useState(startPage);
   const scrollY  = useRef(new Animated.Value(0)).current;
   const pagerRef = useRef<PagerView>(null);
   const data     = useAudit();
@@ -48,18 +48,13 @@ export function AuditScreen() {
     }
   }, [pageParam]);
 
-  const headerTranslateY = scrollY.interpolate({
-    inputRange:  [0, headerHeight],
-    outputRange: [0, -headerHeight],
-    extrapolate: 'clamp',
-  });
-
   const handlePageSelected = useCallback((position: number) => {
     setActivePage(position);
     scrollY.setValue(0);
   }, [scrollY]);
 
-  const pageProps = useMemo(() => ({ scrollY, topOffset: headerHeight }), [scrollY, headerHeight]);
+  const topOffset = insets.top + spacing.stackSm;
+  const pageProps = useMemo(() => ({ scrollY, topOffset }), [scrollY, topOffset]);
   const indicator = useMemo(() => ({ count: PAGE_COUNT, active: activePage }), [activePage]);
 
   const auditoriaData = useMemo(
@@ -98,12 +93,6 @@ export function AuditScreen() {
       </PagerView>
 
       <View style={[styles.statusBarBg, { height: insets.top }]} />
-      <Animated.View
-        style={[styles.headerFloat, { transform: [{ translateY: headerTranslateY }] }]}
-        onLayout={(e) => setHeaderHeight(e.nativeEvent.layout.height)}
-      >
-        <AppTopBar />
-      </Animated.View>
     </View>
   );
 }
@@ -112,6 +101,5 @@ const styles = StyleSheet.create({
   screen:      { flex: 1, backgroundColor: colors.background },
   pager:       { flex: 1 },
   page:        { flex: 1 },
-  statusBarBg: { position: 'absolute', top: 0, left: 0, right: 0, zIndex: 20, backgroundColor: colors.pureWhite },
-  headerFloat: { position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10, backgroundColor: colors.pureWhite },
+  statusBarBg: { position: 'absolute', top: 0, left: 0, right: 0, zIndex: 20, backgroundColor: colors.background },
 });

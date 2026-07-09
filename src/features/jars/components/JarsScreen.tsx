@@ -10,13 +10,13 @@
  *           nunca resta directo. Cualquier otra (incluida Fondo Seguridad) abre JarDetailModal, que
  *           a su vez puede abrir TransferSheet o EditJarModal sobre la misma jarra activa
  *           (`activeJar` + `mode`).
- * @returns  JSX — FlatList 2 columnas + JarsListHeader + CreateJarModal + JarDetailModal +
- *           GoalsJarModal + TransferSheet + EditJarModal.
+ * @returns  JSX — content-first (sin AppTopBar; la barra global vive solo en Dashboard): FlatList 2
+ *           columnas liderada por su propio summaryCard + JarsListHeader + CreateJarModal +
+ *           JarDetailModal + GoalsJarModal + TransferSheet + EditJarModal.
  * @props    —
  */
 import { useCallback, useMemo, useState } from 'react';
 import { View, FlatList, StyleSheet } from 'react-native';
-import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { colors, spacing } from '@shared/styles';
@@ -34,7 +34,6 @@ import type { JarDisplay } from '../types';
 const FILLER_ID = '__filler__';
 type Mode = 'detail' | 'edit' | 'transfer' | 'goals' | null;
 
-function handleBack() { router.back(); }
 function RowSeparator() { return <View style={styles.rowSep} />; }
 
 export function JarsScreen() {
@@ -75,8 +74,8 @@ export function JarsScreen() {
   );
 
   const ListHeader = useMemo(() => (
-    <JarsListHeader total={total} count={jars.length} topInset={insets.top} onBack={handleBack} onCreate={handleOpenCreate} />
-  ), [total, jars.length, insets.top, handleOpenCreate]);
+    <JarsListHeader total={total} count={jars.length} onCreate={handleOpenCreate} />
+  ), [total, jars.length, handleOpenCreate]);
 
   return (
     <View style={styles.screen}>
@@ -88,10 +87,10 @@ export function JarsScreen() {
         columnWrapperStyle={styles.row}
         ItemSeparatorComponent={RowSeparator}
         renderItem={renderItem}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing.stackSm }]}
         showsVerticalScrollIndicator={false}
       />
-      <View style={[styles.statusBarCover, { height: insets.top }]} />
+      <View style={[styles.statusBarBg, { height: insets.top }]} />
       <CreateJarModal visible={isCreateVisible} onClose={handleCloseCreate} onCreate={handleCreate} />
       <GoalsJarModal item={mode === 'goals' ? activeJar : null} onClose={handleCloseModals} />
       <JarDetailModal
@@ -120,10 +119,10 @@ export function JarsScreen() {
 }
 
 const styles = StyleSheet.create({
-  screen:         { flex: 1, backgroundColor: colors.background },
-  content:        { paddingHorizontal: spacing.marginPage, paddingBottom: spacing.stackLg * 3 },
-  row:            { gap: spacing.stackMd },
-  rowSep:         { height: spacing.stackMd },
-  filler:         { flex: 1 },
-  statusBarCover: { position: 'absolute', top: 0, left: 0, right: 0, backgroundColor: colors.pureWhite },
+  screen:      { flex: 1, backgroundColor: colors.background },
+  content:     { paddingHorizontal: spacing.marginPage, paddingBottom: spacing.stackLg * 3 },
+  row:         { gap: spacing.stackMd },
+  rowSep:      { height: spacing.stackMd },
+  filler:      { flex: 1 },
+  statusBarBg: { position: 'absolute', top: 0, left: 0, right: 0, zIndex: 20, backgroundColor: colors.background },
 });

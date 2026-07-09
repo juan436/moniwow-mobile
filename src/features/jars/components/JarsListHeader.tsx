@@ -1,14 +1,16 @@
 /**
  * JarsListHeader — Component
  *
- * @what     Header de JarsScreen: back button + título + card resumen de saldo total con botón Añadir.
- * @receives 5 props: total, count, topInset, onBack, onCreate
+ * @what     Header de contenido de JarsScreen: card resumen de saldo total + botón Añadir + título de
+ *           sección. Content-first: la pantalla NO lleva barra global (logo/campanita/avatar vive solo
+ *           en Dashboard) ni back — la summaryCard es el hero que identifica la pantalla.
+ * @receives 3 props: total, count, onCreate
  * @processes Ninguno — presentación pura. Botón "Añadir" vive en la summaryCard (MoniButton
- *           estandarizado), ya no en el header — mismo patrón que GoalsSummaryCard.
- * @returns  JSX — Fragment: header row + summaryCard + sectionTitle.
- * @props    5: total, count, topInset, onBack, onCreate
+ *           estandarizado) — mismo patrón que GoalsSummaryCard.
+ * @returns  JSX — Fragment: summaryCard + sectionTitle.
+ * @props    3: total, count, onCreate
  */
-import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 
 import { colors, typography, spacing, radius, shadows, sizes } from '@shared/styles';
@@ -17,21 +19,12 @@ import { MoniButton } from '@shared/components';
 type Props = {
   total: number;
   count: number;
-  topInset: number;
-  onBack: () => void;
   onCreate: () => void;
 };
 
-export function JarsListHeader({ total, count, topInset, onBack, onCreate }: Props) {
+export function JarsListHeader({ total, count, onCreate }: Props) {
   return (
     <>
-      <View style={[styles.header, { paddingTop: topInset + spacing.stackSm }]}>
-        <Pressable style={styles.backBtn} onPress={onBack}>
-          <MaterialIcons name="arrow-back" size={24} color={colors.navyDark} />
-        </Pressable>
-        <Text style={styles.headerTitle}>Mis jarras</Text>
-      </View>
-
       <View style={[styles.summaryCard, shadows.card]}>
         <View style={styles.summaryRow}>
           <View style={styles.summaryIconWrap}>
@@ -58,26 +51,6 @@ export function JarsListHeader({ total, count, topInset, onBack, onCreate }: Pro
 }
 
 const styles = StyleSheet.create({
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingLeft: spacing.stackMd,
-    paddingRight: spacing.marginPage,
-    paddingBottom: spacing.stackSm,
-    gap: spacing.stackSm,
-    backgroundColor: colors.pureWhite,
-    marginHorizontal: -spacing.marginPage,
-    ...shadows.card,
-  },
-  backBtn: {
-    width: sizes.iconSm,
-    height: sizes.iconSm,
-    borderRadius: radius.full,
-    backgroundColor: colors.surfaceContainerLow,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerTitle: { ...typography.headlineMd, color: colors.navyDark, flex: 1 },
   summaryCard: {
     backgroundColor: colors.pureWhite,
     borderRadius: radius.card,

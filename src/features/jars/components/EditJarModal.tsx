@@ -14,6 +14,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import type { ComponentProps } from 'react';
 
 import { MoniInput, MoniButton, IconPicker, WizardSheet } from '@shared/components';
+import { jarCapabilities } from '@core/entities/Jar';
 import { JarFlagsField } from './JarFlagsField';
 import { JarPreview } from './JarPreview';
 import type { JarDisplay, SaveJarData } from '../types';
@@ -52,6 +53,8 @@ export function EditJarModal({ visible, jar, onClose, onSave, onDelete }: Props)
     setForm((prev) => ({ ...prev, [key]: val }));
   }
 
+  const caps = jar ? jarCapabilities(jar.type) : null;
+
   const parsedMonto = parseFloat(form.monto.replace(',', '.'));
   const step1Ok = form.nombre.trim() !== '' && (!form.tieneObjetivo || (!isNaN(parsedMonto) && parsedMonto > 0));
   const targetAmount = form.tieneObjetivo ? parsedMonto : undefined;
@@ -74,7 +77,7 @@ export function EditJarModal({ visible, jar, onClose, onSave, onDelete }: Props)
     : (
       <>
         <MoniButton label="Guardar cambios" onPress={handleSave} />
-        <MoniButton label="Eliminar jarra" onPress={handleDelete} variant="danger" />
+        {caps?.canDelete && <MoniButton label="Eliminar jarra" onPress={handleDelete} variant="danger" />}
       </>
     );
 
@@ -87,14 +90,15 @@ export function EditJarModal({ visible, jar, onClose, onSave, onDelete }: Props)
     >
       {step === 0 && (
         <>
-          <MoniInput label="Nombre de la jarra" value={form.nombre} onChangeText={(v) => setField('nombre', v)} placeholder="ej. Vacaciones" />
+          <MoniInput label="Nombre de la jarra" value={form.nombre} onChangeText={(v) => setField('nombre', v)} placeholder="ej. Vacaciones" disabled={!caps?.canRename} />
           <JarFlagsField
             presupuesto={{
               checked: form.tieneObjetivo, monto: form.monto,
               onToggle: () => setField('tieneObjetivo', !form.tieneObjetivo),
               onChangeMonto: (v) => setField('monto', v),
+              disabled: !caps?.canEditBudget,
             }}
-            blindado={{ checked: form.isBlindado, onToggle: () => setField('isBlindado', !form.isBlindado) }}
+            blindado={{ checked: form.isBlindado, onToggle: () => setField('isBlindado', !form.isBlindado), disabled: !caps?.canToggleBlindado }}
           />
         </>
       )}
