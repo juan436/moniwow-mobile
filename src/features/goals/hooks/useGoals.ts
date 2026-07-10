@@ -1,46 +1,54 @@
 /**
  * useGoals — Hook
  *
- * @what     Estado y datos mock de la feature Metas (M10): lista de metas + modales crear/editar.
+ * @what     Estado de la feature Metas (M10): lista de metas + modales crear/editar/aportar/sacrificar.
  * @receives —
- * @processes Mock hasta conectar backend. CRUD local: crear, editar, eliminar meta. Modelo "pozo
- *           financiado, luego repartido" (decisión 2026-07-03): `poolTotal` es el saldo de la jarra
- *           Metas (se financia con Transferir desde Libre — no wireado aún, mismo límite mock-stage
- *           que TransferSheet de jars/); `asignado` es la suma de `current` de todas las metas;
- *           `disponible = poolTotal - asignado` es lo que queda para repartir. handleDeposit
- *           (Aportar) mueve de disponible → una meta (`poolTotal` no cambia, solo se reasigna).
- *           handleWithdraw (Slider de Sacrificio) saca dinero de una meta Y de `poolTotal` — ese
- *           dinero sale de Metas hacia Libre de verdad, no vuelve a quedar disponible.
+ * @processes Carga desde la BD (goalRepository → metas; jarRepository → balance de la jarra `goals`).
+ *           Modelo "pozo financiado, luego repartido": `poolTotal` = balance de la jarra Metas (dato
+ *           guardado, toda la plata dentro); `asignado` = Σ `current` de las metas (dato guardado);
+ *           `disponible = poolTotal − asignado` es lo SIN asignar (DERIVADO). handleDeposit (Aportar)
+ *           mueve de disponible → una meta (pool no cambia, se reasigna). handleWithdraw (Slider de
+ *           Sacrificio) saca de una meta Y del pool (sale de Metas hacia Libre de verdad). CRUD en
+ *           estado local sobre lo sembrado (mock-stage, mismo límite que jars/ hasta wirear mutaciones).
  * @returns  { goals, isAddVisible, selectedGoal, poolTotal, asignado, disponible, handleAnadir,
  *            handleCloseAdd, handleCreate, handleCardPress, handleCloseEdit, handleSave,
  *            handleDelete, handleWithdraw, handleDeposit }
  */
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
+import { goalRepository, jarRepository } from '@infrastructure/container';
+import { toGoalItem } from '../mappers';
 import type { GoalItem, CreateGoalData, SaveGoalData } from '../types';
+
+const WORKSPACE_ID = 'ws1'; // mock-stage: único workspace sembrado
+const GOALS_JAR_ID = 'goals';
 
 function recalc(goal: GoalItem, current: number): GoalItem {
   return { ...goal, current, progress: Math.min(100, Math.round((current / goal.target) * 100)) };
 }
 
-const POOL_TOTAL_INITIAL = 50000;
-
-const INITIAL_GOALS: GoalItem[] = [
-  { id: '1', emoji: '🚗', name: 'Mi Carro Nuevo',   statusLabel: 'Progreso Constante', current: 4000,  target: 10000,  progress: 40 },
-  { id: '2', emoji: '✈️', name: 'Viaje a Japón',    statusLabel: 'Apenas comenzando',  current: 500,   target: 5000,   progress: 10 },
-  { id: '3', emoji: '🏠', name: 'Fondo Casa',        statusLabel: 'Vas muy bien',       current: 25000, target: 50000,  progress: 50 },
-  { id: '4', emoji: '💻', name: 'MacBook Pro',       statusLabel: '¡Ya casi!',          current: 3200,  target: 3500,   progress: 91 },
-  { id: '5', emoji: '🎓', name: 'Maestría',          statusLabel: 'En camino',          current: 6000,  target: 20000,  progress: 30 },
-  { id: '6', emoji: '🏖️', name: 'Vacaciones Caribe', statusLabel: 'Soñando despierto',  current: 200,   target: 4000,   progress: 5  },
-  { id: '7', emoji: '💍', name: 'Anillo de Compromiso', statusLabel: 'Guardando en secreto', current: 1800, target: 3000, progress: 60 },
-  { id: '8', emoji: '🛵', name: 'Moto Eléctrica',   statusLabel: 'Progreso Constante', current: 900,   target: 2500,   progress: 36 },
-];
-
 export function useGoals() {
-  const [goals, setGoals] = useState<GoalItem[]>(INITIAL_GOALS);
-  const [poolTotal, setPoolTotal] = useState(POOL_TOTAL_INITIAL);
+  const [goals, setGoals] = useState<GoalItem[]>([]);
+  const [poolTotal, setPoolTotal] = useState(0);
   const [isAddVisible, setIsAddVisible] = useState(false);
   const [selectedGoal, setSelectedGoal] = useState<GoalItem | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    async function load() {
+      const [gs, jars] = await Promise.all([
+        goalRepository.findByWorkspace(WORKSPACE_ID),
+        jarRepository.findByWorkspace(WORKSPACE_ID),
+      ]);
+      if (!active) return;
+      setGoals(gs.map(toGoalItem));
+      setPoolTotal(jars.find((j) => j.id === GOALS_JAR_ID)?.balance ?? 0);
+    }
+    load();
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const asignado   = useMemo(() => goals.reduce((sum, g) => sum + g.current, 0), [goals]);
   const disponible = poolTotal - asignado;

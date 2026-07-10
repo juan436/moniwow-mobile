@@ -17,7 +17,9 @@
 
 ## Conflictos que requieren decisión (reconciliación)
 
-### C1 · Total de Metas (el del mapa)
+### C1 · Total de Metas (el del mapa) — ✅ RESUELTO 2026-07-09
+- **Estructura:** `poolTotal` = `jar('goals').balance` (GUARDADO) · `asignado` = Σ `goal.currentAmount` (GUARDADO) · `disponible` = pool − asignado (DERIVADO). El pozo sin asignar es concepto real. Seed: jarra `goals` balance → 50000 (el 3000 era placeholder). Wireado en `useGoals` (paso 6b).
+
 - `goals.json` = 8 metas de `useGoals` (tab Metas). Suma de `currentAmount` = **41.600**.
 - Descartado: `useAudit` tenía **6 metas distintas** (Honda Civic, AWS…) con total `goalsTotal=39.800`.
 - Además: jarra `goals` tiene `balance=3000` y `useGoals.poolTotal=50000`.

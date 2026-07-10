@@ -12,6 +12,9 @@
       ],
       "@core/*": [
         "src/core/*"
+      ],
+      "@infrastructure/*": [
+        "src/infrastructure/*"
       ]
     }
   },

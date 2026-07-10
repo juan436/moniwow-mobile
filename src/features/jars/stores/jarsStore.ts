@@ -19,7 +19,7 @@ const INITIAL_JARS: JarDisplay[] = [
   { id: 'libre', type: 'libre', name: 'Libre', balance: 1285.50, iconName: 'account-balance-wallet', iconBg: colors.primary + '1A', iconColor: colors.primary },
   { id: 'hogar', type: 'hogar', name: 'Hogar', balance: 1200.00, iconName: 'home', iconBg: colors.inversePrimary + '33', iconColor: colors.primary, progress: 80, targetAmount: 1500 },
   { id: 'fondo_seguridad', type: 'fondo_seguridad', name: 'Fondo Seguridad', balance: 5000.00, iconName: 'security', iconBg: colors.emeraldSuccess + '1A', iconColor: colors.emeraldSuccess, isBlindado: true },
-  { id: 'goals', type: 'goals', name: 'Metas', balance: 3000.00, iconName: 'savings', iconBg: colors.goldDreams + '1A', iconColor: colors.goldDreams, isBlindado: true },
+  { id: 'goals', type: 'goals', name: 'Metas', balance: 50000.00, iconName: 'savings', iconBg: colors.goldDreams + '1A', iconColor: colors.goldDreams, isBlindado: true },
   { id: 'viaje', type: 'custom', name: 'Viaje Europa', balance: 500.00, iconName: 'flight', iconBg: colors.tertiaryContainer + '33', iconColor: colors.tertiary, progress: 35, targetAmount: 1500 },
   { id: 'salud', type: 'custom', name: 'Salud & Médico', balance: 750.00, iconName: 'favorite', iconBg: colors.alertOrange + '1A', iconColor: colors.alertOrange, progress: 50, targetAmount: 1500 },
   { id: 'educacion', type: 'custom', name: 'Educación', balance: 200.00, iconName: 'school', iconBg: colors.secondaryContainer + '4D', iconColor: colors.secondary, progress: 20, targetAmount: 1000 },
