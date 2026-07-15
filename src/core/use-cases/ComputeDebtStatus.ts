@@ -1,0 +1,65 @@
+/**
+ * ComputeDebtStatus — Use Case
+ *
+ * @what     El estado real de una deuda, derivado del libro: qué cuotas pagaste, cuáles debes y
+ *           cuáles van atrasadas.
+ * @receives debt: Debt · txs: Transaction[] · today: Date
+ * @processes La deuda sabe qué meses le TOCABAN (una cuota al mes desde `createdAt`). El libro sabe
+ *           cuáles PAGASTE (gastos con `debtId`, marcados con el `cuotaMonth` que cubren). Restar
+ *           las dos listas da los atrasados. **Nada de esto se guarda**: un `paidCuotas` decía
+ *           "llevas 7" sin decir cuáles, así que no podía saber que te saltaste mayo.
+ *           `overdue` = cuotas de meses ANTERIORES sin pagar (se acumulan; la deuda no corre su
+ *           calendario). `current` = la de este mes, si existe y toca.
+ * @returns  DebtStatus
+ */
+import { Debt } from '../entities/Debt';
+import { Transaction } from '../entities/Transaction';
+import { monthKey } from './ComputeMonthlyTotals';
+
+export interface CuotaStatus {
+  /** Mes que cubre la cuota, 'YYYY-MM'. Es su identidad: la cuota de julio es la de julio. */
+  month: string;
+  number: number;
+  dueDate: Date;
+  amount: number;
+  isPaid: boolean;
+}
+
+export interface DebtStatus {
+  paidCount: number;
+  remaining: number;
+  isPaid: boolean;
+  /** Cuotas vencidas de meses anteriores, sin pagar. Las más viejas primero. */
+  overdue: CuotaStatus[];
+  /** La cuota de este mes, si la deuda ya empezó y aún le quedan. */
+  current: CuotaStatus | null;
+}
+
+export class ComputeDebtStatus {
+  execute(debt: Debt, txs: Transaction[], today: Date): DebtStatus {
+    const paidMonths = new Set(
+      txs
+        .filter((t) => t.debtId === debt.id && t.cuotaMonth !== undefined)
+        .map((t) => t.cuotaMonth as string),
+    );
+
+    const thisMonth = monthKey(today);
+    const cuotas: CuotaStatus[] = [];
+
+    for (let n = 1; n <= debt.cuotas; n += 1) {
+      const dueDate = debt.cuotaDueDate(n);
+      const month   = monthKey(dueDate);
+      cuotas.push({ month, number: n, dueDate, amount: debt.cuotaAmount(), isPaid: paidMonths.has(month) });
+    }
+
+    const paidCount = cuotas.filter((c) => c.isPaid).length;
+
+    return {
+      paidCount,
+      remaining: debt.remainingAmount(paidCount),
+      isPaid: debt.isPaid(paidCount),
+      overdue: cuotas.filter((c) => !c.isPaid && c.month < thisMonth),
+      current: cuotas.find((c) => c.month === thisMonth) ?? null,
+    };
+  }
+}

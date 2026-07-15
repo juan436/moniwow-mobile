@@ -39,7 +39,7 @@ function mapItems(items: Transaction['items']): TransactionItem[] | undefined {
 
 /** Etiqueta de categoría: gasto hormiga se rotula aparte; el resto lleva el nombre de su jarra. */
 function categoryLabel(tx: Transaction, jar: JarPresentation): string {
-  return tx.isHormiga ? 'Hormiga 🐜' : jar.name;
+  return tx.isHormiga() ? 'Hormiga 🐜' : jar.name;
 }
 
 export function toTransactionDisplay(

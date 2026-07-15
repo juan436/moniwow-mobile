@@ -9,7 +9,52 @@
  */
 import type { Goal } from '@core/entities/Goal';
 import type { Debt } from '@core/entities/Debt';
-import type { GoalDisplay, DebtBreakdown } from './types';
+import type { Transaction } from '@core/entities/Transaction';
+import type { MonthTotals } from '@core/use-cases/ComputeMonthlyTotals';
+import type { JarPresentation } from '@shared/styles';
+import type { GoalDisplay, DebtBreakdown, BarChartEntry, LeakDisplay, DistributionEntry } from './types';
+
+const MONTHS = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+
+export function toBarChartEntry(totals: MonthTotals): BarChartEntry {
+  const monthIndex = Number(totals.key.slice(5, 7)) - 1;
+  return {
+    key: totals.key,
+    month: MONTHS[monthIndex],
+    ingresos: totals.ingresos,
+    gastos: totals.gastos,
+  };
+}
+
+/** Distribución: un solo eje, la jarra. El % es sobre el gasto total del mes. */
+export function toDistribution(
+  spending: Map<string, number>,
+  presById: Map<string, JarPresentation>,
+): DistributionEntry[] {
+  const total = [...spending.values()].reduce((sum, v) => sum + v, 0);
+  if (total === 0) return [];
+
+  return [...spending.entries()]
+    .map(([jarId, amount]) => ({
+      id: jarId,
+      label: presById.get(jarId)?.name ?? 'Sin jarra',
+      pct: Math.round((amount / total) * 100),
+      color: presById.get(jarId)?.iconColor ?? '#999999',
+    }))
+    .sort((a, b) => b.pct - a.pct);
+}
+
+/** Fuga interina: un gasto de Libre = una fila. Sin agrupar, sin categoría inventada. */
+export function toLeakDisplay(tx: Transaction, jar: JarPresentation): LeakDisplay {
+  return {
+    id: tx.id,
+    iconName: jar.iconName,
+    name: tx.description,
+    amount: tx.amount,
+    date: `${tx.date.getDate()} ${MONTHS[tx.date.getMonth()]}`,
+    items: [],
+  };
+}
 
 export function toGoalDisplay(goal: Goal): GoalDisplay {
   return {
@@ -23,11 +68,15 @@ export function toGoalDisplay(goal: Goal): GoalDisplay {
 }
 
 /** progress = % de cuotas pagadas (deriva de la entidad, no texto suelto). */
-export function toDebtBreakdown(debt: Debt): DebtBreakdown {
+/**
+ * `amount` = lo que AÚN debes de esa deuda, no lo que pediste. El donut reparte lo que queda vivo.
+ * `paidCount` sale del LIBRO (`ComputeDebtStatus`): cuántas cuotas tienen su gasto registrado.
+ */
+export function toDebtBreakdown(debt: Debt, paidCount: number): DebtBreakdown {
   return {
     id: debt.id,
     label: debt.description,
-    amount: debt.amount,
-    progress: debt.cuotas > 0 ? Math.round((debt.paidCuotas / debt.cuotas) * 100) : 0,
+    amount: debt.remainingAmount(paidCount),
+    progress: debt.cuotas > 0 ? Math.round((paidCount / debt.cuotas) * 100) : 0,
   };
 }

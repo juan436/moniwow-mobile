@@ -1,62 +1,69 @@
 /**
- * listsStore — Store (external, mock)
+ * listsStore — Store (external, sobre repo)
  *
- * @what     Estado compartido de las listas de compra entre tabs (Listas y Quick Add). Sin backend
- *           aún: vive en el módulo + se consume con useSyncExternalStore para que ambos tabs (que
- *           usan hooks separados y se montan por separado) vean y muten el MISMO estado.
+ * @what     Estado compartido de las listas de compra entre tabs (Listas y Quick Add). HIDRATA desde
+ *           listRepository (fuente única) y PERSISTE cada mutación de vuelta al repo — ya no hay una
+ *           lista hardcodeada aquí. Se consume con useSyncExternalStore para que ambos tabs (hooks
+ *           separados, montados por separado) vean y muten el MISMO estado.
  * @receives —
- * @processes Guarda `listas` y notifica a los suscriptores en cada mutación con un snapshot NUEVO
- *           (inmutable) — requisito de useSyncExternalStore para detectar el cambio. Mutadores:
- *           toggleItem (chulea/deschulea uno), clearList (deschulea todos), markPurchased (chulea
- *           todos, lo llama Quick Add al confirmar una compra hecha desde esa lista).
- * @returns  { getSnapshot, subscribe, toggleItem, clearList, markPurchased }
+ * @processes Guarda entidades `List` y publica un snapshot NUEVO (array inmutable) en cada mutación —
+ *           requisito de useSyncExternalStore para detectar el cambio. Cada mutación crea una `List`
+ *           nueva (no muta la vieja) y la manda a listRepository.update. `hydrate` es idempotente:
+ *           carga una sola vez (el primer tab que monte). Mutadores: toggleItem, clearList,
+ *           markPurchased (lo llama Quick Add al confirmar una compra hecha desde esa lista).
+ * @returns  { getSnapshot, subscribe, hydrate, toggleItem, clearList, markPurchased }
  */
-import type { ListDisplay } from '../types';
+import { List, type ListItem } from '@core/entities/List';
+import { listRepository } from '@infrastructure/container';
 
-let listas: ListDisplay[] = [
-  {
-    id: 'l1', emoji: '🛒', name: 'SUPERMERCADO', jarLabel: 'Hogar 🏠',
-    items: [
-      { id: 'li1', name: 'Leche', approxAmount: 2.50, isChecked: false },
-      { id: 'li2', name: 'Huevos', approxAmount: 4.00, isChecked: false },
-      { id: 'li3', name: 'Pan', approxAmount: 1.50, isChecked: true },
-    ],
-  },
-  {
-    id: 'l2', emoji: '🛠️', name: 'FERRETERÍA', jarLabel: 'Hogar 🏠',
-    items: [{ id: 'li4', name: 'Bombillo Sala', isChecked: false }],
-  },
-  {
-    id: 'l3', emoji: '👗', name: 'DESEOS', jarLabel: 'Libre 🍃',
-    items: [{ id: 'li5', name: 'Zapatos Deportivos', isChecked: false }],
-  },
-];
+const WORKSPACE_ID = 'ws1';
 
+let lists: List[] = [];
+let hydrated = false;
 const listeners = new Set<() => void>();
 
-function set(next: ListDisplay[]) {
-  listas = next;
+function emit(next: List[]) {
+  lists = next;
   listeners.forEach((listener) => listener());
 }
 
+function replaceItems(listId: string, items: ListItem[]) {
+  const target = lists.find((l) => l.id === listId);
+  if (!target) return;
+  const updated = new List({
+    id: target.id, name: target.name, emoji: target.emoji,
+    jarId: target.jarId, workspaceId: target.workspaceId, items,
+  });
+  emit(lists.map((l) => (l.id === listId ? updated : l)));
+  void listRepository.update(updated);
+}
+
 export const listsStore = {
-  getSnapshot(): ListDisplay[] {
-    return listas;
+  getSnapshot(): List[] {
+    return lists;
   },
   subscribe(listener: () => void): () => void {
     listeners.add(listener);
     return () => { listeners.delete(listener); };
   },
+  async hydrate(): Promise<void> {
+    if (hydrated) return;
+    hydrated = true;
+    emit(await listRepository.findByWorkspace(WORKSPACE_ID));
+  },
   toggleItem(listId: string, itemId: string) {
-    set(listas.map((l) => l.id !== listId ? l
-      : { ...l, items: l.items.map((i) => i.id !== itemId ? i : { ...i, isChecked: !i.isChecked }) }));
+    const target = lists.find((l) => l.id === listId);
+    if (!target) return;
+    replaceItems(listId, target.items.map((i) => i.id !== itemId ? i : { ...i, isChecked: !i.isChecked }));
   },
   clearList(listId: string) {
-    set(listas.map((l) => l.id !== listId ? l
-      : { ...l, items: l.items.map((i) => ({ ...i, isChecked: false })) }));
+    const target = lists.find((l) => l.id === listId);
+    if (!target) return;
+    replaceItems(listId, target.items.map((i) => ({ ...i, isChecked: false })));
   },
   markPurchased(listId: string) {
-    set(listas.map((l) => l.id !== listId ? l
-      : { ...l, items: l.items.map((i) => ({ ...i, isChecked: true })) }));
+    const target = lists.find((l) => l.id === listId);
+    if (!target) return;
+    replaceItems(listId, target.items.map((i) => ({ ...i, isChecked: true })));
   },
 };

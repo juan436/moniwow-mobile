@@ -73,7 +73,7 @@ export function GoalsSummaryPage({ data, indicator, scrollY, topOffset }: Props)
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Metas Activas</Text>
-          <Pressable hitSlop={8} onPress={() => router.push('/metas')}><Text style={styles.sectionLink}>Ver todos</Text></Pressable>
+          <Pressable hitSlop={8} onPress={() => router.push('/goals')}><Text style={styles.sectionLink}>Ver todos</Text></Pressable>
         </View>
         {goals.map((goal) => (
           <Pressable key={goal.id} style={[styles.goalCard, shadows.card]} onLongPress={() => handleGoalLongPress(goal)} delayLongPress={400}>

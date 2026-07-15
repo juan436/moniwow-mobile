@@ -6,6 +6,6 @@
  */
 import { PlannerScreen } from '@features/planner/components/shared/PlannerScreen';
 
-export default function AgendaTab() {
+export default function PlannerTab() {
   return <PlannerScreen />;
 }

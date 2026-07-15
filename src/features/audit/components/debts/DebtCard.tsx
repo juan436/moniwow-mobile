@@ -1,11 +1,15 @@
 /**
  * DebtCard — Component
  *
- * @what     Card deuda total: donut SVG por categoría + lista de ítems con long-press modal.
- * @receives 3 props: deudaTotal, deudaPagada, deudaBreakdown
- * @processes Calcula ángulos donut y segmentos. Delega filas a DebtRow y modal a DebtDetailModal.
+ * @what     Card de deuda: donut SVG por deuda viva + lista de ítems con long-press modal.
+ * @receives 4 props: deudaTotal, deudaOriginal, deudaPagada, deudaBreakdown
+ * @processes `deudaTotal` es **lo que aún debes** (baja al pagar una cuota); `deudaOriginal` es lo que
+ *           pediste, y solo sirve de referencia. Antes el restante se reconstruía a ojo desde el
+ *           porcentaje ya redondeado (`total × (1 − pct/100)`) — un número derivado de otro número
+ *           derivado, con el error acumulado dentro. Ahora llega calculado.
+ *           El donut reparte lo VIVO: una deuda saldada no ocupa arco.
  * @returns  JSX — card blanca con donut centrado + lista + modal detalle.
- * @props    3: deudaTotal, deudaPagada, deudaBreakdown
+ * @props    4: deudaTotal, deudaOriginal, deudaPagada, deudaBreakdown
  */
 import { useState, useMemo, useCallback } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
@@ -18,6 +22,7 @@ import { DebtDetailModal } from './DebtDetailModal';
 
 type Props = {
   deudaTotal: number;
+  deudaOriginal: number;
   deudaPagada: number;
   deudaBreakdown: DebtBreakdown[];
 };
@@ -44,13 +49,13 @@ function arc(start: number, end: number): string {
   return `M${s.x},${s.y} A${R_OUT},${R_OUT},0,${lg},1,${e.x},${e.y} L${si.x},${si.y} A${R_IN},${R_IN},0,${lg},0,${ei.x},${ei.y} Z`;
 }
 
-export function DebtCard({ deudaTotal, deudaPagada, deudaBreakdown }: Props) {
+export function DebtCard({ deudaTotal, deudaOriginal, deudaPagada, deudaBreakdown }: Props) {
   const [selected, setSelected] = useState<DebtBreakdown | null>(null);
 
   const totalAmount = useMemo(() => deudaBreakdown.reduce((s, d) => s + d.amount, 0), [deudaBreakdown]);
-  const restante    = useMemo(() => Math.round(deudaTotal * (1 - deudaPagada / 100)), [deudaTotal, deudaPagada]);
 
   const segments = useMemo(() => {
+    if (totalAmount === 0) return []; // todo saldado: no hay arco que repartir
     let deg = 0;
     return deudaBreakdown.map((item, i) => {
       const sweep = (item.amount / totalAmount) * 360;
@@ -73,8 +78,8 @@ export function DebtCard({ deudaTotal, deudaPagada, deudaBreakdown }: Props) {
     <View style={styles.card}>
       <View style={styles.header}>
         <View>
-          <Text style={styles.cardLabel}>Deuda total</Text>
-          <Text style={styles.deudaAmount}>-$ {deudaTotal.toLocaleString('es')}.00</Text>
+          <Text style={styles.cardLabel}>Lo que debes</Text>
+          <Text style={styles.deudaAmount}>-$ {deudaTotal.toLocaleString('es')}</Text>
         </View>
         <View style={styles.pctBox}>
           <Text style={styles.pctValue}>{deudaPagada}%</Text>
@@ -87,8 +92,8 @@ export function DebtCard({ deudaTotal, deudaPagada, deudaBreakdown }: Props) {
           {segments.map((seg) => <Path key={seg.item.id} d={seg.path} fill={seg.color} />)}
         </Svg>
         <View style={styles.chartCenter}>
-          <Text style={styles.centerAmount}>$ {restante.toLocaleString('es')}</Text>
-          <Text style={styles.centerLabel}>restante</Text>
+          <Text style={styles.centerAmount}>$ {deudaOriginal.toLocaleString('es')}</Text>
+          <Text style={styles.centerLabel}>pediste</Text>
         </View>
       </View>
 

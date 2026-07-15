@@ -1,5 +1,5 @@
 /**
- * MovimientosScreen — Screen
+ * TransactionsScreen — Screen
  *
  * @what     Pantalla completa de todos los movimientos con filtros por tipo y período.
  * @receives —
@@ -29,7 +29,7 @@ const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto'
 
 function keyExtractor(item: TransactionDisplay) { return item.id; }
 
-export default function MovimientosScreen() {
+export function TransactionsScreen() {
   const { transactions } = useTransactions();
   const insets = useSafeAreaInsets();
   const [filterTipo, setFilterTipo] = useState<FilterTipo>('todos');

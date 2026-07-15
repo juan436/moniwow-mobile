@@ -1,13 +1,17 @@
 /**
  * OverviewPage — Component
  *
- * @what     Página izquierda del carrusel: análisis mensual con barras visuales y fugas.
+ * @what     Página izquierda del carrusel: balance mensual, fugas y distribución del gasto.
  * @receives 1 prop: data
- * @processes Normaliza alturas de barras relativo al valor máximo.
- * @returns  JSX — ScrollView vertical con gráfica de barras y lista de fugas.
+ * @processes Todo DERIVADO del libro (C6 cerrado, ya no hay mocks). **Fugas es interino**: una fila
+ *           por gasto de Libre del mes, ordenados por monto — sin agrupar. Agrupar por categoría
+ *           ("café", "delivery") exige que la IA etiquete cada gasto (M09); inventar la categoría
+ *           aquí sería mentir. Por eso cada fila lleva su fecha y NO dice "/mes": es un gasto, no un
+ *           hábito. La distribución tiene un solo eje: la jarra.
+ * @returns  JSX — ScrollView con MonthlyBalanceCard + fugas + distribución.
  * @props    1: data
  */
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback } from 'react';
 import { View, Text, Animated, Pressable, StyleSheet } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 
@@ -15,26 +19,24 @@ import { colors, typography, spacing, radius, shadows, sizes } from '@shared/sty
 import { truncateLabel } from '@shared/utils';
 import { PageIndicator } from '@shared/components';
 import { LeakDetailModal } from './LeakDetailModal';
+import { MonthlyBalanceCard } from './MonthlyBalanceCard';
 import type { BarChartEntry, LeakDisplay, DistributionEntry } from '../../types';
 
 type Data = {
   barChart: BarChartEntry[];
   fugas: LeakDisplay[];
   distribution: DistributionEntry[];
+  selectedMonth: string;
+  onSelectMonth: (key: string) => void;
 };
 type Indicator = { count: number; active: number };
 type Props = { data: Data; indicator: Indicator; scrollY: Animated.Value; topOffset: number };
 
 export function OverviewPage({ data, indicator, scrollY, topOffset }: Props) {
-  const { barChart, fugas, distribution } = data;
+  const { barChart, fugas, distribution, selectedMonth, onSelectMonth } = data;
   const [selectedFuga, setSelectedFuga]     = useState<LeakDisplay | null>(null);
   const handleFugaLongPress  = useCallback((fuga: LeakDisplay) => setSelectedFuga(fuga), []);
   const handleFugaModalClose = useCallback(() => setSelectedFuga(null), []);
-
-  const maxAmount = useMemo(
-    () => Math.max(...barChart.map((b) => b.amount)),
-    [barChart]
-  );
 
   return (
     <Animated.ScrollView
@@ -46,41 +48,32 @@ export function OverviewPage({ data, indicator, scrollY, topOffset }: Props) {
     >
       <PageIndicator count={indicator.count} active={indicator.active} />
 
-      <View style={[styles.card, styles.heroCard, shadows.card]}>
-        <View style={styles.accentBar} />
-        <Text style={styles.cardLabel}>Balance mensual</Text>
-
-        <View style={styles.barChart}>
-          {barChart.map((entry) => {
-            const barHeight = (entry.amount / maxAmount) * sizes.barMaxHeight;
-            return (
-              <View key={entry.month} style={styles.barGroup}>
-                <Text style={styles.barAmount}>$ {(entry.amount / 1000).toFixed(1)}k</Text>
-                <View style={styles.barTrack}>
-                  <View style={[styles.bar, { height: barHeight }]} />
-                </View>
-                <Text style={styles.barMonth}>{entry.month}</Text>
-              </View>
-            );
-          })}
-        </View>
-      </View>
+      <MonthlyBalanceCard barChart={barChart} selectedMonth={selectedMonth} onSelectMonth={onSelectMonth} />
 
       <View style={[styles.card, shadows.card]}>
-        <Text style={styles.cardLabel}>Tus fugas más grandes</Text>
+        <Text style={styles.cardLabel}>Fugas del mes</Text>
+        {fugas.length === 0 && (
+          <Text style={styles.empty}>Ni una fuga este mes. Bien ahí.</Text>
+        )}
         {fugas.map((fuga, i) => (
           <Pressable key={fuga.id} style={[styles.fugaRow, i < fugas.length - 1 && styles.fugaBorder]} onLongPress={() => handleFugaLongPress(fuga)} delayLongPress={400}>
             <View style={styles.fugaIcon}>
               <MaterialIcons name={fuga.iconName} size={20} color={colors.secondary} />
             </View>
-            <Text style={styles.fugaName} numberOfLines={1} ellipsizeMode="tail">{truncateLabel(fuga.name)}</Text>
-            <Text style={styles.fugaAmount}>-$ {fuga.amount}/mes</Text>
+            <View style={styles.fugaInfo}>
+              <Text style={styles.fugaName} numberOfLines={1} ellipsizeMode="tail">{truncateLabel(fuga.name)}</Text>
+              <Text style={styles.fugaDate}>{fuga.date}</Text>
+            </View>
+            <Text style={styles.fugaAmount}>-$ {fuga.amount.toLocaleString('es')}</Text>
           </Pressable>
         ))}
       </View>
 
       <View style={[styles.card, shadows.card]}>
         <Text style={styles.cardLabel}>Distribución del gasto</Text>
+        {distribution.length === 0 && (
+          <Text style={styles.empty}>Sin gastos registrados este mes.</Text>
+        )}
         {distribution.map((item) => (
           <View key={item.id} style={styles.distRow}>
             <View style={styles.distLabelRow}>
@@ -103,25 +96,17 @@ const styles = StyleSheet.create({
   scroll: { flex: 1 },
   content: { paddingHorizontal: spacing.marginPage, paddingTop: spacing.stackSm, paddingBottom: spacing.stackLg, gap: spacing.stackMd },
   card:     { backgroundColor: colors.pureWhite, borderRadius: radius.card, padding: spacing.cardPadding, gap: spacing.stackSm },
-  heroCard: { overflow: 'hidden' },
-  accentBar: { position: 'absolute', top: 0, left: 0, right: 0, height: 4, backgroundColor: colors.emeraldSuccess },
   cardLabel: { ...typography.bodyMdBold, color: colors.navyDark },
-  barChart: {
-    flexDirection: 'row', alignItems: 'flex-end', gap: spacing.gutter,
-    height: sizes.barMaxHeight + sizes.barLabelSpace,
-  },
-  barGroup: { flex: 1, alignItems: 'center', gap: spacing.stackXs },
-  barAmount: { ...typography.labelXs, color: colors.slateGray },
-  barTrack: { width: '100%', alignItems: 'center', justifyContent: 'flex-end', height: sizes.barMaxHeight },
-  bar: { width: '60%', backgroundColor: colors.emeraldSuccess, borderRadius: radius.sm },
-  barMonth: { ...typography.labelXs, color: colors.slateGray },
+  empty:     { ...typography.bodyMd, color: colors.slateGray, paddingVertical: spacing.stackSm },
   fugaRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.stackSm, paddingVertical: spacing.stackSm },
   fugaBorder: { borderBottomWidth: 1, borderBottomColor: colors.outlineVariant + '33' },
   fugaIcon: {
     width: sizes.iconSm, height: sizes.iconSm, borderRadius: radius.full,
     backgroundColor: colors.secondaryContainer + '4D', alignItems: 'center', justifyContent: 'center',
   },
-  fugaName: { ...typography.labelMd, color: colors.onBackground, flex: 1 },
+  fugaInfo: { flex: 1, gap: 2 },
+  fugaName: { ...typography.labelMd, color: colors.onBackground },
+  fugaDate: { ...typography.labelXs, color: colors.slateGray },
   fugaAmount: { ...typography.labelMd, color: colors.alertOrange },
   distRow: { gap: spacing.stackXs },
   distLabelRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.stackSm },

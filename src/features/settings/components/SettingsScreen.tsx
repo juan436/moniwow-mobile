@@ -1,5 +1,5 @@
 /**
- * ConfiguracionScreen — Screen (/configuracion)
+ * SettingsScreen — Screen
  *
  * @what     Ajustes básicos V1: switches de notificaciones/recordatorios/modo oscuro + moneda.
  * @receives —
@@ -14,7 +14,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, typography, spacing, radius } from '@shared/styles';
 import { ScreenHeader } from '@shared/components';
 
-export default function ConfiguracionScreen() {
+export function SettingsScreen() {
   const insets = useSafeAreaInsets();
   const [notifs, setNotifs]       = useState(true);
   const [reminders, setReminders] = useState(true);

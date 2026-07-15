@@ -25,21 +25,22 @@
 - Además: jarra `goals` tiene `balance=3000` y `useGoals.poolTotal=50000`.
 - **Decisión:** ¿el total de Metas es la suma de las metas (41.600), el pozo (50.000) o el balance de la jarra (3.000)? Al derivar, Revisión y Dashboard mostrarán el MISMO número → cambia lo que hoy ves en alguna de las dos.
 
-### C2 · Total de Deudas
-- `debts.json` = 5 deudas de `useAudit` (suma **2.600**).
-- `pendingItems.json` conserva las 4 deudas de la agenda (Visa 300, Mamá 100, Auto 180, Débito 75 = **655**) porque son compromisos con fecha.
-- Son listas DISTINTAS (agenda "Visa 300" vs audit "Visa Platino 400"). **Decisión:** ¿las deudas de la agenda son las mismas que las del breakdown de Revisión? Si sí, hay que fusionarlas a una sola lista.
+### C2 · Total de Deudas — ✅ RESUELTO 2026-07-14
+- **Una sola colección: `debts`.** Una deuda con cuotas pendientes YA ES el compromiso mensual de la agenda: su `cuotaAmount()` en su `dueDate`. No se siembra dos veces.
+- Las 4 deudas de `pendingItems.json` (d1..d4) **borradas**. La agenda las deriva de `debts` vía `toDebtAgendaItem`.
+- Pagar una cuota escribe el `gasto` **y** sube `paidCuotas` (`PayDebtCuota`) → la barra de Revisión avanza sola.
 
-### C3 · Movimientos que son transferencias (tx18/tx19)
-- Sembrados **faithful** como `ingreso`/`gasto` (lo que muestra hoy la pantalla).
-- Realmente son transferencia hacia/desde Fondo Seguridad → deberían ser `type:'transferencia'` + `toJarId`.
-- **Decisión:** al corregir el tipo, el signo/etiqueta en Movimientos puede cambiar.
+### C3 · Movimientos que son transferencias — ✅ RESUELTO 2026-07-14
+- Una transferencia es **UNA** fila: `type:'transferencia'` + `jarId` (origen) + `toJarId` (destino). Nunca dos.
+- `TransferFunds` creaba dos (una por jarra): con el balance derivado habría restado de ambas y el dinero se evaporaba. Corregido.
+- Los seeds se rehicieron enteros (ver C4), así que ya nacen bien: el reparto mensual del sueldo son transferencias reales.
 
-### C4 · Balance de jarra: ¿guardado o derivado?
-- `jars.json.balance` = valor actual mostrado (p.ej. Libre 1285.50).
-- Objetivo del modelo: `jar.balance = SUM(transacciones de la jarra)`. Las transacciones actuales **NO suman** esos balances.
-- Suma de balances sembrados = **15.855,50**; `useAudit.patrimonio=7650`. Ninguno deriva del otro.
-- **Decisión:** ¿derivamos balance/patrimonio de las transacciones (correcto, pero mueve números) o los dejamos como campo hasta tener transacciones completas?
+### C4 · Balance de jarra: ¿guardado o derivado? — ✅ RESUELTO 2026-07-14: **DERIVADO**
+- `jars.json` **pierde el campo `balance`**. `jar.balance = Σ transacciones de la jarra` (`core/use-cases/ComputeJarBalances`).
+- La derivación vive en `JsonJarRepository` (recibe `ITransactionRepository`): así TODO el que lee jarras hereda el número bueno. En Mongo esto es un `$group` sobre `transactions`.
+- Ningún use-case escribe balance ya. `WithdrawFromGoal` ni siquiera creaba transacción → el dinero se habría evaporado. Corregido.
+- **Los seeds no respaldaban nada**: al derivar salían 9 jarras a 0, Hogar −985, Metas 0, patrimonio 62.855 → 1.592. Se rehizo `transactions.json`: **173 tx, 6 meses reales (feb–jul 2026)**, asiento de apertura incluido.
+- Resultado: ninguna jarra negativa · Metas = 50.000 (respeta C1) · **patrimonio 59.564,62 = ingresos − gastos**. Cuadra solo — si no cuadrara, el libro mentiría.
 
 ### C5 · Próximos vencimientos del Dashboard
 - `useDashboard.MOCK_UPCOMING` era lista **aparte** (6 ítems: "Electricidad CFE Bimestral", "Renta Departamento"…), distinta de la agenda.

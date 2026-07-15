@@ -19,9 +19,9 @@ import type { ProfileData } from '@shared/hooks/useProfile';
 type MenuItem = { icon: keyof typeof MaterialIcons.glyphMap; label: string; route: Href };
 
 const MENU: MenuItem[] = [
-  { icon: 'edit', label: 'Editar perfil', route: '/editar-perfil' },
-  { icon: 'settings', label: 'Configuración', route: '/configuracion' },
-  { icon: 'help-outline', label: 'Ayuda y soporte', route: '/ayuda' },
+  { icon: 'edit', label: 'Editar perfil', route: '/edit-profile' },
+  { icon: 'settings', label: 'Configuración', route: '/settings' },
+  { icon: 'help-outline', label: 'Ayuda y soporte', route: '/help' },
 ];
 
 type Props = {

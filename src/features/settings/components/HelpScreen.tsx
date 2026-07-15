@@ -1,5 +1,5 @@
 /**
- * AyudaScreen — Screen (/ayuda)
+ * HelpScreen — Screen
  *
  * @what     Ayuda y soporte V1: FAQ breve + contacto directo + versión de la app.
  * @receives —
@@ -22,7 +22,7 @@ const FAQS: Faq[] = [
   { q: '¿Cómo registro una compra?', a: 'Tocá el botón central (+) y elegí la jarra. Podés cargar los ítems a mano o desde una lista.' },
 ];
 
-export default function AyudaScreen() {
+export function HelpScreen() {
   const insets = useSafeAreaInsets();
 
   return (

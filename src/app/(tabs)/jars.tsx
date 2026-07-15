@@ -6,6 +6,6 @@
  */
 import { JarsScreen } from '@features/jars/components/JarsScreen';
 
-export default function JarrasTab() {
+export default function JarsTab() {
   return <JarsScreen />;
 }

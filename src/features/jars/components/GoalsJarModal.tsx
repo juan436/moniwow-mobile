@@ -5,7 +5,7 @@
  *           una meta puntual. Goals no es un pozo único, es la suma de metas — por eso "Transferir"
  *           primero manda a elegir de cuál.
  * @receives 2 props: item, onClose
- * @processes "Ir a Mis Metas y Objetivos" → /metas. "Transferir" → /metas-transferir
+ * @processes "Ir a Mis Metas y Objetivos" → /goals. "Transferir" → /goals-transfer
  *           (GoalsTransferScreen, pantalla propia con el selector de meta + Slider de Sacrificio).
  *           Ambos botones llaman onClose() antes de navegar — si no, el modal queda montado
  *           (visible=true) debajo de la pantalla nueva y da sensación de lentitud/doble transición.
@@ -33,11 +33,11 @@ export function GoalsJarModal({ item, onClose }: Props) {
 
   function handleGoToGoals() {
     onClose();
-    router.push('/metas');
+    router.push('/goals');
   }
   function handleGoToTransfer() {
     onClose();
-    router.push('/metas-transferir');
+    router.push('/goals-transfer');
   }
 
   return (

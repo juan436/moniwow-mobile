@@ -3,7 +3,8 @@
  *
  * @what     Modal de detalle de vencimiento: monto héroe, chip urgencia y nombre.
  * @receives 2 props: item, onClose
- * @processes Calcula color según urgencia desde item.urgency.
+ * @processes Color según `item.isUrgent` — el dato, no la frase (parsear `urgency` pintaba de alerta
+ *           todo lo que empezara por "En 1": 12, 15 y 19 días incluidos).
  * @returns  JSX — Modal fade con backdrop y layout monto-primero.
  * @props    2: item, onClose
  */
@@ -23,8 +24,11 @@ type Props = {
 
 export function UpcomingDetailModal({ item, onClose }: Props) {
   const insets = useSafeAreaInsets();
-  const isUrgent = item ? (item.urgency === 'Mañana' || item.urgency.startsWith('En 1')) : false;
-  const color = isUrgent ? colors.alertOrange : colors.primary;
+  const isUrgent = item?.isUrgent ?? false;
+  const isIncome = item?.isIncome ?? false;
+  const color     = isUrgent ? colors.alertOrange : isIncome ? colors.emeraldSuccess : colors.primary;
+  const typeLabel = isIncome ? 'Ingreso previsto' : 'Vencimiento';
+  const prefix    = isIncome ? '+' : '-';
 
   return (
     <Modal visible={item !== null} transparent animationType="fade" onRequestClose={onClose} statusBarTranslucent navigationBarTranslucent>
@@ -34,7 +38,7 @@ export function UpcomingDetailModal({ item, onClose }: Props) {
           <View style={styles.metaZone}>
             <View style={styles.typeRow}>
               <View style={[styles.dot, { backgroundColor: color }]} />
-              <Text style={styles.typeLabel}>Vencimiento</Text>
+              <Text style={styles.typeLabel}>{typeLabel}</Text>
             </View>
             <View style={[styles.chip, { backgroundColor: color + '1A' }]}>
               <Text style={[styles.chipLabel, { color }]}>{item?.urgency}</Text>
@@ -45,7 +49,7 @@ export function UpcomingDetailModal({ item, onClose }: Props) {
 
           <View style={styles.amountZone}>
             <Text style={[styles.amount, { color }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
-              -$ {item?.amount.toFixed(2)}
+              {prefix}$ {item?.amount.toFixed(2)}
             </Text>
           </View>
 

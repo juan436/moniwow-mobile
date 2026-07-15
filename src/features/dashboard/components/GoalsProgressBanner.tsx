@@ -7,7 +7,7 @@
  * @processes Mismo lenguaje visual que GoalsSummaryPage (barra de progreso emeraldSuccess) para
  *           que se sienta la misma sección, no una distinta — sin el accentBar superior de esa
  *           página, acá se ve demasiado cargado junto al resto del dashboard. Navega a
- *           `/auditoria?page=goals` — AuditScreen lee ese param y salta a la página de Mis Sueños.
+ *           `/review?page=goals` — AuditScreen lee ese param y salta a la página de Mis Sueños.
  * @returns  JSX — card con título, %, barra y botón "Ver detalle".
  * @props    3: goalProgress, goalsTotal, metaGlobal
  */
@@ -20,13 +20,13 @@ import { colors, typography, spacing, radius, shadows, sizes } from '@shared/sty
 
 type Props = { goalProgress: number; goalsTotal: number; metaGlobal: number };
 
-function handleVerDetalle() { router.push('/auditoria?page=goals'); }
+function handleViewDetail() { router.push('/review?page=goals'); }
 
 export function GoalsProgressBanner({ goalProgress, goalsTotal, metaGlobal }: Props) {
   const fillStyle = useMemo(() => [styles.fill, { width: `${goalProgress}%` as `${number}%` }], [goalProgress]);
 
   return (
-    <Pressable style={[styles.card, shadows.card]} onPress={handleVerDetalle}>
+    <Pressable style={[styles.card, shadows.card]} onPress={handleViewDetail}>
       <View style={styles.header}>
         <Text style={styles.title}>Progreso Total de Metas</Text>
         <Text style={styles.pct}>{goalProgress}%</Text>

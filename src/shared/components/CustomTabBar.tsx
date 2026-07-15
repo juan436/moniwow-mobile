@@ -22,12 +22,12 @@ type IconName = React.ComponentProps<typeof MaterialIcons>['name'];
 type TabCfg   = { name: string; icon: IconName; label: string };
 
 const LEFT_TABS: TabCfg[]  = [
-  { name: 'index',  icon: 'home',       label: 'Inicio'   },
-  { name: 'agenda', icon: 'event-note', label: 'Agenda'   },
+  { name: 'index',   icon: 'home',       label: 'Inicio'   },
+  { name: 'planner', icon: 'event-note', label: 'Agenda'   },
 ];
 const RIGHT_TABS: TabCfg[] = [
-  { name: 'jarras',    icon: 'account-balance-wallet', label: 'Jarras'   },
-  { name: 'auditoria', icon: 'bar-chart',              label: 'Revisión' },
+  { name: 'jars',   icon: 'account-balance-wallet', label: 'Jarras'   },
+  { name: 'review', icon: 'bar-chart',              label: 'Revisión' },
 ];
 
 const FAB_SIZE    = sizes.iconFab;   // 52

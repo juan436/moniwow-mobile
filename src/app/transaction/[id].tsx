@@ -67,9 +67,11 @@ export default function TransactionDetailScreen() {
         {tx?.items?.map((item) => (
           <View key={item.description} style={[styles.itemCard, shadows.card]}>
             <Text style={styles.itemDesc}>{item.description}</Text>
-            <Text style={[styles.itemAmount, colorStyle]}>
-              {prefix}${item.amount.toFixed(2)}
-            </Text>
+            {item.amount !== undefined && (
+              <Text style={[styles.itemAmount, colorStyle]}>
+                {prefix}${item.amount.toFixed(2)}
+              </Text>
+            )}
           </View>
         ))}
       </ScrollView>

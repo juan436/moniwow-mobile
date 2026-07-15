@@ -32,7 +32,7 @@ export function TransactionDetailModal({ item, onClose }: Props) {
 
   const hasItems = !isIncome && (item?.items?.length ?? 0) > 0;
 
-  function handleVerDetalle() {
+  function handleViewDetail() {
     onClose();
     router.push({ pathname: '/transaction/[id]', params: { id: item?.id ?? '' } });
   }
@@ -87,7 +87,7 @@ export function TransactionDetailModal({ item, onClose }: Props) {
           </View>
 
           {hasItems && (
-            <Pressable style={[styles.detalleBtn, { backgroundColor: item!.iconBg }]} onPress={handleVerDetalle}>
+            <Pressable style={[styles.detalleBtn, { backgroundColor: item!.iconBg }]} onPress={handleViewDetail}>
               <Text style={[styles.chipLabel, { color: item!.iconColor }]}>Ver detalle</Text>
             </Pressable>
           )}

@@ -6,6 +6,6 @@
  */
 import { AuditScreen } from '@features/audit/components/shared/AuditScreen';
 
-export default function RevisionTab() {
+export default function ReviewTab() {
   return <AuditScreen />;
 }

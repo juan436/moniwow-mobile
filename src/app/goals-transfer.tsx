@@ -6,6 +6,6 @@
  */
 import { GoalsTransferScreen } from '@features/goals/components/GoalsTransferScreen';
 
-export default function MetasTransferirRoute() {
+export default function GoalsTransferRoute() {
   return <GoalsTransferScreen />;
 }

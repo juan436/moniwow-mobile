@@ -1,84 +1,128 @@
 /**
  * usePlanner — Hook
  *
- * @what     Estado y datos mock de la feature Planner + CRUD local de compromisos recurrentes.
+ * @what     Estado y datos de la Agenda + CRUD local de compromisos recurrentes.
  * @receives —
- * @processes Expone activeTab, activeFilter, data mock y setters. Mock hasta conectar backend:
- *           recurrentes vive en estado propio (no en AgendaData) para poder crear/editar/eliminar.
- * @returns  { activeTab, setActiveTab, activeFilter, setActiveFilter, data, recurrentes,
- *            recurrenteActions, isLoading, error }
+ * @processes **Ya no hay `MOCK_DATA`.** Los compromisos salen de `agendaRepository` (`pendingItems`)
+ *           y las deudas de `debtRepository` — la Agenda no inventa nada. Los totales se DERIVAN de
+ *           esas listas (antes eran tres literales escritos a mano que nadie recalculaba).
+ *           **Confirmar ESCRIBE en el libro**: Pagar/¡Llegó! → `ConfirmPendingItem`; pagar una cuota
+ *           → `PayDebtCuota`. Antes los tres botones solo daban la vuelta a un booleano en memoria:
+ *           marcabas la renta como pagada y el balance de Hogar ni se enteraba.
+ *           **La unidad de deuda es la CUOTA, no la deuda.** `ComputeDebtStatus` cruza el calendario
+ *           de la deuda con el libro: la cuota de este mes **y las atrasadas de meses anteriores**
+ *           (que se acumulan). Un `paidCuotas` guardado decía "llevas 7" sin decir cuáles, así que
+ *           no sabía que te saltaste mayo. `inFlight` bloquea el doble toque mientras se guarda.
+ * @returns  { activeTab, setActiveTab, activeFilter, setActiveFilter, data, onConfirmItem, overdue,
+ *            recurrentes, recurrenteActions, isLoading, error }
  */
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { colors } from '@shared/styles';
+import { ConfirmPendingItem } from '@core/use-cases/ConfirmPendingItem';
+import { PayDebtCuota } from '@core/use-cases/PayDebtCuota';
+import { agendaRepository, debtRepository, jarRepository, transactionRepository } from '@infrastructure/container';
+import { useTransactionsStore } from '@features/transactions/stores/transactionsStore';
+import { toJarPresentation, colorByType, type JarPresentation } from '@shared/styles';
+import { buildAgenda } from '../agenda';
+import { INITIAL_RECURRENTES, RECURRENTE_ICON } from '../recurringMocks';
+import type { Debt } from '@core/entities/Debt';
+import type { PendingItem } from '@core/ports/IAgendaRepository';
 import type {
-  AgendaTab, AgendaFilter, AgendaData, RecurringDisplay,
+  AgendaTab, AgendaFilter, RecurringDisplay,
   CreateRecurringData, SaveRecurringData, RecurringActions,
 } from '../types';
 
-const RECURRENTE_ICON: Record<AgendaFilter, { iconName: RecurringDisplay['iconName']; iconColor: string; iconBg: string }> = {
-  gastos:   { iconName: 'receipt-long', iconColor: colors.tertiary,      iconBg: colors.tertiary + '15' },
-  ingresos: { iconName: 'attach-money', iconColor: colors.emeraldSuccess, iconBg: colors.emeraldSuccess + '15' },
-  deudas:   { iconName: 'credit-card',  iconColor: colors.alertOrange,   iconBg: colors.alertOrange + '1A' },
-};
+const WORKSPACE_ID = 'ws1'; // mock-stage: único workspace sembrado
+const USER_ID = 'u1';
+const FALLBACK: JarPresentation = { name: 'Libre', iconName: 'account-balance-wallet', ...colorByType('libre') };
 
-const MOCK_DATA: AgendaData = {
-  totalGastos: 1737.98,
-  totalIngresos: 2787.50,
-  totalDeudas: 655,
-  items: [
-    { id: 'g1', emoji: '🏠', name: 'Alquiler Hogar', day: 5, amount: 800, isPaid: false, filter: 'gastos' },
-    { id: 'g2', emoji: '🏢', name: 'Expensas Edificio', day: 10, amount: 120, isPaid: false, filter: 'gastos' },
-    { id: 'g3', emoji: '⚡', name: 'Energía Eléctrica', day: 12, amount: 45, isPaid: false, filter: 'gastos' },
-    { id: 'g4', emoji: '📡', name: 'Internet Fibra', day: 15, amount: 40, isPaid: false, filter: 'gastos' },
-    { id: 'g5', emoji: '📺', name: 'Netflix', day: 20, amount: 15, isPaid: false, filter: 'gastos' },
-    { id: 'g6', emoji: '💧', name: 'Agua Potable', day: 5, amount: 22, isPaid: false, filter: 'gastos' },
-    { id: 'g7', emoji: '🅿️', name: 'Parking Mensual', day: 5, amount: 60, isPaid: false, filter: 'gastos' },
-    { id: 'g8', emoji: '🎵', name: 'Spotify', day: 15, amount: 9.99, isPaid: false, filter: 'gastos' },
-    { id: 'g9', emoji: '☁️', name: 'iCloud 200GB', day: 15, amount: 2.99, isPaid: false, filter: 'gastos' },
-    { id: 'g10', emoji: '🏋️', name: 'Gimnasio Smart Fit', day: 15, amount: 55, isPaid: true, filter: 'gastos' },
-    { id: 'g11', emoji: '📱', name: 'Plan Móvil', day: 20, amount: 18, isPaid: false, filter: 'gastos' },
-    { id: 'g12', emoji: '🛡️', name: 'Seguro Médico', day: 28, amount: 90, isPaid: false, filter: 'gastos' },
-    { id: 'i1', emoji: '💼', name: 'Sueldo Empresa X', day: 1, amount: 2000, isPaid: false, filter: 'ingresos' },
-    { id: 'i2', emoji: '💸', name: 'Pago Freelance', day: 10, amount: 150, isPaid: false, filter: 'ingresos' },
-    { id: 'i3', emoji: '🎯', name: 'Bono Proyecto', day: 15, amount: 625.50, isPaid: false, filter: 'ingresos' },
-    { id: 'i4', emoji: '🏦', name: 'Intereses Ahorro', day: 28, amount: 12.50, isPaid: false, filter: 'ingresos' },
-    { id: 'd1', emoji: '💳', name: 'Tarjeta Visa', day: 15, amount: 300, isPaid: false, filter: 'deudas' },
-    { id: 'd2', emoji: '🧍', name: 'Préstamo Mamá (4/10)', day: 28, amount: 100, isPaid: false, filter: 'deudas' },
-    { id: 'd3', emoji: '🚗', name: 'Cuota Auto (8/36)', day: 5, amount: 180, isPaid: false, filter: 'deudas' },
-    { id: 'd4', emoji: '📲', name: 'Tarjeta Débito Plus', day: 20, amount: 75, isPaid: false, filter: 'deudas' },
-  ],
-};
-
-const INITIAL_RECURRENTES: RecurringDisplay[] = [
-  { id: 'r1', iconName: 'home', iconColor: colors.emeraldSuccess, iconBg: colors.emeraldSuccess + '15', name: 'Alquiler Hogar', day: 5, amount: 800, filter: 'gastos' },
-  { id: 'r2', iconName: 'tv', iconColor: colors.alertOrange, iconBg: colors.alertOrange + '1A', name: 'Netflix', day: 20, amount: 15, filter: 'gastos' },
-  { id: 'r3', iconName: 'restaurant', iconColor: colors.secondary, iconBg: colors.secondaryContainer + '40', name: 'Suscripción Comida', day: 25, amount: 50, filter: 'gastos' },
-  { id: 'r4', iconName: 'work', iconColor: colors.emeraldSuccess, iconBg: colors.emeraldSuccess + '15', name: 'Sueldo Empresa X', day: 1, amount: 2000, filter: 'ingresos' },
-  { id: 'r5', iconName: 'laptop', iconColor: colors.primary, iconBg: colors.primary + '15', name: 'Pago Freelance', day: 10, amount: 150, filter: 'ingresos' },
-  { id: 'r6', iconName: 'star', iconColor: colors.goldDreams, iconBg: colors.goldDreams + '20', name: 'Bono Proyecto', day: 15, amount: 625, filter: 'ingresos' },
-  { id: 'r7', iconName: 'credit-card', iconColor: colors.alertOrange, iconBg: colors.alertOrange + '1A', name: 'Tarjeta Visa', day: 15, amount: 300, filter: 'deudas' },
-  { id: 'r8', iconName: 'person', iconColor: colors.secondary, iconBg: colors.secondaryContainer + '40', name: 'Préstamo Mamá', day: 28, amount: 100, filter: 'deudas' },
-];
+const confirmPendingItem = new ConfirmPendingItem(jarRepository, transactionRepository, agendaRepository);
+const payDebtCuota = new PayDebtCuota(debtRepository, jarRepository, transactionRepository);
 
 export function usePlanner() {
   const [activeTab, setActiveTab] = useState<AgendaTab>('mi-mes');
   const [activeFilter, setActiveFilter] = useState<AgendaFilter>('gastos');
+  const [pending, setPending] = useState<PendingItem[]>([]);
+  const [debts, setDebts] = useState<Debt[]>([]);
+  const [presById, setPresById] = useState<Map<string, JarPresentation>>(new Map());
   const [recurrentes, setRecurrentes] = useState<RecurringDisplay[]>(INITIAL_RECURRENTES);
-  const [isLoading] = useState(false);
-  const [error] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const inFlight = useRef(new Set<string>()); // toques repetidos mientras el guardado va en vuelo
 
-  const handleCreateRecurrente = useCallback((data: CreateRecurringData) => {
-    const icon = RECURRENTE_ICON[data.filter];
-    const item: RecurringDisplay = { id: `r_${Date.now()}`, ...icon, ...data };
-    setRecurrentes((prev) => [...prev, item]);
+  const transactions = useTransactionsStore((s) => s.transactions);
+  const loadLedger = useTransactionsStore((s) => s.load);
+  const addToLedger = useTransactionsStore((s) => s.add);
+
+  useEffect(() => { void loadLedger(); }, [loadLedger]);
+
+  const load = useCallback(async () => {
+    try {
+      const [items, ds, jars] = await Promise.all([
+        agendaRepository.findByWorkspace(WORKSPACE_ID),
+        debtRepository.findByWorkspace(WORKSPACE_ID),
+        jarRepository.findByWorkspace(WORKSPACE_ID),
+      ]);
+      setPending(items);
+      setDebts(ds);
+      setPresById(new Map(jars.map((j) => [j.id, toJarPresentation(j)])));
+    } catch {
+      setError('No se pudo cargar la agenda');
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
 
-  const handleSaveRecurrente = useCallback((data: SaveRecurringData) => {
-    const icon = RECURRENTE_ICON[data.filter];
-    setRecurrentes((prev) => prev.map((r) => r.id === data.id ? { ...r, ...icon, ...data } : r));
-  }, []);
+  // Relee al crecer el libro. Sin esto, pagar un atrasado desde su página (otra instancia de este
+  // hook) no refrescaba la Agenda: su `pending`/`debts` se cargaban una vez y quedaban viejos, así
+  // que el banner seguía contando algo ya pagado. Confirmar cualquier compromiso añade una tx.
+  useEffect(() => { void load(); }, [load, transactions.length]);
 
+  const { data, overdue, toConfirm } = useMemo(
+    () => buildAgenda(pending, debts, transactions, (id) => presById.get(id) ?? FALLBACK, new Date()),
+    [pending, debts, presById, transactions],
+  );
+
+  /** Pagar / ¡Llegó! / pagar cuota (la del mes o una atrasada). Los tres escriben en el libro. */
+  const onConfirmItem = useCallback(async (id: string) => {
+    const item = [...data.items, ...overdue, ...toConfirm].find((i) => i.id === id);
+    if (!item || item.isPaid || inFlight.current.has(id)) return;
+
+    inFlight.current.add(id);
+    try {
+      setError(null);
+      const txId = `tx-${Date.now()}`;
+
+      const { transaction } = item.debtId && item.cuotaMonth
+        ? await payDebtCuota.execute({
+            id: txId,
+            debtId: item.debtId,
+            cuotaMonth: item.cuotaMonth, // QUÉ cuota se salda; la jarra la pone la deuda
+            workspaceId: WORKSPACE_ID,
+            userId: USER_ID,
+          })
+        : await confirmPendingItem.execute({
+            id: txId,
+            pendingItemId: id,
+            workspaceId: WORKSPACE_ID,
+            userId: USER_ID,
+          });
+
+      await addToLedger(transaction);
+      await load(); // relee compromisos: su estado vive en la BD, no en memoria
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'No se pudo confirmar el compromiso — intenta de nuevo');
+    } finally {
+      inFlight.current.delete(id);
+    }
+  }, [data.items, overdue, toConfirm, addToLedger, load]);
+
+  const handleCreateRecurrente = useCallback((d: CreateRecurringData) => {
+    setRecurrentes((prev) => [...prev, { id: `r_${Date.now()}`, ...RECURRENTE_ICON[d.filter], ...d }]);
+  }, []);
+  const handleSaveRecurrente = useCallback((d: SaveRecurringData) => {
+    setRecurrentes((prev) => prev.map((r) => r.id === d.id ? { ...r, ...RECURRENTE_ICON[d.filter], ...d } : r));
+  }, []);
   const handleDeleteRecurrente = useCallback((id: string) => {
     setRecurrentes((prev) => prev.filter((r) => r.id !== id));
   }, []);
@@ -91,7 +135,7 @@ export function usePlanner() {
 
   return {
     activeTab, setActiveTab, activeFilter, setActiveFilter,
-    data: MOCK_DATA, recurrentes, recurrenteActions,
+    data, overdue, toConfirm, onConfirmItem, recurrentes, recurrenteActions,
     isLoading, error,
   };
 }

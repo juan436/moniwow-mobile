@@ -1,13 +1,13 @@
 [
-  { "id": "l1", "name": "SUPERMERCADO", "jarId": "hogar", "workspaceId": "ws1", "items": [
+  { "id": "l1", "name": "SUPERMERCADO", "emoji": "🛒", "jarId": "hogar", "workspaceId": "ws1", "items": [
     { "id": "li1", "name": "Leche", "approxAmount": 2.50, "isChecked": false },
     { "id": "li2", "name": "Huevos", "approxAmount": 4.00, "isChecked": false },
     { "id": "li3", "name": "Pan", "approxAmount": 1.50, "isChecked": true }
   ] },
-  { "id": "l2", "name": "FERRETERÍA", "jarId": "hogar", "workspaceId": "ws1", "items": [
+  { "id": "l2", "name": "FERRETERÍA", "emoji": "🛠️", "jarId": "hogar", "workspaceId": "ws1", "items": [
     { "id": "li4", "name": "Bombillo Sala", "isChecked": false }
   ] },
-  { "id": "l3", "name": "DESEOS", "jarId": "libre", "workspaceId": "ws1", "items": [
+  { "id": "l3", "name": "DESEOS", "emoji": "👗", "jarId": "libre", "workspaceId": "ws1", "items": [
     { "id": "li5", "name": "Zapatos Deportivos", "isChecked": false }
   ] }
 ]

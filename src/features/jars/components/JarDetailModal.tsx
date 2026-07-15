@@ -8,10 +8,10 @@
  * @processes Filtra transactions por jarId, muestra hasta 3. Un solo divisor (antes de
  *           movimientos) — progreso/breakdown viven en un bloque `surfaceContainerLow` en vez de
  *           separarse con líneas, para verse compacto y de una sola pieza (menos "cortado en
- *           pedazos" que la versión anterior). El progreso es "presupuesto usado" (no meta de
- *           ahorro) — Hogar y categorías personalizadas con monto objetivo son límites de gasto,
- *           llegar a 100% es alerta (barra pasa a alertOrange desde 90%), no logro. Distinto de
- *           GoalsJarModal, que sí es ahorro real. Últimos movimientos sin ícono por fila (se quitó
+ *           pedazos" que la versión anterior). El progreso es el NIVEL de la jarra
+ *           (`balance / presupuesto`): cuánto te queda, no cuánto gastaste. Coherente con la metáfora
+ *           de la card (FB-011: la jarra se llena con tu dinero) — lleno = bueno, vacío = alerta, y
+ *           por eso el naranja salta abajo (≤20%), no arriba. Últimos movimientos sin ícono por fila (se quitó
  *           el círculo de MaterialIcons — mezclaba dos lenguajes visuales de ícono en un mismo
  *           modal chico, uno para la jarra y otro por transacción, se sentía inconsistente) y con
  *           un poco más de aire vertical entre filas. onTransfer/onEdit opcionales — dashboard/ no
@@ -30,6 +30,9 @@ import { truncateLabel } from '@shared/utils';
 import { jarCapabilities } from '@core/entities/Jar';
 import type { JarDisplay } from '../types';
 import type { TransactionDisplay } from '@features/transactions/types';
+
+// Jarra casi vacía = alerta. El nivel alto es lo sano (tienes tu presupuesto intacto).
+const LOW_LEVEL_PCT = 20;
 
 function handlePopupPress() {}
 
@@ -76,13 +79,13 @@ export function JarDetailModal({ item, transactions, onClose, onTransfer, onEdit
           {item?.progress !== undefined && (
             <View style={styles.progressBlock}>
               <View style={styles.barTrack}>
-                <View style={[styles.barFill, { width: `${item.progress}%` as `${number}%`, backgroundColor: item.progress >= 90 ? colors.alertOrange : item.iconColor }]} />
+                <View style={[styles.barFill, { width: `${item.progress}%` as `${number}%`, backgroundColor: item.progress <= LOW_LEVEL_PCT ? colors.alertOrange : item.iconColor }]} />
               </View>
               <View style={styles.progressFooter}>
-                <Text style={styles.progressLabel}>{item.progress}% del presupuesto usado</Text>
+                <Text style={styles.progressLabel}>Te queda el {item.progress}% del presupuesto</Text>
                 {item.targetAmount !== undefined && (
                   <Text style={styles.progressLabel}>
-                    $ {item.targetAmount.toLocaleString('es')} presupuesto · <Text style={styles.restColor}>$ {(item.targetAmount - item.balance).toLocaleString('es')} disponible</Text>
+                    $ {item.targetAmount.toLocaleString('es')} presupuesto · <Text style={styles.restColor}>$ {item.balance.toLocaleString('es')} disponible</Text>
                   </Text>
                 )}
               </View>

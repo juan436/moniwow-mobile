@@ -12,7 +12,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 
 import { colors, typography, spacing, radius } from '@shared/styles';
-import { RECURRING_JARS } from '../recurring/RecurringJarSelector';
+import { RECURRING_JARS } from '../../jarOptions';
 import type { RecurringJar } from '../../types';
 
 type Props = { nombre: string; emoji: string; jarra: RecurringJar };

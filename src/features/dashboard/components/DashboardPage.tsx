@@ -46,9 +46,9 @@ type Data = {
 type Props = { data: Data; scrollY: Animated.Value; topOffset: number };
 
 function handleAddPress() { router.push('/add-income'); }
-function handleVerJarras() { router.push('/jarras'); }
-function handleFiltroMovimientos() { router.push('/movimientos'); }
-function handleVerAgenda() { router.push('/agenda?tab=mi-mes&filter=gastos'); }
+function handleViewJars() { router.push('/jars'); }
+function handleViewTransactions() { router.push('/transactions'); }
+function handleViewPlanner() { router.push('/planner?tab=mi-mes&filter=gastos'); }
 
 export function DashboardPage({ data, scrollY, topOffset }: Props) {
   const { saldoLibre, jars, transactions, upcoming, goalProgress, goalsTotal, metaGlobal } = data;
@@ -84,7 +84,7 @@ export function DashboardPage({ data, scrollY, topOffset }: Props) {
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Mis jarras</Text>
-          <Pressable hitSlop={8} onPress={handleVerJarras}><Text style={styles.sectionLink}>Ver todas</Text></Pressable>
+          <Pressable hitSlop={8} onPress={handleViewJars}><Text style={styles.sectionLink}>Ver todas</Text></Pressable>
         </View>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.jarsRow}>
           {jars.map((jar) => <JarCard key={jar.id} jar={jar} onPress={() => handleJarPress(jar)} />)}
@@ -98,7 +98,7 @@ export function DashboardPage({ data, scrollY, topOffset }: Props) {
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Últimos movimientos</Text>
-          <Pressable hitSlop={8} onPress={handleFiltroMovimientos}><MaterialIcons name="tune" size={20} color={colors.primary} /></Pressable>
+          <Pressable hitSlop={8} onPress={handleViewTransactions}><MaterialIcons name="tune" size={20} color={colors.primary} /></Pressable>
         </View>
         <View style={styles.movimientosCard}>
           {transactions.slice(0, 5).map((tx) => <TransactionItem key={tx.id} transaction={tx} onLongPress={handleTxLongPress} />)}
@@ -108,7 +108,7 @@ export function DashboardPage({ data, scrollY, topOffset }: Props) {
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Próximos compromisos</Text>
-          <Pressable hitSlop={8} onPress={handleVerAgenda}><MaterialIcons name="chevron-right" size={26} color={colors.primary} /></Pressable>
+          <Pressable hitSlop={8} onPress={handleViewPlanner}><MaterialIcons name="chevron-right" size={26} color={colors.primary} /></Pressable>
         </View>
         <View style={styles.upcomingCard}>
           {upcoming.map((item, i) => (

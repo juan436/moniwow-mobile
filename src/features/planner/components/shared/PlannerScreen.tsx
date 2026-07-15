@@ -27,7 +27,7 @@ import type { AgendaTab, AgendaFilter } from '../../types';
 
 export function PlannerScreen() {
   const insets   = useSafeAreaInsets();
-  const { activeTab, setActiveTab, activeFilter, setActiveFilter, data, recurrentes, recurrenteActions } = usePlanner();
+  const { activeTab, setActiveTab, activeFilter, setActiveFilter, data, overdue, toConfirm, onConfirmItem, recurrentes, recurrenteActions } = usePlanner();
   const { tab: tabParam, filter: filterParam } = useLocalSearchParams<{ tab?: AgendaTab; filter?: AgendaFilter }>();
   const scrollY  = useRef(new Animated.Value(0)).current;
 
@@ -53,11 +53,16 @@ export function PlannerScreen() {
   const topOffset  = tabBarHeight;
   const pageProps  = { scrollY, topOffset };
   const layout     = useMemo(() => ({ scrollY, topOffset }), [scrollY, topOffset]);
+  // data + atrasados + a-confirmar + acción viajan juntas: MyMonthPage ya llega al tope de 5 props
+  const agenda     = useMemo(
+    () => ({ data, overdue, toConfirm, onConfirm: onConfirmItem }),
+    [data, overdue, toConfirm, onConfirmItem],
+  );
 
   return (
     <View style={styles.screen}>
       {activeTab === 'mi-mes' && (
-        <MyMonthPage data={data} activeFilter={activeFilter} onFilterChange={setActiveFilter} {...pageProps} />
+        <MyMonthPage agenda={agenda} activeFilter={activeFilter} onFilterChange={setActiveFilter} {...pageProps} />
       )}
       {activeTab === 'listas' && (
         <ListsPage {...pageProps} />

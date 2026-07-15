@@ -1,5 +1,5 @@
 /**
- * NotificacionesScreen — Screen (/notificaciones)
+ * NotificationsScreen — Screen
  *
  * @what     Pantalla completa de notificaciones con scroll nativo (FlatList §9).
  * @receives —
@@ -19,7 +19,7 @@ import { useNotifications, type NotificationItem } from '@shared/hooks/useNotifi
 
 function keyExtractor(item: NotificationItem) { return item.id; }
 
-export default function NotificacionesScreen() {
+export function NotificationsScreen() {
   const insets = useSafeAreaInsets();
   const { notifications, unreadCount, markAllRead } = useNotifications();
 

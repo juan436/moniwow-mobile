@@ -1,9 +1,13 @@
 /**
- * FugaDetailScreen — Screen
+ * LeakDetailScreen — Screen
  *
- * @what     Pantalla completa de detalle de fuga: todos los movimientos de esa categoría hormiga.
+ * @what     Detalle de una fuga (gasto hormiga).
  * @receives id param de expo-router (fuga.id).
- * @processes Busca la fuga en useDashboard y muestra su lista completa de items.
+ * @processes Lee de `useAudit` (antes apuntaba a `useDashboard.fugas`, que ya no existe → la pantalla
+ *           llevaba rota con 3 errores de tsc). **Hoy una fuga es UN gasto de Libre**, no una
+ *           categoría con historial: por eso el hero muestra su fecha y NO dice "/mes", y la lista de
+ *           movimientos solo aparece si hay desglose. El desglose por categoría ("café" = 20 cafés
+ *           que suman $90) llega cuando la IA etiquete los gastos (M09).
  * @returns  JSX — Stack screen con back arrow y ScrollView sin anidamiento.
  */
 import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native';
@@ -12,11 +16,11 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { colors, typography, spacing, radius, shadows } from '@shared/styles';
-import { useDashboard } from '@features/dashboard/hooks/useDashboard';
+import { useAudit } from '@features/audit/hooks/useAudit';
 
-export default function FugaDetailScreen() {
+export function LeakDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { fugas } = useDashboard();
+  const { fugas } = useAudit();
   const fuga = fugas.find((f) => f.id === id) ?? null;
   const insets = useSafeAreaInsets();
 
@@ -39,21 +43,24 @@ export default function FugaDetailScreen() {
           </Text>
         </View>
         <View style={[styles.heroCard, shadows.card]}>
-          <Text style={styles.heroLabel}>Gasto mensual</Text>
-          <Text style={styles.heroAmount}>-$ {fuga?.amount.toLocaleString('es')} / mes</Text>
+          <Text style={styles.heroLabel}>{fuga?.date ?? 'Gasto hormiga'}</Text>
+          <Text style={styles.heroAmount}>-$ {fuga?.amount.toLocaleString('es')}</Text>
         </View>
 
-        <Text style={styles.sectionLabel}>Movimientos</Text>
-
-        {fuga?.items.map((tx) => (
-          <View key={tx.description} style={[styles.txCard, shadows.card]}>
-            <View style={styles.txLeft}>
-              <Text style={styles.txDesc}>{tx.description}</Text>
-              <Text style={styles.txDate}>{tx.date}</Text>
-            </View>
-            <Text style={styles.txAmount}>-$ {tx.amount.toLocaleString('es')}</Text>
-          </View>
-        ))}
+        {(fuga?.items.length ?? 0) > 0 && (
+          <>
+            <Text style={styles.sectionLabel}>Movimientos</Text>
+            {fuga?.items.map((tx) => (
+              <View key={tx.description} style={[styles.txCard, shadows.card]}>
+                <View style={styles.txLeft}>
+                  <Text style={styles.txDesc}>{tx.description}</Text>
+                  <Text style={styles.txDate}>{tx.date}</Text>
+                </View>
+                <Text style={styles.txAmount}>-$ {tx.amount.toLocaleString('es')}</Text>
+              </View>
+            ))}
+          </>
+        )}
       </ScrollView>
 
       <View style={[styles.footer, { paddingBottom: insets.bottom }]} />

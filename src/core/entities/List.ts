@@ -11,7 +11,10 @@ export interface ListItem {
 export interface ListProps {
   id: string;
   name: string;
-  // Referencia a una jarra real (no label+emoji, cf. H18). El ícono se deriva del jar en el mapper.
+  // El emoji lo ELIGE el usuario al crear la lista (CreateListModal): es dato suyo, se guarda.
+  // No se deriva del jar (cf. H18 aplica al ícono de agenda, no a este avatar propio de la lista).
+  emoji: string;
+  // Referencia a una jarra real (no label). La etiqueta de la jarra se deriva del jarId en el mapper.
   jarId: string;
   workspaceId: string;
   items: ListItem[];
@@ -20,6 +23,7 @@ export interface ListProps {
 export class List {
   readonly id: string;
   readonly name: string;
+  readonly emoji: string;
   readonly jarId: string;
   readonly workspaceId: string;
   items: ListItem[];
@@ -27,6 +31,7 @@ export class List {
   constructor(props: ListProps) {
     this.id = props.id;
     this.name = props.name;
+    this.emoji = props.emoji;
     this.jarId = props.jarId;
     this.workspaceId = props.workspaceId;
     this.items = [...props.items];

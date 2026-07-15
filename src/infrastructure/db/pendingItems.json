@@ -14,9 +14,5 @@
   { "id": "i1", "description": "Sueldo Empresa X", "amount": 2000, "type": "ingreso", "status": "pendiente", "dueDate": "2026-07-01T00:00:00.000Z", "jarId": "libre", "isRecurring": true, "recurrenceDayOfMonth": 1, "workspaceId": "ws1" },
   { "id": "i2", "description": "Pago Freelance", "amount": 150, "type": "ingreso", "status": "pendiente", "dueDate": "2026-07-10T00:00:00.000Z", "jarId": "libre", "isRecurring": true, "recurrenceDayOfMonth": 10, "workspaceId": "ws1" },
   { "id": "i3", "description": "Bono Proyecto", "amount": 625.50, "type": "ingreso", "status": "pendiente", "dueDate": "2026-07-15T00:00:00.000Z", "jarId": "libre", "isRecurring": true, "recurrenceDayOfMonth": 15, "workspaceId": "ws1" },
-  { "id": "i4", "description": "Intereses Ahorro", "amount": 12.50, "type": "ingreso", "status": "pendiente", "dueDate": "2026-07-28T00:00:00.000Z", "jarId": "libre", "isRecurring": true, "recurrenceDayOfMonth": 28, "workspaceId": "ws1" },
-  { "id": "d1", "description": "Tarjeta Visa", "amount": 300, "type": "pago", "status": "pendiente", "dueDate": "2026-07-15T00:00:00.000Z", "jarId": "libre", "isRecurring": true, "recurrenceDayOfMonth": 15, "workspaceId": "ws1" },
-  { "id": "d2", "description": "Préstamo Mamá (4/10)", "amount": 100, "type": "pago", "status": "pendiente", "dueDate": "2026-07-28T00:00:00.000Z", "jarId": "libre", "isRecurring": true, "recurrenceDayOfMonth": 28, "workspaceId": "ws1" },
-  { "id": "d3", "description": "Cuota Auto (8/36)", "amount": 180, "type": "pago", "status": "pendiente", "dueDate": "2026-07-05T00:00:00.000Z", "jarId": "auto", "isRecurring": true, "recurrenceDayOfMonth": 5, "workspaceId": "ws1" },
-  { "id": "d4", "description": "Tarjeta Débito Plus", "amount": 75, "type": "pago", "status": "pendiente", "dueDate": "2026-07-20T00:00:00.000Z", "jarId": "libre", "isRecurring": true, "recurrenceDayOfMonth": 20, "workspaceId": "ws1" }
+  { "id": "i4", "description": "Intereses Ahorro", "amount": 12.50, "type": "ingreso", "status": "pendiente", "dueDate": "2026-07-28T00:00:00.000Z", "jarId": "libre", "isRecurring": true, "recurrenceDayOfMonth": 28, "workspaceId": "ws1" }
 ]

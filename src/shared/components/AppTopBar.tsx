@@ -31,7 +31,7 @@ export function AppTopBar() {
     <View style={[styles.bar, { paddingTop: insets.top + spacing.stackSm }]}>
       <MoniLogo width={80} height={44} />
       <View style={styles.actions}>
-        <Pressable style={styles.iconButton} hitSlop={sizes.dotSm} onPress={() => router.push('/notificaciones')}>
+        <Pressable style={styles.iconButton} hitSlop={sizes.dotSm} onPress={() => router.push('/notifications')}>
           <MaterialIcons name="notifications" size={24} color={colors.emeraldSuccess} />
           {unreadCount > 0 && <View style={styles.badge} />}
         </Pressable>

@@ -1,5 +1,5 @@
 /**
- * EditarPerfilScreen — Screen (/editar-perfil)
+ * EditProfileScreen — Screen
  *
  * @what     Formulario V1 para editar nombre, apellido, correo y contraseña del usuario.
  * @receives —
@@ -16,7 +16,7 @@ import { colors, spacing } from '@shared/styles';
 import { ScreenHeader, MoniInput, MoniButton } from '@shared/components';
 import { useProfile } from '@shared/hooks/useProfile';
 
-export default function EditarPerfilScreen() {
+export function EditProfileScreen() {
   const insets = useSafeAreaInsets();
   const { profile } = useProfile();
   const [firstName, setFirstName] = useState(profile.firstName);

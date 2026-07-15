@@ -12,9 +12,10 @@ export type JarOption = { id: string; name: string; iconColor: string; iconBg: s
 /** Distribución de ingreso: monto en $ por id de jarra (dinámico, no fijo a 3). */
 export type IncomeDistribution = Record<string, number>;
 
+/** `amount` opcional: los ítems tecleados en Quick Add no llevan precio (llega con el OCR, M09). */
 export type TransactionItem = {
   description: string;
-  amount: number;
+  amount?: number;
 };
 
 /** Ítem en borrador durante el alta (Quick Add, paso Detalle): solo nombre, sin precio.

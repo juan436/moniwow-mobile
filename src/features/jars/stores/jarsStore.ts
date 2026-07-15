@@ -2,82 +2,118 @@
  * jarsStore — Zustand store
  *
  * @what     Fuente ÚNICA del estado de jarras (dashboard + grid + modales comparten esta lista).
- *           Reemplaza el `useState` local de useJars (antes cada pantalla tenía su copia). Mock-stage.
- * @processes Guarda estado + acciones. NO reimplementa reglas de negocio: importa `jarCapabilities`
- *           del dominio (core) y lo aplica como candado — `remove` rechaza jarras protegidas y `save`
- *           ignora campos que la jarra no permite editar (rename/budget/blindado). La UI ya deshabilita
- *           esos controles; este candado es la segunda capa (varias entradas, UI falible, futuro backend).
- * @returns  useJarsStore hook (selectores) — envuelto por useJars para mantener los call sites.
+ *           Guarda entidades `Jar` del dominio hidratadas desde `jarRepository` — ya NO una lista
+ *           hardcodeada. Antes convivían dos listas (INITIAL_JARS del store vs db/jars.json): la UI
+ *           pintaba una y los repos leían la otra. Ahora hay una sola (P7).
+ * @processes `load` hidrata una vez (idempotente aunque varias pantallas lo pidan a la vez). Las
+ *           mutaciones escriben al repositorio Y al estado. NO reimplementa reglas de negocio:
+ *           importa `jarCapabilities` (core) como candado — `remove` rechaza jarras protegidas y
+ *           `save` ignora campos que la jarra no permite editar. La UI ya deshabilita esos controles;
+ *           este candado es la segunda capa (varias entradas, UI falible, futuro backend).
+ * @returns  useJarsStore hook (selectores) — envuelto por useJars, que mapea Jar → JarDisplay.
  */
 import { create } from 'zustand';
 
-import { colors } from '@shared/styles';
-import { jarCapabilities } from '@core/entities/Jar';
-import type { JarDisplay, CreateJarData, SaveJarData } from '../types';
+import { Jar, jarCapabilities } from '@core/entities/Jar';
+import { TransferFunds } from '@core/use-cases/TransferFunds';
+import { jarRepository, transactionRepository } from '@infrastructure/container';
+import { useTransactionsStore } from '@features/transactions/stores/transactionsStore';
+import type { CreateJarData, SaveJarData } from '../types';
 
-const INITIAL_JARS: JarDisplay[] = [
-  { id: 'libre', type: 'libre', name: 'Libre', balance: 1285.50, iconName: 'account-balance-wallet', iconBg: colors.primary + '1A', iconColor: colors.primary },
-  { id: 'hogar', type: 'hogar', name: 'Hogar', balance: 1200.00, iconName: 'home', iconBg: colors.inversePrimary + '33', iconColor: colors.primary, progress: 80, targetAmount: 1500 },
-  { id: 'fondo_seguridad', type: 'fondo_seguridad', name: 'Fondo Seguridad', balance: 5000.00, iconName: 'security', iconBg: colors.emeraldSuccess + '1A', iconColor: colors.emeraldSuccess, isBlindado: true },
-  { id: 'goals', type: 'goals', name: 'Metas', balance: 50000.00, iconName: 'savings', iconBg: colors.goldDreams + '1A', iconColor: colors.goldDreams, isBlindado: true },
-  { id: 'viaje', type: 'custom', name: 'Viaje Europa', balance: 500.00, iconName: 'flight', iconBg: colors.tertiaryContainer + '33', iconColor: colors.tertiary, progress: 35, targetAmount: 1500 },
-  { id: 'salud', type: 'custom', name: 'Salud & Médico', balance: 750.00, iconName: 'favorite', iconBg: colors.alertOrange + '1A', iconColor: colors.alertOrange, progress: 50, targetAmount: 1500 },
-  { id: 'educacion', type: 'custom', name: 'Educación', balance: 200.00, iconName: 'school', iconBg: colors.secondaryContainer + '4D', iconColor: colors.secondary, progress: 20, targetAmount: 1000 },
-  { id: 'ocio', type: 'custom', name: 'Ocio & Diversión', balance: 320.00, iconName: 'sports-esports', iconBg: colors.inversePrimary + '1A', iconColor: colors.primary, progress: 60, targetAmount: 550 },
-  { id: 'super', type: 'custom', name: 'Supermercado', balance: 1200.00, iconName: 'shopping-cart', iconBg: colors.inversePrimary + '33', iconColor: colors.primary, progress: 80, targetAmount: 1500 },
-  { id: 'ropa', type: 'custom', name: 'Ropa', balance: 500.00, iconName: 'shopping-bag', iconBg: colors.tertiaryContainer + '33', iconColor: colors.tertiary, progress: 40, targetAmount: 1250 },
-  { id: 'transport', type: 'custom', name: 'Transporte', balance: 200.00, iconName: 'directions-bus', iconBg: colors.secondaryContainer + '4D', iconColor: colors.secondary, progress: 30, targetAmount: 650 },
-  { id: 'comida', type: 'custom', name: 'Comida', balance: 300.00, iconName: 'restaurant', iconBg: colors.alertOrange + '1A', iconColor: colors.alertOrange, progress: 50, targetAmount: 600 },
-  { id: 'casa', type: 'custom', name: 'Casa', balance: 400.00, iconName: 'home', iconBg: colors.inversePrimary + '33', iconColor: colors.primary, progress: 60, targetAmount: 650 },
-  { id: 'auto', type: 'custom', name: 'Auto', balance: 500.00, iconName: 'directions-car', iconBg: colors.tertiaryContainer + '33', iconColor: colors.tertiary, progress: 70, targetAmount: 700 },
-  { id: 'mascotas', type: 'custom', name: 'Mascotas', balance: 200.00, iconName: 'pets', iconBg: colors.secondaryContainer + '4D', iconColor: colors.secondary, progress: 40, targetAmount: 500 },
-  { id: 'servicios', type: 'custom', name: 'Servicios', balance: 300.00, iconName: 'build', iconBg: colors.alertOrange + '1A', iconColor: colors.alertOrange, progress: 50, targetAmount: 600 },
-];
+const WORKSPACE_ID = 'ws1'; // mock-stage: único workspace sembrado
+const USER_ID = 'u1';
 
-function buildCustomJar(data: CreateJarData): JarDisplay {
-  return {
-    id: `custom-${Date.now()}`, type: 'custom', name: data.name, iconName: data.iconName, balance: 0,
-    iconBg: colors.emeraldTint, iconColor: colors.emeraldSuccess, isBlindado: data.isBlindado,
-    ...(data.targetAmount !== undefined ? { targetAmount: data.targetAmount, progress: 0 } : {}),
-  };
+const transferFunds = new TransferFunds(jarRepository, transactionRepository);
+
+function buildCustomJar(data: CreateJarData): Jar {
+  return new Jar({
+    id: `custom-${Date.now()}`,
+    name: data.name,
+    balance: 0,
+    type: 'custom',
+    workspaceId: WORKSPACE_ID,
+    icon: data.iconName,
+    isBlindado: data.isBlindado ?? false,
+    targetAmount: data.targetAmount,
+  });
 }
 
 /** Candado de dominio: solo escribe los campos que las capacidades de la jarra permiten. */
-function applySave(jar: JarDisplay, data: SaveJarData): JarDisplay {
+function applySave(jar: Jar, data: SaveJarData): Jar {
   const caps = jarCapabilities(jar.type);
-  const targetAmount = caps.canEditBudget ? data.targetAmount : jar.targetAmount;
-  return {
-    ...jar,
+  return new Jar({
+    id: jar.id,
     name: caps.canRename ? data.name : jar.name,
-    iconName: data.iconName,
-    isBlindado: caps.canToggleBlindado ? data.isBlindado : jar.isBlindado,
-    targetAmount,
-    progress: targetAmount !== undefined ? (jar.progress ?? 0) : undefined,
-  };
+    balance: jar.balance,
+    type: jar.type,
+    workspaceId: jar.workspaceId,
+    icon: data.iconName,
+    isBlindado: caps.canToggleBlindado ? (data.isBlindado ?? false) : jar.isBlindado,
+    targetAmount: caps.canEditBudget ? data.targetAmount : jar.targetAmount,
+  });
 }
 
 type JarsState = {
-  jars: JarDisplay[];
+  jars: Jar[];
+  isLoading: boolean;
+  error: string | null;
+  load: () => Promise<void>;
   create: (data: CreateJarData) => void;
   save: (data: SaveJarData) => void;
   remove: (id: string) => void;
   transfer: (fromId: string, toId: string, amount: number) => void;
 };
 
-export const useJarsStore = create<JarsState>((set) => ({
-  jars: INITIAL_JARS,
-  create: (data) => set((s) => ({ jars: [...s.jars, buildCustomJar(data)] })),
-  save: (data) => set((s) => ({ jars: s.jars.map((j) => (j.id === data.id ? applySave(j, data) : j)) })),
-  remove: (id) => set((s) => {
-    const jar = s.jars.find((j) => j.id === id);
-    if (!jar || !jarCapabilities(jar.type).canDelete) return s; // jarra protegida → no-op
-    return { jars: s.jars.filter((j) => j.id !== id) };
-  }),
-  transfer: (fromId, toId, amount) => set((s) => ({
-    jars: s.jars.map((j) => {
-      if (j.id === fromId) return { ...j, balance: j.balance - amount };
-      if (j.id === toId) return { ...j, balance: j.balance + amount };
-      return j;
-    }),
-  })),
+// Hidratación en vuelo: varias pantallas montan a la vez y todas piden load().
+let hydrating: Promise<void> | null = null;
+
+export const useJarsStore = create<JarsState>((set, get) => ({
+  jars: [],
+  isLoading: true,
+  error: null,
+
+  load: () => {
+    if (hydrating) return hydrating;
+    hydrating = jarRepository
+      .findByWorkspace(WORKSPACE_ID)
+      .then((jars) => set({ jars, isLoading: false }))
+      .catch(() => set({ error: 'No se pudieron cargar las jarras', isLoading: false }));
+    return hydrating;
+  },
+
+  create: (data) => {
+    const jar = buildCustomJar(data);
+    void jarRepository.save(jar);
+    set((s) => ({ jars: [...s.jars, jar] }));
+  },
+
+  save: (data) => {
+    const target = get().jars.find((j) => j.id === data.id);
+    if (!target) return;
+    const updated = applySave(target, data);
+    void jarRepository.update(updated);
+    set((s) => ({ jars: s.jars.map((j) => (j.id === updated.id ? updated : j)) }));
+  },
+
+  remove: (id) => {
+    const jar = get().jars.find((j) => j.id === id);
+    if (!jar || !jarCapabilities(jar.type).canDelete) return; // jarra protegida → no-op
+    void jarRepository.delete(id);
+    set((s) => ({ jars: s.jars.filter((j) => j.id !== id) }));
+  },
+
+  // Una transferencia es UN movimiento del libro, no dos balances tecleados: el balance se deriva
+  // (C4), así que escribir la jarra aquí no haría nada. Publicarla al libro sí mueve las dos jarras.
+  transfer: (fromId, toId, amount) => {
+    void transferFunds
+      .execute({
+        id: `tx-${Date.now()}`,
+        sourceJarId: fromId,
+        destinationJarId: toId,
+        amount,
+        workspaceId: WORKSPACE_ID,
+        userId: USER_ID,
+      })
+      .then(({ transaction }) => useTransactionsStore.getState().add(transaction));
+  },
 }));

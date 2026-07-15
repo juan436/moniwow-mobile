@@ -43,6 +43,12 @@ export function SacrificeSlider({ progress, onConfirm, disabled = false }: Props
   const holdTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const holdInterval = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  // El gesto se memoiza con [maxX, disabled] y congela el `onConfirm` de ese render. Al teclear
+  // "400", `disabled` cae en el "4" y ahí queda capturado: el hold confirmaba 4, no 400. La ref
+  // siempre apunta al callback fresco, así el monto que se confirma es el que se ve en pantalla.
+  const onConfirmRef = useRef(onConfirm);
+  useEffect(() => { onConfirmRef.current = onConfirm; });
+
   const maxX = Math.max(1, trackWidth - THUMB_SIZE);
   const fillWidth = useMemo(() => Animated.add(translateX, THUMB_SIZE), [translateX]);
 
@@ -54,7 +60,7 @@ export function SacrificeSlider({ progress, onConfirm, disabled = false }: Props
 
   function startHold() {
     const startedAt = Date.now();
-    holdTimer.current = setTimeout(onConfirm, HOLD_MS);
+    holdTimer.current = setTimeout(() => onConfirmRef.current(), HOLD_MS);
     holdInterval.current = setInterval(() => {
       setHoldMsLeft(Math.max(0, HOLD_MS - (Date.now() - startedAt)));
     }, 100);

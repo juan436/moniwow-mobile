@@ -18,6 +18,7 @@ import { DebtCard } from './DebtCard';
 type Data = {
   patrimonio: number;
   deudaTotal: number;
+  deudaOriginal: number;
   deudaPagada: number;
   deudaBreakdown: DebtBreakdown[];
 };
@@ -26,7 +27,7 @@ type Indicator = { count: number; active: number };
 type Props = { data: Data; indicator: Indicator; scrollY: Animated.Value; topOffset: number };
 
 export function DebtsPage({ data, indicator, scrollY, topOffset }: Props) {
-  const { patrimonio, deudaTotal, deudaPagada, deudaBreakdown } = data;
+  const { patrimonio, deudaTotal, deudaOriginal, deudaPagada, deudaBreakdown } = data;
   const dineroTotal = patrimonio + deudaTotal;
   const isPositive = patrimonio >= 0;
 
@@ -71,6 +72,7 @@ export function DebtsPage({ data, indicator, scrollY, topOffset }: Props) {
 
       <DebtCard
         deudaTotal={deudaTotal}
+        deudaOriginal={deudaOriginal}
         deudaPagada={deudaPagada}
         deudaBreakdown={deudaBreakdown}
       />

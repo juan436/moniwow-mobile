@@ -23,8 +23,9 @@ import { JsonAgendaRepository } from './json/JsonAgendaRepository';
 import { JsonListRepository } from './json/JsonListRepository';
 import { JsonWorkspaceRepository } from './json/JsonWorkspaceRepository';
 
-export const jarRepository: IJarRepository = new JsonJarRepository();
+// El libro va primero: `jars` deriva su balance de `transactions` (C4), no al revés.
 export const transactionRepository: ITransactionRepository = new JsonTransactionRepository();
+export const jarRepository: IJarRepository = new JsonJarRepository(transactionRepository);
 export const goalRepository: IGoalRepository = new JsonGoalRepository();
 export const debtRepository: IDebtRepository = new JsonDebtRepository();
 export const agendaRepository: IAgendaRepository = new JsonAgendaRepository();

@@ -6,7 +6,7 @@
  * @receives 3 props: visible, onClose, onCreate
  * @processes Form local + `step` (0..2). Chrome/teclado/dots delegados a WizardSheet. Valida por paso:
  *           P1 nombre + (monto > 0 si Presupuesto), P2 ícono elegido. Con Presupuesto → tipo
- *           presupuesto (barra = usado, igual que Hogar); sin él → jarra plana (igual que Libre).
+ *           presupuesto (barra = nivel restante, igual que Hogar); sin él → jarra plana (igual que Libre).
  *           Blindado añade fricción al transferir (ver TransferSheet).
  * @returns  JSX — WizardSheet con los 3 pasos.
  * @props    3: visible, onClose, onCreate

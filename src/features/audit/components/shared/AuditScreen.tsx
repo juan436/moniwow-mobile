@@ -58,12 +58,18 @@ export function AuditScreen() {
   const indicator = useMemo(() => ({ count: PAGE_COUNT, active: activePage }), [activePage]);
 
   const auditoriaData = useMemo(
-    () => ({ barChart: data.barChart, fugas: data.fugas, distribution: data.distribution }),
-    [data.barChart, data.fugas, data.distribution]
+    () => ({
+      barChart: data.barChart,
+      fugas: data.fugas,
+      distribution: data.distribution,
+      selectedMonth: data.selectedMonth,
+      onSelectMonth: data.onSelectMonth,
+    }),
+    [data.barChart, data.fugas, data.distribution, data.selectedMonth, data.onSelectMonth]
   );
   const mundoParaleloData = useMemo(
-    () => ({ patrimonio: data.patrimonio, deudaTotal: data.deudaTotal, deudaPagada: data.deudaPagada, deudaBreakdown: data.deudaBreakdown }),
-    [data.patrimonio, data.deudaTotal, data.deudaPagada, data.deudaBreakdown]
+    () => ({ patrimonio: data.patrimonio, deudaTotal: data.deudaTotal, deudaOriginal: data.deudaOriginal, deudaPagada: data.deudaPagada, deudaBreakdown: data.deudaBreakdown }),
+    [data.patrimonio, data.deudaTotal, data.deudaOriginal, data.deudaPagada, data.deudaBreakdown]
   );
   const misSuenosData = useMemo(
     () => ({ goalProgress: data.goalProgress, goalsTotal: data.goalsTotal, metaGlobal: data.metaGlobal, goals: data.goals }),

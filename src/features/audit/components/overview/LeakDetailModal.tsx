@@ -3,7 +3,7 @@
  *
  * @what     Modal de detalle de fuga: monto héroe, preview de últimos 3 movimientos y botón a pantalla completa.
  * @receives 2 props: item, onClose
- * @processes Muestra los 3 primeros items como preview. "Ver detalle" navega a /fuga/[id].
+ * @processes Muestra los 3 primeros items como preview. "Ver detalle" navega a /leak/[id].
  * @returns  JSX — Modal fade con layout monto-primero sin scroll anidado.
  * @props    2: item, onClose
  */
@@ -25,9 +25,9 @@ export function LeakDetailModal({ item, onClose }: Props) {
   const insets = useSafeAreaInsets();
   const preview = item?.items.slice(0, 3) ?? [];
 
-  function handleVerDetalle() {
+  function handleViewDetail() {
     onClose();
-    router.push({ pathname: '/fuga/[id]', params: { id: item?.id ?? '' } });
+    router.push({ pathname: '/leak/[id]', params: { id: item?.id ?? '' } });
   }
 
   return (
@@ -71,7 +71,7 @@ export function LeakDetailModal({ item, onClose }: Props) {
             ))}
           </View>
 
-          <Pressable style={styles.detalleBtn} onPress={handleVerDetalle}>
+          <Pressable style={styles.detalleBtn} onPress={handleViewDetail}>
             <Text style={styles.chipLabel}>Ver detalle</Text>
           </Pressable>
 

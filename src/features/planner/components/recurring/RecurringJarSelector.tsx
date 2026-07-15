@@ -10,24 +10,10 @@
  */
 import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import type { ComponentProps } from 'react';
 
 import { colors, typography, spacing, radius } from '@shared/styles';
 import type { RecurringJar } from '../../types';
-
-type IconName = ComponentProps<typeof MaterialIcons>['name'];
-
-export const RECURRING_JARS: { key: RecurringJar; label: string; iconName: IconName }[] = [
-  { key: 'hogar',       label: 'Hogar',        iconName: 'home' },
-  { key: 'goals',       label: 'Metas',        iconName: 'savings' },
-  { key: 'libre',       label: 'Libre',        iconName: 'account-balance-wallet' },
-  { key: 'transporte',  label: 'Transporte',   iconName: 'directions-bus' },
-  { key: 'salud',       label: 'Salud',        iconName: 'favorite' },
-  { key: 'educacion',   label: 'Educación',    iconName: 'school' },
-  { key: 'viajes',      label: 'Viajes',       iconName: 'flight' },
-  { key: 'emergencias', label: 'Emergencias',  iconName: 'security' },
-  { key: 'ocio',        label: 'Ocio',         iconName: 'sports-esports' },
-];
+import { RECURRING_JARS } from '../../jarOptions';
 
 type Props = { jarra: RecurringJar; onChange: (v: RecurringJar) => void };
 

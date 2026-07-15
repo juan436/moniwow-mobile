@@ -3,76 +3,135 @@
  *
  * @what     Estado de la feature Metas (M10): lista de metas + modales crear/editar/aportar/sacrificar.
  * @receives —
- * @processes Carga desde la BD (goalRepository → metas; jarRepository → balance de la jarra `goals`).
- *           Modelo "pozo financiado, luego repartido": `poolTotal` = balance de la jarra Metas (dato
- *           guardado, toda la plata dentro); `asignado` = Σ `current` de las metas (dato guardado);
- *           `disponible = poolTotal − asignado` es lo SIN asignar (DERIVADO). handleDeposit (Aportar)
- *           mueve de disponible → una meta (pool no cambia, se reasigna). handleWithdraw (Slider de
- *           Sacrificio) saca de una meta Y del pool (sale de Metas hacia Libre de verdad). CRUD en
- *           estado local sobre lo sembrado (mock-stage, mismo límite que jars/ hasta wirear mutaciones).
+ * @processes Guarda entidades `Goal` (hidratadas de goalRepository) y las mapea a `GoalItem` para
+ *           pintar — igual que Jarras: el estado es el dominio, el display se DERIVA. CRUD persiste
+ *           al repo (create/save/delete/deposit), no solo a memoria: antes se perdía al recargar.
+ *           Modelo "pozo financiado, luego repartido": `poolTotal` = balance de la jarra Metas,
+ *           DERIVADO del libro en vivo (C4); `asignado` = Σ `currentAmount` (dato guardado);
+ *           `disponible = poolTotal − asignado` es lo SIN asignar. handleDeposit (Aportar) reasigna
+ *           dentro del pozo — el dinero ya está en la jarra Metas, no toca el libro, pero sí cambia
+ *           `currentAmount` → se persiste. handleWithdraw (Sacrificio) SÍ mueve dinero (Metas → Libre):
+ *           `WithdrawFromGoal` escribe la transferencia y persiste la meta; usamos la que devuelve.
  * @returns  { goals, isAddVisible, selectedGoal, poolTotal, asignado, disponible, handleAnadir,
  *            handleCloseAdd, handleCreate, handleCardPress, handleCloseEdit, handleSave,
  *            handleDelete, handleWithdraw, handleDeposit }
  */
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { goalRepository, jarRepository } from '@infrastructure/container';
+import { Goal } from '@core/entities/Goal';
+import { ComputeJarBalances } from '@core/use-cases/ComputeJarBalances';
+import { WithdrawFromGoal } from '@core/use-cases/WithdrawFromGoal';
+import { goalRepository, jarRepository, transactionRepository } from '@infrastructure/container';
+import { useTransactionsStore } from '@features/transactions/stores/transactionsStore';
 import { toGoalItem } from '../mappers';
 import type { GoalItem, CreateGoalData, SaveGoalData } from '../types';
 
 const WORKSPACE_ID = 'ws1'; // mock-stage: único workspace sembrado
+const USER_ID = 'u1';
 const GOALS_JAR_ID = 'goals';
 
-function recalc(goal: GoalItem, current: number): GoalItem {
-  return { ...goal, current, progress: Math.min(100, Math.round((current / goal.target) * 100)) };
+const computeBalances = new ComputeJarBalances();
+const withdrawFromGoal = new WithdrawFromGoal(goalRepository, jarRepository, transactionRepository);
+
+/** Reconstruye la meta preservando lo que el form no toca (saldo asignado, fecha objetivo). */
+function editGoal(base: Goal, data: SaveGoalData): Goal {
+  return new Goal({
+    id: base.id, name: data.name, icon: data.icon, targetAmount: data.targetAmount,
+    currentAmount: base.currentAmount, workspaceId: base.workspaceId, targetDate: base.targetDate,
+  });
+}
+/** Reasigna el saldo del pozo (Aportar): cambia solo `currentAmount`, no el libro. */
+function reassign(goal: Goal, currentAmount: number): Goal {
+  return new Goal({
+    id: goal.id, name: goal.name, icon: goal.icon, targetAmount: goal.targetAmount,
+    currentAmount, workspaceId: goal.workspaceId, targetDate: goal.targetDate,
+  });
 }
 
 export function useGoals() {
-  const [goals, setGoals] = useState<GoalItem[]>([]);
-  const [poolTotal, setPoolTotal] = useState(0);
+  const [goals, setGoals] = useState<Goal[]>([]);
   const [isAddVisible, setIsAddVisible] = useState(false);
   const [selectedGoal, setSelectedGoal] = useState<GoalItem | null>(null);
 
+  const transactions = useTransactionsStore((s) => s.transactions);
+  const loadLedger   = useTransactionsStore((s) => s.load);
+  const addToLedger  = useTransactionsStore((s) => s.add);
+
   useEffect(() => {
     let active = true;
-    async function load() {
-      const [gs, jars] = await Promise.all([
-        goalRepository.findByWorkspace(WORKSPACE_ID),
-        jarRepository.findByWorkspace(WORKSPACE_ID),
-      ]);
-      if (!active) return;
-      setGoals(gs.map(toGoalItem));
-      setPoolTotal(jars.find((j) => j.id === GOALS_JAR_ID)?.balance ?? 0);
-    }
-    load();
+    void loadLedger();
+    void goalRepository.findByWorkspace(WORKSPACE_ID).then((gs) => {
+      if (active) setGoals(gs);
+    });
     return () => {
       active = false;
     };
-  }, []);
+  }, [loadLedger]);
 
-  const asignado   = useMemo(() => goals.reduce((sum, g) => sum + g.current, 0), [goals]);
+  const goalItems = useMemo(() => goals.map(toGoalItem), [goals]);
+  // El pozo es el balance de la jarra Metas — derivado del libro, no un campo guardado (C4).
+  const poolTotal  = useMemo(
+    () => computeBalances.execute(transactions).get(GOALS_JAR_ID) ?? 0,
+    [transactions],
+  );
+  const asignado   = useMemo(() => goals.reduce((sum, g) => sum + g.currentAmount, 0), [goals]);
   const disponible = poolTotal - asignado;
 
   const handleAnadir    = useCallback(() => setIsAddVisible(true), []);
   const handleCloseAdd  = useCallback(() => setIsAddVisible(false), []);
-  const handleCreate    = useCallback((_data: CreateGoalData) => { /* TODO: CreateGoal use-case */ }, []);
   const handleCardPress = useCallback((goal: GoalItem) => setSelectedGoal(goal), []);
   const handleCloseEdit = useCallback(() => setSelectedGoal(null), []);
-  const handleSave      = useCallback((data: SaveGoalData) => {
-    setGoals((g) => g.map((x) => x.id === data.id ? { ...x, name: data.name, emoji: data.icon, target: data.targetAmount } : x));
-  }, []);
-  const handleDelete    = useCallback((id: string) => setGoals((g) => g.filter((x) => x.id !== id)), []);
 
-  const handleWithdraw = useCallback((id: string, amount: number) => {
-    setGoals((g) => g.map((x) => x.id === id ? recalc(x, Math.max(0, x.current - amount)) : x));
-    setPoolTotal((p) => Math.max(0, p - amount));
+  const handleCreate = useCallback((data: CreateGoalData) => {
+    const goal = new Goal({
+      id: `goal-${Date.now()}`, name: data.name, icon: data.icon,
+      targetAmount: data.targetAmount, currentAmount: 0, workspaceId: WORKSPACE_ID,
+    });
+    void goalRepository.save(goal);
+    setGoals((g) => [...g, goal]);
   }, []);
+
+  const handleSave = useCallback((data: SaveGoalData) => {
+    setGoals((g) => {
+      const base = g.find((x) => x.id === data.id);
+      if (!base) return g;
+      const updated = editGoal(base, data);
+      void goalRepository.update(updated);
+      return g.map((x) => (x.id === updated.id ? updated : x));
+    });
+  }, []);
+
+  const handleDelete = useCallback((id: string) => {
+    void goalRepository.delete(id);
+    setGoals((g) => g.filter((x) => x.id !== id));
+  }, []);
+
+  // Sacar de una meta mueve dinero de verdad (Metas → Libre): tiene que quedar en el libro, o el
+  // pozo —que ahora se deriva— no bajaría. El use-case persiste la meta; reflejamos la que devuelve.
+  const handleWithdraw = useCallback(async (id: string, amount: number) => {
+    const { goal, transaction } = await withdrawFromGoal.execute({
+      id: `tx-${Date.now()}`,
+      goalId: id,
+      amount,
+      workspaceId: WORKSPACE_ID,
+      userId: USER_ID,
+    });
+    await addToLedger(transaction);
+    setGoals((g) => g.map((x) => (x.id === id ? goal : x)));
+  }, [addToLedger]);
+
   const handleDeposit = useCallback((id: string, amount: number) => {
-    setGoals((g) => g.map((x) => x.id === id ? recalc(x, x.current + amount) : x));
+    setGoals((g) => {
+      const base = g.find((x) => x.id === id);
+      if (!base) return g;
+      const updated = reassign(base, base.currentAmount + amount);
+      void goalRepository.update(updated);
+      return g.map((x) => (x.id === id ? updated : x));
+    });
   }, []);
 
   return {
-    goals, isAddVisible, selectedGoal, poolTotal, asignado, disponible,
+    goals: goalItems, isAddVisible, selectedGoal, poolTotal, asignado, disponible,
     handleAnadir, handleCloseAdd, handleCreate,
     handleCardPress, handleCloseEdit, handleSave, handleDelete,
     handleWithdraw, handleDeposit,

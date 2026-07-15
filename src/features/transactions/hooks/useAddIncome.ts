@@ -7,8 +7,10 @@
  *           Nada se asigna automáticamente: `distribution` arranca vacía y solo cambia por acción
  *           explícita del usuario (asignar un monto o "Asignar todo" a una jarra). Sin distribuir:
  *           el 100% se deposita en Libre — pero eso se decide en la confirmación, no se escribe
- *           en `distribution`. La lógica de negocio (CreateTransaction) irá en core/use-cases
- *           cuando haya backend.
+ *           en `distribution`.
+ *           **Confirmar PERSISTE**: delega en `DistributeFunds` (core), que escribe UN ingreso en
+ *           Libre por el total y una transferencia Libre → jarra por cada reparto. Antes era un TODO
+ *           y el ingreso se evaporaba: podías gastar pero no cobrar.
  * @returns  { amount, concept, setConcept, step, isDistributing, distribution, totalAmount,
  *            remaining, selectedJarId, jarAmountDraft, jarMaxAvailable, carouselPage,
  *            setCarouselPage, handleKey, handleSiguiente, handleToggleDistribute, handleSelectJar,
@@ -17,8 +19,16 @@
  */
 import { useState, useCallback, useMemo } from 'react';
 
+import { DistributeFunds } from '@core/use-cases/DistributeFunds';
+import { jarRepository, transactionRepository } from '@infrastructure/container';
 import { applyNumpadKey } from '@shared/utils';
+import { useTransactionsStore } from '../stores/transactionsStore';
 import type { JarOption, IncomeDistribution } from '../types';
+
+const WORKSPACE_ID = 'ws1'; // mock-stage: único workspace sembrado
+const USER_ID = 'u1';
+
+const distributeFunds = new DistributeFunds(jarRepository, transactionRepository);
 
 function emptyDistribution(jars: JarOption[]): IncomeDistribution {
   return Object.fromEntries(jars.map(j => [j.id, 0]));
@@ -33,6 +43,9 @@ export function useAddIncome(jars: JarOption[]) {
   const [selectedJarId, setSelectedJarId] = useState<string | null>(null);
   const [jarAmountDraft, setJarAmountDraft] = useState('0');
   const [carouselPage, setCarouselPage] = useState(0);
+  const [error, setError] = useState<string | null>(null);
+
+  const addToLedger = useTransactionsStore((s) => s.add);
 
   const totalAmount = useMemo(() => parseFloat(amount) || 0, [amount]);
   const allocated   = useMemo(
@@ -102,17 +115,37 @@ export function useAddIncome(jars: JarOption[]) {
     setCarouselPage(0);
   }, [jars]);
 
-  const handleConfirmar = useCallback(() => {
-    // TODO: core/use-cases/CreateTransaction (isIncome: true)
-    // Sin distribuir (isDistributing=false): 100% a Libre, decidido acá — no en `distribution`.
-    resetAll();
-  }, [resetAll]);
+  const handleConfirmar = useCallback(async () => {
+    if (totalAmount <= 0) return;
+    try {
+      setError(null);
+      // Sin distribuir: reparto vacío → el total se queda en Libre. Es lo mismo que repartir 0.
+      const entries = isDistributing
+        ? Object.entries(distribution).map(([jarId, amt]) => ({ jarId, amount: amt }))
+        : [];
+
+      const { income, transfers } = await distributeFunds.execute({
+        id: `tx-${Date.now()}`,
+        totalAmount,
+        description: concept.trim() || 'Ingreso',
+        distribution: entries,
+        workspaceId: WORKSPACE_ID,
+        userId: USER_ID,
+      });
+
+      await addToLedger(income);
+      for (const transfer of transfers) await addToLedger(transfer);
+      resetAll();
+    } catch {
+      setError('No se pudo registrar el ingreso — intenta de nuevo');
+    }
+  }, [totalAmount, isDistributing, distribution, concept, addToLedger, resetAll]);
 
   const handleBack = useCallback(() => setStep(1), []);
 
   return {
     amount, concept, setConcept,
-    step,
+    step, error,
     isDistributing, distribution, totalAmount, remaining,
     selectedJarId, jarAmountDraft, jarMaxAvailable, carouselPage, setCarouselPage,
     handleKey, handleSiguiente, handleToggleDistribute,
