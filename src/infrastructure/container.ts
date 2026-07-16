@@ -11,16 +11,16 @@ import { IJarRepository } from '@core/ports/IJarRepository';
 import { ITransactionRepository } from '@core/ports/ITransactionRepository';
 import { IGoalRepository } from '@core/ports/IGoalRepository';
 import { IDebtRepository } from '@core/ports/IDebtRepository';
-import { IAgendaRepository } from '@core/ports/IAgendaRepository';
 import { IListRepository } from '@core/ports/IListRepository';
+import { IRecurrenceRepository } from '@core/ports/IRecurrenceRepository';
 import { IWorkspaceRepository } from '@core/ports/IWorkspaceRepository';
 
 import { JsonJarRepository } from './json/JsonJarRepository';
 import { JsonTransactionRepository } from './json/JsonTransactionRepository';
 import { JsonGoalRepository } from './json/JsonGoalRepository';
 import { JsonDebtRepository } from './json/JsonDebtRepository';
-import { JsonAgendaRepository } from './json/JsonAgendaRepository';
 import { JsonListRepository } from './json/JsonListRepository';
+import { JsonRecurrenceRepository } from './json/JsonRecurrenceRepository';
 import { JsonWorkspaceRepository } from './json/JsonWorkspaceRepository';
 
 // El libro va primero: `jars` deriva su balance de `transactions` (C4), no al revés.
@@ -28,6 +28,6 @@ export const transactionRepository: ITransactionRepository = new JsonTransaction
 export const jarRepository: IJarRepository = new JsonJarRepository(transactionRepository);
 export const goalRepository: IGoalRepository = new JsonGoalRepository();
 export const debtRepository: IDebtRepository = new JsonDebtRepository();
-export const agendaRepository: IAgendaRepository = new JsonAgendaRepository();
 export const listRepository: IListRepository = new JsonListRepository();
+export const recurrenceRepository: IRecurrenceRepository = new JsonRecurrenceRepository();
 export const workspaceRepository: IWorkspaceRepository = new JsonWorkspaceRepository();

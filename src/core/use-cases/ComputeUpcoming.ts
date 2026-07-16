@@ -2,48 +2,64 @@
  * ComputeUpcoming — Use Case
  *
  * @what     Los próximos compromisos, derivados de la BD. Alimenta "Próximos" del Dashboard.
- * @receives items: PendingItem[] · debts: Debt[] · txs: Transaction[] · today: Date · limit?: number
+ * @receives recurrences: Recurrence[] · debts: Debt[] · txs: Transaction[] · today: Date · limit?: number
  * @processes **Una sola fuente para el Dashboard y la Agenda** (C5). Antes el Dashboard tenía su
  *           propia lista escrita a mano (`MOCK_UPCOMING`): pagabas la renta en la Agenda y el
  *           Dashboard seguía pidiéndotela.
  *           Un **compromiso** es una fecha en la que se mueve dinero — entre o salga. Entra todo lo
  *           que sigue pendiente:
- *           - `pendingItems` no confirmados, `pago` **e** `ingreso` (el sueldo del 1 también es una cita).
+ *           - las ocurrencias vivas de cada regla recurrente (`ComputeRecurringOccurrences`): la del
+ *             mes y las atrasadas sin pagar. Gasto → 'pago', ingreso → 'ingreso' (el sueldo es cita).
  *           - las cuotas vivas de cada deuda: **las atrasadas de meses anteriores** y la de este mes.
  *             Las atrasadas se acumulan (decisión 2026-07-14): saltarte julio no borra julio.
  *           Ordenado por fecha: lo primero que llega, primero — así lo vencido sube arriba solo.
  * @returns  UpcomingCommitment[] — más cercano primero.
  */
 import { Debt } from '../entities/Debt';
+import { Recurrence } from '../entities/Recurrence';
 import { Transaction } from '../entities/Transaction';
-import { PendingItem, PendingItemType } from '../ports/IAgendaRepository';
 import { ComputeDebtStatus, CuotaStatus } from './ComputeDebtStatus';
+import { ComputeRecurringOccurrences, RecurrenceOccurrence } from './ComputeRecurringOccurrences';
+
+/** Hacia dónde se mueve el dinero en la fecha del compromiso. */
+export type CommitmentType = 'ingreso' | 'pago';
 
 export interface UpcomingCommitment {
   id: string;
   description: string;
   amount: number;
-  type: PendingItemType; // 'pago' sale, 'ingreso' entra. Una cuota siempre es 'pago'.
+  type: CommitmentType; // 'pago' sale, 'ingreso' entra. Una cuota siempre es 'pago'.
   dueDate: Date;
   jarId: string;
   debtId?: string;
   cuotaMonth?: string;
+  recurrenceId?: string;
+  recurrenceMonth?: string;
 }
 
 export class ComputeUpcoming {
   private readonly computeStatus = new ComputeDebtStatus();
+  private readonly computeRecurring = new ComputeRecurringOccurrences();
 
-  execute(items: PendingItem[], debts: Debt[], txs: Transaction[], today: Date, limit?: number): UpcomingCommitment[] {
-    const fromItems: UpcomingCommitment[] = items
-      .filter((i) => i.status !== 'confirmado')
-      .map((i) => ({
-        id: i.id,
-        description: i.description,
-        amount: i.amount,
-        type: i.type,
-        dueDate: i.dueDate,
-        jarId: i.jarId,
+  execute(recurrences: Recurrence[], debts: Debt[], txs: Transaction[], today: Date, limit?: number): UpcomingCommitment[] {
+    const fromRecurrences: UpcomingCommitment[] = recurrences.flatMap((rec) => {
+      const status = this.computeRecurring.execute(rec, txs, today);
+      const occurrences: RecurrenceOccurrence[] = [
+        ...status.overdue,
+        ...(status.current && !status.current.isPaid ? [status.current] : []),
+      ];
+
+      return occurrences.map((occ) => ({
+        id: `rec-${rec.id}-${occ.month}`,
+        description: rec.name,
+        amount: occ.amount,
+        type: rec.type === 'ingreso' ? ('ingreso' as const) : ('pago' as const),
+        dueDate: occ.dueDate,
+        jarId: rec.jarId,
+        recurrenceId: rec.id,
+        recurrenceMonth: occ.month,
       }));
+    });
 
     const fromDebts: UpcomingCommitment[] = debts.flatMap((debt) => {
       const status = this.computeStatus.execute(debt, txs, today);
@@ -64,7 +80,7 @@ export class ComputeUpcoming {
       }));
     });
 
-    const ordered = [...fromItems, ...fromDebts].sort((a, b) => a.dueDate.getTime() - b.dueDate.getTime());
+    const ordered = [...fromRecurrences, ...fromDebts].sort((a, b) => a.dueDate.getTime() - b.dueDate.getTime());
     return limit ? ordered.slice(0, limit) : ordered;
   }
 }

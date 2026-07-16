@@ -16,7 +16,7 @@ export function emptyRecurringForm(tipo: AgendaFilter): RecurringForm {
 }
 
 export function recurringFormFromItem(item: RecurringDisplay): RecurringForm {
-  return { tipo: item.filter, nombre: item.name, monto: item.amount.toString(), dia: item.day, mes: 1, frecuencia: 'indefinido', modoFecha: 'recurrente', diasFijos: [], diasPorMes: {}, cuotasTotales: 12, cuotasPagadas: 0, jarra: 'libre' };
+  return { tipo: item.filter, nombre: item.name, monto: item.amount.toString(), dia: item.day, mes: 1, frecuencia: item.frecuencia, modoFecha: 'recurrente', diasFijos: [], diasPorMes: {}, cuotasTotales: item.cuotas, cuotasPagadas: 0, jarra: item.jarra };
 }
 
 export function resetOnTipoChange(prev: RecurringForm, tipo: AgendaFilter): RecurringForm {

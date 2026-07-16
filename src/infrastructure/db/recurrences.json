@@ -1,0 +1,14 @@
+[
+  { "id": "rec-g1",  "name": "Alquiler Hogar",     "amount": 800,    "type": "gasto",   "dayOfMonth": 5,  "jarId": "hogar", "startMonth": "2026-07", "workspaceId": "ws1" },
+  { "id": "rec-g2",  "name": "Expensas Edificio",  "amount": 120,    "type": "gasto",   "dayOfMonth": 10, "jarId": "hogar", "startMonth": "2026-07", "workspaceId": "ws1" },
+  { "id": "rec-g3",  "name": "Energía Eléctrica",  "amount": 45,     "type": "gasto",   "dayOfMonth": 12, "jarId": "hogar", "startMonth": "2026-07", "workspaceId": "ws1" },
+  { "id": "rec-g4",  "name": "Internet Fibra",     "amount": 40,     "type": "gasto",   "dayOfMonth": 15, "jarId": "hogar", "startMonth": "2026-07", "workspaceId": "ws1" },
+  { "id": "rec-g5",  "name": "Netflix",            "amount": 15,     "type": "gasto",   "dayOfMonth": 20, "jarId": "ocio",  "startMonth": "2026-07", "workspaceId": "ws1" },
+  { "id": "rec-g6",  "name": "Agua Potable",       "amount": 22,     "type": "gasto",   "dayOfMonth": 5,  "jarId": "hogar", "startMonth": "2026-07", "workspaceId": "ws1" },
+  { "id": "rec-g7",  "name": "Spotify",            "amount": 9.99,   "type": "gasto",   "dayOfMonth": 15, "jarId": "ocio",  "startMonth": "2026-07", "workspaceId": "ws1" },
+  { "id": "rec-g8",  "name": "Plan Móvil",         "amount": 18,     "type": "gasto",   "dayOfMonth": 20, "jarId": "hogar", "startMonth": "2026-07", "workspaceId": "ws1" },
+  { "id": "rec-g9",  "name": "Seguro Médico",      "amount": 90,     "type": "gasto",   "dayOfMonth": 28, "jarId": "salud", "startMonth": "2026-07", "workspaceId": "ws1" },
+  { "id": "rec-i1",  "name": "Sueldo Empresa X",   "amount": 2000,   "type": "ingreso", "dayOfMonth": 1,  "jarId": "libre", "startMonth": "2026-07", "workspaceId": "ws1" },
+  { "id": "rec-i2",  "name": "Pago Freelance",     "amount": 150,    "type": "ingreso", "dayOfMonth": 10, "jarId": "libre", "startMonth": "2026-07", "workspaceId": "ws1" },
+  { "id": "rec-i3",  "name": "Beca Formación",     "amount": 500,    "type": "ingreso", "dayOfMonth": 10, "jarId": "libre", "startMonth": "2026-05", "endMonth": "2026-10", "workspaceId": "ws1" }
+]

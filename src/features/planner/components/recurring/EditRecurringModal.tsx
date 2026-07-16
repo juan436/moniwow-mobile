@@ -4,11 +4,9 @@
  * @what     Modal formulario para editar o eliminar un recurrente existente. Siempre 4 pasos, uno
  *           por pregunta — mismo patrón que CreateRecurringModal.
  * @receives 5 props: visible, item, onClose, onSave, onDelete
- * @processes Paso 1: tipo + nombre + monto + "Eliminar" (acceso rápido, no obliga a pasar por los
- *           pasos siguientes solo para borrar). Mismos 4 pasos que CreateRecurringModal, contenido
- *           cambia según tipo. Sheet sube con el teclado (Keyboard listeners + marginBottom),
- *           mismo comportamiento que TransferSheet. Cambiar Tipo resetea el form y vuelve al
- *           paso 1.
+ * @processes Paso 1: tipo + nombre + monto + "Eliminar" (acceso rápido, no obliga a pasar los pasos
+ *           siguientes solo para borrar). Mismos 4 pasos que CreateRecurringModal, contenido según
+ *           tipo. Sheet sube con el teclado. Cambiar Tipo resetea el form y vuelve al paso 1.
  * @returns  JSX — bottom sheet slide-up con el paso activo y su CTA.
  * @props    5: visible, item, onClose, onSave, onDelete
  */
@@ -84,7 +82,10 @@ export function EditRecurringModal({ visible, item, onClose, onSave, onDelete }:
 
   function handleSave() {
     if (!canContinue || !item || !form) return;
-    onSave({ id: item.id, name: form.nombre.trim(), amount: parsedMonto, day: primaryDay(form), filter: form.tipo });
+    onSave({
+      id: item.id, name: form.nombre.trim(), amount: parsedMonto, day: primaryDay(form), filter: form.tipo,
+      jarra: form.jarra, frecuencia: form.frecuencia, cuotas: form.cuotasTotales,
+    });
     onClose();
   }
 

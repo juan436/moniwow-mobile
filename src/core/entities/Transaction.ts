@@ -30,6 +30,12 @@ export interface TransactionProps {
   // agosto saldas la cuota atrasada de julio: date = agosto, cuotaMonth = '2026-07'. Con un solo
   // campo, julio se debería para siempre y agosto se daría por pagado sin serlo.
   cuotaMonth?: string;
+  // Regla recurrente que este movimiento salda. ENLACE (como debtId): permite preguntarle al libro
+  // qué ocurrencias están pagadas en vez de guardar un `status` por mes.
+  recurrenceId?: string;
+  // Qué OCURRENCIA cubre ('YYYY-MM'), no cuándo se pagó (`date`). Confirmar la renta de julio en
+  // agosto: date = agosto, recurrenceMonth = '2026-07'. Misma lógica que `cuotaMonth`.
+  recurrenceMonth?: string;
   items?: TransactionItem[];
   receiptUri?: string;
 }
@@ -46,6 +52,8 @@ export class Transaction {
   readonly toJarId?: string;
   readonly debtId?: string;
   readonly cuotaMonth?: string;
+  readonly recurrenceId?: string;
+  readonly recurrenceMonth?: string;
   readonly items?: TransactionItem[];
   readonly receiptUri?: string;
 
@@ -61,6 +69,8 @@ export class Transaction {
     this.toJarId = props.toJarId;
     this.debtId = props.debtId;
     this.cuotaMonth = props.cuotaMonth;
+    this.recurrenceId = props.recurrenceId;
+    this.recurrenceMonth = props.recurrenceMonth;
     this.items = props.items;
     this.receiptUri = props.receiptUri;
   }

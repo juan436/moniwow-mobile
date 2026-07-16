@@ -9,7 +9,7 @@
  *           **`upcoming` derivado (C5).** Era `MOCK_UPCOMING`: 6 nombres inventados ("Electricidad CFE",
  *           "Gimnasio Smart Fit"…) que no existían en ninguna tabla. El Dashboard y la Agenda pedían
  *           cosas distintas: pagabas la renta en la Agenda y aquí te la seguían reclamando. Ahora
- *           ambos salen de `pendingItems` + `debts` vía `ComputeUpcoming` — **una sola verdad**.
+ *           ambos salen de `recurrences` + `debts` vía `ComputeUpcoming` — **una sola verdad**.
  *           Jarras vive en features/jars/useJars, transacciones en features/transactions/useTransactions
  *           (ver ADR excepciones dashboard→jars, dashboard→transactions en clean_architecture.md).
  * @returns  { saldoLibre, upcoming, isLoading, error }
@@ -18,12 +18,12 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { ComputeJarBalances } from '@core/use-cases/ComputeJarBalances';
 import { ComputeUpcoming } from '@core/use-cases/ComputeUpcoming';
-import { agendaRepository, debtRepository, jarRepository } from '@infrastructure/container';
+import { recurrenceRepository, debtRepository, jarRepository } from '@infrastructure/container';
 import { useTransactionsStore } from '@features/transactions/stores/transactionsStore';
 import { toJarPresentation, colorByType, type JarPresentation } from '@shared/styles';
 import { toUpcomingExpense } from '../mappers';
 import type { Debt } from '@core/entities/Debt';
-import type { PendingItem } from '@core/ports/IAgendaRepository';
+import type { Recurrence } from '@core/entities/Recurrence';
 
 const WORKSPACE_ID = 'ws1'; // mock-stage: único workspace sembrado
 const LIBRE_JAR_ID = 'libre';
@@ -39,7 +39,7 @@ export function useDashboard() {
   const ledgerError  = useTransactionsStore((s) => s.error);
   const load         = useTransactionsStore((s) => s.load);
 
-  const [pending, setPending] = useState<PendingItem[]>([]);
+  const [recurrences, setRecurrences] = useState<Recurrence[]>([]);
   const [debts, setDebts] = useState<Debt[]>([]);
   const [presById, setPresById] = useState<Map<string, JarPresentation>>(new Map());
   const [error, setError] = useState<string | null>(null);
@@ -48,12 +48,12 @@ export function useDashboard() {
 
   const loadCommitments = useCallback(async () => {
     try {
-      const [items, ds, jars] = await Promise.all([
-        agendaRepository.findByWorkspace(WORKSPACE_ID),
+      const [recs, ds, jars] = await Promise.all([
+        recurrenceRepository.findByWorkspace(WORKSPACE_ID),
         debtRepository.findByWorkspace(WORKSPACE_ID),
         jarRepository.findByWorkspace(WORKSPACE_ID),
       ]);
-      setPending(items);
+      setRecurrences(recs);
       setDebts(ds);
       setPresById(new Map(jars.map((j) => [j.id, toJarPresentation(j)])));
     } catch {
@@ -73,9 +73,9 @@ export function useDashboard() {
   const upcoming = useMemo(() => {
     const today = new Date();
     return computeUpcoming
-      .execute(pending, debts, transactions, today, UPCOMING_LIMIT)
+      .execute(recurrences, debts, transactions, today, UPCOMING_LIMIT)
       .map((c) => toUpcomingExpense(c, presById.get(c.jarId) ?? FALLBACK, today));
-  }, [pending, debts, transactions, presById]);
+  }, [recurrences, debts, transactions, presById]);
 
   return {
     saldoLibre,

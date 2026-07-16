@@ -33,6 +33,10 @@ export type AgendaItemDisplay = {
   debtId?: string;
   /** Solo en deudas: QUÉ cuota es ('YYYY-MM'). Su identidad — pagar la de julio no paga la de agosto. */
   cuotaMonth?: string;
+  /** Solo en recurrentes: la regla dueña de esta ocurrencia. */
+  recurrenceId?: string;
+  /** Solo en recurrentes: QUÉ ocurrencia es ('YYYY-MM'). Confirmar la de julio no confirma la de agosto. */
+  recurrenceMonth?: string;
   urgencyLabel?: string;
 };
 
@@ -58,11 +62,24 @@ export type RecurringDisplay = {
   iconBg: string;
   name: string;
   day: number;
+  /** El monto MENSUAL (la cuota, en deudas). El total de una deuda = amount × cuotas. */
   amount: number;
   filter: AgendaFilter;
+  /** Necesarios para editar sin perder datos: la jarra de pago y la duración. Derivados de la entidad. */
+  jarra: RecurringJar;
+  frecuencia: RecurringFrequency;
+  cuotas: number;
 };
 
-export type CreateRecurringData = { name: string; amount: number; day: number; filter: AgendaFilter };
+export type CreateRecurringData = {
+  name: string;
+  amount: number; // mensual: para deuda es la cuota (total = amount × cuotas)
+  day: number;
+  filter: AgendaFilter;
+  jarra: RecurringJar;
+  frecuencia: RecurringFrequency;
+  cuotas: number; // duración en meses (ingreso/gasto finito) o nº de cuotas (deuda)
+};
 export type SaveRecurringData   = CreateRecurringData & { id: string };
 
 export type RecurringActions = {

@@ -3,49 +3,44 @@
  *
  * @what     Estado y datos de la Agenda + CRUD local de compromisos recurrentes.
  * @receives —
- * @processes **Ya no hay `MOCK_DATA`.** Los compromisos salen de `agendaRepository` (`pendingItems`)
- *           y las deudas de `debtRepository` — la Agenda no inventa nada. Los totales se DERIVAN de
- *           esas listas (antes eran tres literales escritos a mano que nadie recalculaba).
- *           **Confirmar ESCRIBE en el libro**: Pagar/¡Llegó! → `ConfirmPendingItem`; pagar una cuota
- *           → `PayDebtCuota`. Antes los tres botones solo daban la vuelta a un booleano en memoria:
- *           marcabas la renta como pagada y el balance de Hogar ni se enteraba.
- *           **La unidad de deuda es la CUOTA, no la deuda.** `ComputeDebtStatus` cruza el calendario
- *           de la deuda con el libro: la cuota de este mes **y las atrasadas de meses anteriores**
- *           (que se acumulan). Un `paidCuotas` guardado decía "llevas 7" sin decir cuáles, así que
- *           no sabía que te saltaste mayo. `inFlight` bloquea el doble toque mientras se guarda.
+ * @processes La Agenda se DERIVA: reglas recurrentes (`recurrenceRepository`) + deudas
+ *           (`debtRepository`), cruzadas con el libro. **Ya no hay `pendingItems`**: cada ocurrencia
+ *           del mes y las atrasadas salen de `ComputeRecurringOccurrences` / `ComputeDebtStatus`.
+ *           **Confirmar ESCRIBE en el libro**: recurrente → `ConfirmRecurrence`; cuota → `PayDebtCuota`
+ *           (ambos con `recurrenceMonth`/`cuotaMonth`: QUÉ ocurrencia se cubre, no cuándo). Antes un
+ *           booleano en memoria: marcabas la renta pagada y el balance de Hogar ni se enteraba.
+ *           El CRUD del tab Recurrentes vive en `useRecurrentes` (enruta a Recurrence / Debt).
+ *           `inFlight` bloquea el doble toque mientras se guarda.
  * @returns  { activeTab, setActiveTab, activeFilter, setActiveFilter, data, onConfirmItem, overdue,
  *            recurrentes, recurrenteActions, isLoading, error }
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { ConfirmPendingItem } from '@core/use-cases/ConfirmPendingItem';
+import { ConfirmRecurrence } from '@core/use-cases/ConfirmRecurrence';
 import { PayDebtCuota } from '@core/use-cases/PayDebtCuota';
-import { agendaRepository, debtRepository, jarRepository, transactionRepository } from '@infrastructure/container';
+import { recurrenceRepository, debtRepository, jarRepository, transactionRepository } from '@infrastructure/container';
 import { useTransactionsStore } from '@features/transactions/stores/transactionsStore';
 import { toJarPresentation, colorByType, type JarPresentation } from '@shared/styles';
 import { buildAgenda } from '../agenda';
-import { INITIAL_RECURRENTES, RECURRENTE_ICON } from '../recurringMocks';
+import { useRecurrentes } from './useRecurrentes';
 import type { Debt } from '@core/entities/Debt';
-import type { PendingItem } from '@core/ports/IAgendaRepository';
-import type {
-  AgendaTab, AgendaFilter, RecurringDisplay,
-  CreateRecurringData, SaveRecurringData, RecurringActions,
-} from '../types';
+import type { Recurrence } from '@core/entities/Recurrence';
+import type { Transaction } from '@core/entities/Transaction';
+import type { AgendaTab, AgendaFilter } from '../types';
 
 const WORKSPACE_ID = 'ws1'; // mock-stage: único workspace sembrado
 const USER_ID = 'u1';
 const FALLBACK: JarPresentation = { name: 'Libre', iconName: 'account-balance-wallet', ...colorByType('libre') };
 
-const confirmPendingItem = new ConfirmPendingItem(jarRepository, transactionRepository, agendaRepository);
+const confirmRecurrence = new ConfirmRecurrence(recurrenceRepository, jarRepository, transactionRepository);
 const payDebtCuota = new PayDebtCuota(debtRepository, jarRepository, transactionRepository);
 
 export function usePlanner() {
   const [activeTab, setActiveTab] = useState<AgendaTab>('mi-mes');
   const [activeFilter, setActiveFilter] = useState<AgendaFilter>('gastos');
-  const [pending, setPending] = useState<PendingItem[]>([]);
+  const [recurrences, setRecurrences] = useState<Recurrence[]>([]);
   const [debts, setDebts] = useState<Debt[]>([]);
   const [presById, setPresById] = useState<Map<string, JarPresentation>>(new Map());
-  const [recurrentes, setRecurrentes] = useState<RecurringDisplay[]>(INITIAL_RECURRENTES);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const inFlight = useRef(new Set<string>()); // toques repetidos mientras el guardado va en vuelo
@@ -58,12 +53,12 @@ export function usePlanner() {
 
   const load = useCallback(async () => {
     try {
-      const [items, ds, jars] = await Promise.all([
-        agendaRepository.findByWorkspace(WORKSPACE_ID),
+      const [recs, ds, jars] = await Promise.all([
+        recurrenceRepository.findByWorkspace(WORKSPACE_ID),
         debtRepository.findByWorkspace(WORKSPACE_ID),
         jarRepository.findByWorkspace(WORKSPACE_ID),
       ]);
-      setPending(items);
+      setRecurrences(recs);
       setDebts(ds);
       setPresById(new Map(jars.map((j) => [j.id, toJarPresentation(j)])));
     } catch {
@@ -78,10 +73,14 @@ export function usePlanner() {
   // que el banner seguía contando algo ya pagado. Confirmar cualquier compromiso añade una tx.
   useEffect(() => { void load(); }, [load, transactions.length]);
 
+  const jarOf = useCallback((id: string) => presById.get(id) ?? FALLBACK, [presById]);
+
   const { data, overdue, toConfirm } = useMemo(
-    () => buildAgenda(pending, debts, transactions, (id) => presById.get(id) ?? FALLBACK, new Date()),
-    [pending, debts, presById, transactions],
+    () => buildAgenda(recurrences, debts, transactions, jarOf, new Date()),
+    [recurrences, debts, jarOf, transactions],
   );
+
+  const { recurrentes, recurrenteActions } = useRecurrentes(recurrences, debts, setRecurrences, setDebts, jarOf);
 
   /** Pagar / ¡Llegó! / pagar cuota (la del mes o una atrasada). Los tres escriben en el libro. */
   const onConfirmItem = useCallback(async (id: string) => {
@@ -93,20 +92,22 @@ export function usePlanner() {
       setError(null);
       const txId = `tx-${Date.now()}`;
 
-      const { transaction } = item.debtId && item.cuotaMonth
-        ? await payDebtCuota.execute({
-            id: txId,
-            debtId: item.debtId,
-            cuotaMonth: item.cuotaMonth, // QUÉ cuota se salda; la jarra la pone la deuda
-            workspaceId: WORKSPACE_ID,
-            userId: USER_ID,
-          })
-        : await confirmPendingItem.execute({
-            id: txId,
-            pendingItemId: id,
-            workspaceId: WORKSPACE_ID,
-            userId: USER_ID,
-          });
+      let transaction: Transaction;
+      if (item.debtId && item.cuotaMonth) {
+        // QUÉ cuota se salda; la jarra la pone la deuda.
+        ({ transaction } = await payDebtCuota.execute({
+          id: txId, debtId: item.debtId, cuotaMonth: item.cuotaMonth,
+          workspaceId: WORKSPACE_ID, userId: USER_ID,
+        }));
+      } else if (item.recurrenceId && item.recurrenceMonth) {
+        // QUÉ ocurrencia se cubre; la jarra la pone la regla.
+        ({ transaction } = await confirmRecurrence.execute({
+          id: txId, recurrenceId: item.recurrenceId, recurrenceMonth: item.recurrenceMonth,
+          workspaceId: WORKSPACE_ID, userId: USER_ID,
+        }));
+      } else {
+        return; // sin enlace no hay qué confirmar
+      }
 
       await addToLedger(transaction);
       await load(); // relee compromisos: su estado vive en la BD, no en memoria
@@ -116,22 +117,6 @@ export function usePlanner() {
       inFlight.current.delete(id);
     }
   }, [data.items, overdue, toConfirm, addToLedger, load]);
-
-  const handleCreateRecurrente = useCallback((d: CreateRecurringData) => {
-    setRecurrentes((prev) => [...prev, { id: `r_${Date.now()}`, ...RECURRENTE_ICON[d.filter], ...d }]);
-  }, []);
-  const handleSaveRecurrente = useCallback((d: SaveRecurringData) => {
-    setRecurrentes((prev) => prev.map((r) => r.id === d.id ? { ...r, ...RECURRENTE_ICON[d.filter], ...d } : r));
-  }, []);
-  const handleDeleteRecurrente = useCallback((id: string) => {
-    setRecurrentes((prev) => prev.filter((r) => r.id !== id));
-  }, []);
-
-  const recurrenteActions: RecurringActions = useMemo(() => ({
-    onCreate: handleCreateRecurrente,
-    onSave: handleSaveRecurrente,
-    onDelete: handleDeleteRecurrente,
-  }), [handleCreateRecurrente, handleSaveRecurrente, handleDeleteRecurrente]);
 
   return {
     activeTab, setActiveTab, activeFilter, setActiveFilter,

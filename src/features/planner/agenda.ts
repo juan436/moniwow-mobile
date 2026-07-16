@@ -2,7 +2,7 @@
  * agenda — Planner Feature
  *
  * @what     Construye la Agenda: los compromisos de este mes + lo que está vencido.
- * @receives pending: PendingItem[] · debts: Debt[] · txs: Transaction[] · presById · today
+ * @receives recurrences: Recurrence[] · debts: Debt[] · txs: Transaction[] · jarOf · today
  * @processes **La unidad de deuda es la CUOTA, no la deuda.** `ComputeDebtStatus` cruza el calendario
  *           de cada deuda con el libro y devuelve la del mes y las atrasadas — que **se acumulan**:
  *           saltarte julio no borra julio.
@@ -19,16 +19,18 @@
  * @returns  { data, overdue, toConfirm }
  */
 import { ComputeDebtStatus } from '@core/use-cases/ComputeDebtStatus';
+import { ComputeRecurringOccurrences } from '@core/use-cases/ComputeRecurringOccurrences';
 import { monthKey } from '@core/use-cases/ComputeMonthlyTotals';
-import { toAgendaItem, toCuotaAgendaItem, hasPassed } from './mappers';
+import { toRecurrenceAgendaItem, toCuotaAgendaItem, hasPassed } from './mappers';
 import { computeTotals } from './totals';
 import type { Debt } from '@core/entities/Debt';
+import type { Recurrence } from '@core/entities/Recurrence';
 import type { Transaction } from '@core/entities/Transaction';
-import type { PendingItem } from '@core/ports/IAgendaRepository';
 import type { JarPresentation } from '@shared/styles';
 import type { AgendaData, AgendaItemDisplay } from './types';
 
 const computeDebtStatus = new ComputeDebtStatus();
+const computeRecurring = new ComputeRecurringOccurrences();
 
 export interface AgendaBundle {
   data: AgendaData;
@@ -37,7 +39,7 @@ export interface AgendaBundle {
 }
 
 export function buildAgenda(
-  pending: PendingItem[],
+  recurrences: Recurrence[],
   debts: Debt[],
   txs: Transaction[],
   jarOf: (jarId: string) => JarPresentation,
@@ -47,10 +49,30 @@ export function buildAgenda(
   // vencido salía en los dos y pagarlo en uno lo borraba del otro — parecía un bug.
   const items: AgendaItemDisplay[] = [];
   const atrasadas: AgendaItemDisplay[] = [];
+  const toConfirm: AgendaItemDisplay[] = [];
   const place = (item: AgendaItemDisplay) => (item.isOverdue ? atrasadas : items).push(item);
 
-  for (const i of pending) {
-    place(toAgendaItem(i, jarOf(i.jarId), today));
+  // Un ingreso NO se atrasa (no lo debes): si pasó su día sin marcar, va a Por confirmar, no a
+  // Atrasados. `isOverdue` ya viene apagado para ingresos desde el mapper.
+  const askIfIncome = (item: AgendaItemDisplay, isIncome: boolean, dueDate: Date) => {
+    if (isIncome && !item.isPaid && hasPassed(dueDate, today)) toConfirm.push(item);
+  };
+
+  for (const rec of recurrences) {
+    const status  = computeRecurring.execute(rec, txs, today);
+    const jar     = jarOf(rec.jarId);
+    const isIncome = rec.type === 'ingreso';
+
+    if (status.current) {
+      const item = toRecurrenceAgendaItem(rec, status.current, jar, today);
+      place(item);
+      askIfIncome(item, isIncome, status.current.dueDate);
+    }
+    for (const occ of status.overdue) {
+      const item = toRecurrenceAgendaItem(rec, occ, jar, today);
+      if (item.isOverdue) atrasadas.push(item);   // gasto atrasado
+      else askIfIncome(item, isIncome, occ.dueDate); // ingreso de mes pasado sin confirmar
+    }
   }
 
   for (const debt of debts) {
@@ -63,19 +85,14 @@ export function buildAgenda(
     }
   }
 
-  // Lo más viejo primero. Un pago no tiene `cuotaMonth`: es de este mes, así que cae al final.
+  // Lo más viejo primero. Una ocurrencia/cuota de este mes cae al final (usa el mes actual).
   const thisMonth = monthKey(today);
-  const when = (i: AgendaItemDisplay) => `${i.cuotaMonth ?? thisMonth}-${String(i.day).padStart(2, '0')}`;
-
-  // Ingresos cuya fecha ya pasó y siguen sin marcar: ¿se te olvidó confirmar que llegó?
-  const toConfirm = pending
-    .filter((i) => i.type === 'ingreso' && i.status !== 'confirmado' && hasPassed(i.dueDate, today))
-    .map((i) => toAgendaItem(i, jarOf(i.jarId), today))
-    .sort((a, b) => a.day - b.day);
+  const when = (i: AgendaItemDisplay) =>
+    `${i.cuotaMonth ?? i.recurrenceMonth ?? thisMonth}-${String(i.day).padStart(2, '0')}`;
 
   return {
     data: { items, totals: computeTotals(items) },
     overdue: atrasadas.sort((a, b) => when(a).localeCompare(when(b))),
-    toConfirm,
+    toConfirm: toConfirm.sort((a, b) => a.day - b.day),
   };
 }

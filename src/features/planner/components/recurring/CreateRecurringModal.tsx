@@ -77,7 +77,10 @@ export function CreateRecurringModal({ visible, initialType, onClose, onCreate }
 
   function handleSave() {
     if (!canContinue) return;
-    onCreate({ name: form.nombre.trim(), amount: parsedMonto, day: primaryDay(form), filter: form.tipo });
+    onCreate({
+      name: form.nombre.trim(), amount: parsedMonto, day: primaryDay(form), filter: form.tipo,
+      jarra: form.jarra, frecuencia: form.frecuencia, cuotas: form.cuotasTotales,
+    });
     onClose();
   }
 

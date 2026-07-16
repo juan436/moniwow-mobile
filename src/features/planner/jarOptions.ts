@@ -31,3 +31,8 @@ export const RECURRING_JARS: { key: RecurringJar; label: string; iconName: IconN
 export function jarLabelOf(jarId: string): string {
   return RECURRING_JARS.find((j) => j.key === jarId)?.label ?? jarId;
 }
+
+/** Estrecha un jarId (string) a `RecurringJar` para prellenar el selector; si no es una opción, Libre. */
+export function asRecurringJar(jarId: string): RecurringJar {
+  return RECURRING_JARS.some((j) => j.key === jarId) ? (jarId as RecurringJar) : 'libre';
+}

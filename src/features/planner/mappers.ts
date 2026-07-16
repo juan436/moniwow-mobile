@@ -2,11 +2,11 @@
  * mappers — Planner Feature
  *
  * @what     Deriva los compromisos de la Agenda desde el dominio. La Agenda no tiene datos propios.
- * @receives item: PendingItem · debt: Debt · jar: JarPresentation (la jarra dueña) · today: Date
+ * @receives rec: Recurrence + occ · debt: Debt + cuota · jar: JarPresentation (la jarra dueña) · today: Date
  * @processes Ícono y color salen de la JARRA, no de un emoji guardado aparte.
- *           **Las deudas no son `pendingItems`**: se derivan de la colección `debts` (C2). Una deuda
- *           con cuotas pendientes YA es un compromiso mensual — su `cuotaAmount()` en su `dueDate`.
- *           Sembrarlas también en `pendingItems` era duplicar la colección.
+ *           **Nada se guarda como "compromiso"**: una deuda con cuotas pendientes (C2) y una regla
+ *           recurrente YA son compromisos mensuales — su cuota/ocurrencia en su `dueDate`. Guardar
+ *           también la fila era duplicar la colección.
  *           `isOverdue` se deriva de la fecha, no se guarda: un `status: 'atrasado'` en la BD habría
  *           que recalcularlo cada día, y el día que nadie lo haga, la app miente. **Solo pagos y
  *           cuotas se atrasan** — un ingreso que no llegó no es una deuda tuya.
@@ -14,8 +14,9 @@
  */
 import type { Debt } from '@core/entities/Debt';
 import type { List } from '@core/entities/List';
+import type { Recurrence } from '@core/entities/Recurrence';
 import type { CuotaStatus } from '@core/use-cases/ComputeDebtStatus';
-import type { PendingItem } from '@core/ports/IAgendaRepository';
+import type { RecurrenceOccurrence } from '@core/use-cases/ComputeRecurringOccurrences';
 import type { JarPresentation } from '@shared/styles';
 import type { AgendaItemDisplay, ListDisplay } from './types';
 import { jarLabelOf } from './jarOptions';
@@ -47,26 +48,6 @@ export function hasPassed(dueDate: Date, today: Date): boolean {
   return due < start;
 }
 
-export function toAgendaItem(item: PendingItem, jar: JarPresentation, today: Date): AgendaItemDisplay {
-  const isPaid = item.status === 'confirmado';
-
-  return {
-    id: item.id,
-    iconName: jar.iconName,
-    iconColor: jar.iconColor,
-    iconBg: jar.iconBg,
-    name: item.description,
-    jarName: jar.name,
-    day: item.dueDate.getDate(),
-    amount: item.amount,
-    isPaid,
-    // **Solo pagos y deudas se atrasan.** Un ingreso que no llegó no es una deuda tuya: no lo
-    // debes, no lo puedes pagar, y marcarlo de vencido solo añade ruido a la pantalla.
-    isOverdue: item.type === 'pago' && !isPaid && hasPassed(item.dueDate, today),
-    filter: item.type === 'ingreso' ? 'ingresos' : 'gastos',
-  };
-}
-
 /**
  * UNA cuota de una deuda — la de este mes, o una atrasada. La cuota es la unidad, no la deuda: por
  * eso lleva su `cuotaMonth`. Antes el renglón era "la deuda" y su `isPaid` preguntaba si estaba
@@ -96,5 +77,34 @@ export function toCuotaAgendaItem(
     isPaid: cuota.isPaid,
     isOverdue: !cuota.isPaid && hasPassed(cuota.dueDate, today),
     filter: 'deudas',
+  };
+}
+
+/**
+ * UNA ocurrencia de una regla recurrente — la de este mes o una atrasada. Espejo de la cuota. El
+ * color lo decide el tipo, no este mapper: gasto atrasado = naranja ("vas tarde"); ingreso = verde
+ * ("¿llegó?"). Un ingreso NO se atrasa (no lo debes), así que `isOverdue` solo se enciende en gastos.
+ */
+export function toRecurrenceAgendaItem(
+  rec: Recurrence,
+  occ: RecurrenceOccurrence,
+  jar: JarPresentation,
+  today: Date,
+): AgendaItemDisplay {
+  const isIncome = rec.type === 'ingreso';
+  return {
+    id: `rec-${rec.id}-${occ.month}`,
+    recurrenceId: rec.id,
+    recurrenceMonth: occ.month,
+    iconName: jar.iconName,
+    iconColor: jar.iconColor,
+    iconBg: jar.iconBg,
+    name: rec.name,
+    jarName: jar.name,
+    day: occ.dueDate.getDate(),
+    amount: occ.amount,
+    isPaid: occ.isPaid,
+    isOverdue: !isIncome && !occ.isPaid && hasPassed(occ.dueDate, today),
+    filter: isIncome ? 'ingresos' : 'gastos',
   };
 }
