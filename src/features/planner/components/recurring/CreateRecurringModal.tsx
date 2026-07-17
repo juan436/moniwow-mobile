@@ -5,10 +5,11 @@
  *           pasos, uno por pregunta — más liviano que amontonar toggles en una sola pantalla.
  * @receives 4 props: visible, initialType, onClose, onCreate
  * @processes Secuencia (mismos 4 pasos, contenido cambia según tipo): RecurringFormStep1 (datos) →
- *           RecurringDayStep (Ingreso/Gasto, ¿qué día se cobra/paga?) o RecurringPaymentDateStep
- *           (Deuda, ¿qué día se paga? + link a calendario por mes) → RecurringDurationStep
- *           (Ingreso/Gasto, ¿tiene fecha de fin?) o RecurringInstallmentsStep (Deuda, ¿cuántas
- *           cuotas tiene?) → RecurringJarSelector. El ícono del header retrocede un paso; en el
+ *           RecurringDayStep (los tres tipos: un día) → RecurringDurationStep (Ingreso/Gasto,
+ *           ¿tiene fecha de fin?) o RecurringInstallmentsStep (Deuda, ¿único pago o cuotas?) →
+ *           RecurringJarSelector. El paso de fecha era distinto para Deuda (`RecurringPaymentDateStep`,
+ *           con multi-día y "¿Paga distinto cada mes?"): borrado, prometía lo que `Debt` no puede
+ *           guardar — un `dueDay` y una cuota por mes. El ícono del header retrocede un paso; en el
  *           primero cierra el modal. Sheet sube con el teclado (Keyboard listeners + marginBottom),
  *           mismo comportamiento que TransferSheet. Cambiar Tipo resetea nombre/monto/frecuencia/
  *           fecha/cuotas a su default y vuelve al paso 1 — "Nombre" y "Acreedor" son el mismo
@@ -26,10 +27,9 @@ import { MoniButton } from '@shared/components';
 import { RecurringFormStep1 } from './RecurringFormStep1';
 import { RecurringDayStep } from './RecurringDayStep';
 import { RecurringDurationStep } from './RecurringDurationStep';
-import { RecurringPaymentDateStep } from './RecurringPaymentDateStep';
 import { RecurringInstallmentsStep } from './RecurringInstallmentsStep';
 import { RecurringJarSelector } from './RecurringJarSelector';
-import { emptyRecurringForm, resetOnTipoChange, primaryDay } from './recurringFormHelpers';
+import { emptyRecurringForm, resetOnTipoChange } from './recurringFormHelpers';
 import type { AgendaFilter, RecurringForm, CreateRecurringData } from '../../types';
 
 type StepKey = 'datos' | 'fecha' | 'cuotas' | 'jarra';
@@ -78,8 +78,9 @@ export function CreateRecurringModal({ visible, initialType, onClose, onCreate }
   function handleSave() {
     if (!canContinue) return;
     onCreate({
-      name: form.nombre.trim(), amount: parsedMonto, day: primaryDay(form), filter: form.tipo,
+      name: form.nombre.trim(), amount: parsedMonto, day: form.dia, filter: form.tipo,
       jarra: form.jarra, frecuencia: form.frecuencia, cuotas: form.cuotasTotales,
+      unicoPago: form.unicoPago, cuotasPagadas: form.cuotasPagadas,
     });
     onClose();
   }
@@ -97,10 +98,7 @@ export function CreateRecurringModal({ visible, initialType, onClose, onCreate }
           </View>
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.body, { paddingBottom: insets.bottom + spacing.stackLg }]} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets>
             {currentKey === 'datos' && <RecurringFormStep1 form={form} onChange={setField} />}
-            {currentKey === 'fecha' && (isDeuda
-              ? <RecurringPaymentDateStep form={form} onChange={setField} />
-              : <RecurringDayStep form={form} onChange={setField} />
-            )}
+            {currentKey === 'fecha' && <RecurringDayStep form={form} onChange={setField} />}
             {currentKey === 'cuotas' && (isDeuda
               ? <RecurringInstallmentsStep form={form} onChange={setField} />
               : <RecurringDurationStep form={form} onChange={setField} />

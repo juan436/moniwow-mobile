@@ -20,10 +20,9 @@ import { MoniButton } from '@shared/components';
 import { RecurringFormStep1 } from './RecurringFormStep1';
 import { RecurringDayStep } from './RecurringDayStep';
 import { RecurringDurationStep } from './RecurringDurationStep';
-import { RecurringPaymentDateStep } from './RecurringPaymentDateStep';
 import { RecurringInstallmentsStep } from './RecurringInstallmentsStep';
 import { RecurringJarSelector } from './RecurringJarSelector';
-import { recurringFormFromItem, resetOnTipoChange, primaryDay } from './recurringFormHelpers';
+import { recurringFormFromItem, resetOnTipoChange } from './recurringFormHelpers';
 import type { AgendaFilter, RecurringForm, RecurringDisplay, SaveRecurringData } from '../../types';
 
 type StepKey = 'datos' | 'fecha' | 'cuotas' | 'jarra';
@@ -83,8 +82,9 @@ export function EditRecurringModal({ visible, item, onClose, onSave, onDelete }:
   function handleSave() {
     if (!canContinue || !item || !form) return;
     onSave({
-      id: item.id, name: form.nombre.trim(), amount: parsedMonto, day: primaryDay(form), filter: form.tipo,
+      id: item.id, name: form.nombre.trim(), amount: parsedMonto, day: form.dia, filter: form.tipo,
       jarra: form.jarra, frecuencia: form.frecuencia, cuotas: form.cuotasTotales,
+      unicoPago: form.unicoPago, cuotasPagadas: form.cuotasPagadas,
     });
     onClose();
   }
@@ -108,10 +108,7 @@ export function EditRecurringModal({ visible, item, onClose, onSave, onDelete }:
           </View>
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.body, { paddingBottom: insets.bottom + spacing.stackLg }]} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets>
             {currentKey === 'datos' && <RecurringFormStep1 form={form} onChange={setField} lockTipo />}
-            {currentKey === 'fecha' && (isDeuda
-              ? <RecurringPaymentDateStep form={form} onChange={setField} />
-              : <RecurringDayStep form={form} onChange={setField} />
-            )}
+            {currentKey === 'fecha' && <RecurringDayStep form={form} onChange={setField} />}
             {currentKey === 'cuotas' && (isDeuda
               ? <RecurringInstallmentsStep form={form} onChange={setField} />
               : <RecurringDurationStep form={form} onChange={setField} />

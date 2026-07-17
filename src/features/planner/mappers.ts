@@ -68,8 +68,8 @@ export function toCuotaAgendaItem(
     iconName: jar.iconName,
     iconColor: jar.iconColor,
     iconBg: jar.iconBg,
-    name: debt.cuotas > 1
-      ? `${debt.description} (${paidCount}/${debt.cuotas})`
+    name: debt.totalCuotas() > 1
+      ? `${debt.description} (${paidCount}/${debt.totalCuotas()})`
       : debt.description,
     jarName: jar.name,
     day: cuota.dueDate.getDate(),

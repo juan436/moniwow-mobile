@@ -10,6 +10,12 @@
  *           "llevas 7" sin decir cuáles, así que no podía saber que te saltaste mayo.
  *           `overdue` = cuotas de meses ANTERIORES sin pagar (se acumulan; la deuda no corre su
  *           calendario). `current` = la de este mes, si existe y toca.
+ *           **Único pago** (`cuotas` ausente): `totalCuotas()` da 1 → genera una sola cuota por el
+ *           total, en `dueDay`. Sin esa traducción el bucle no correría nunca y la deuda nacería
+ *           saldada.
+ *           **`cuotasPagadas`**: las n primeras cuentan como pagadas aunque no haya tx. No es el
+ *           `paidCuotas` difunto — es historia PREVIA al registro, que el libro no puede saber
+ *           porque pasó antes. Del registro en adelante manda el libro.
  * @returns  DebtStatus
  */
 import { Debt } from '../entities/Debt';
@@ -43,13 +49,15 @@ export class ComputeDebtStatus {
         .map((t) => t.cuotaMonth as string),
     );
 
-    const thisMonth = monthKey(today);
+    const thisMonth   = monthKey(today);
+    const initialPaid = debt.initialPaid();
     const cuotas: CuotaStatus[] = [];
 
-    for (let n = 1; n <= debt.cuotas; n += 1) {
+    for (let n = 1; n <= debt.totalCuotas(); n += 1) {
       const dueDate = debt.cuotaDueDate(n);
       const month   = monthKey(dueDate);
-      cuotas.push({ month, number: n, dueDate, amount: debt.cuotaAmount(), isPaid: paidMonths.has(month) });
+      const isPaid  = n <= initialPaid || paidMonths.has(month);
+      cuotas.push({ month, number: n, dueDate, amount: debt.cuotaAmount(), isPaid });
     }
 
     const paidCount = cuotas.filter((c) => c.isPaid).length;

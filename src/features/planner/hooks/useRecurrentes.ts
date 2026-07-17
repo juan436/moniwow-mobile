@@ -93,15 +93,22 @@ function buildRecurrence(d: CreateRecurringData, id: string, startMonth: string)
   return new Recurrence({
     id, name: d.name, amount: d.amount,
     type: d.filter === 'ingresos' ? 'ingreso' : 'gasto',
-    dayOfMonth: Math.min(d.day, 28), jarId: d.jarra, startMonth,
+    dayOfMonth: d.day, jarId: d.jarra, startMonth,
     endMonth: d.frecuencia === 'cuotas' ? addMonths(startMonth, d.cuotas - 1) : undefined,
     workspaceId: WORKSPACE_ID,
   });
 }
+/**
+ * Único pago: `cuotas` queda ausente y el total ES el monto (no se multiplica por nada — con
+ * `cuotas: 0` el total daría 0). A plazos: total = cuota × cuotas, como siempre.
+ */
 function buildDebt(d: CreateRecurringData, id: string, createdAt: Date, origin: Debt['origin']): Debt {
   return new Debt({
-    id, description: d.name, amount: d.amount * d.cuotas, cuotas: d.cuotas,
-    dueDay: Math.min(d.day, 28), sourceJarId: d.jarra, workspaceId: WORKSPACE_ID, createdAt, origin,
+    id, description: d.name,
+    amount: d.unicoPago ? d.amount : d.amount * d.cuotas,
+    cuotas: d.unicoPago ? undefined : d.cuotas,
+    cuotasPagadas: d.unicoPago ? undefined : d.cuotasPagadas,
+    dueDay: d.day, sourceJarId: d.jarra, workspaceId: WORKSPACE_ID, createdAt, origin,
   });
 }
 
@@ -119,6 +126,6 @@ function toDebtRecurringDisplay(debt: Debt, jar: JarPresentation): RecurringDisp
   return {
     id: debt.id, iconName: jar.iconName, iconColor: jar.iconColor, iconBg: jar.iconBg,
     name: debt.description, day: debt.dueDay, amount: debt.cuotaAmount(),
-    filter: 'deudas', jarra: asRecurringJar(debt.sourceJarId), frecuencia: 'cuotas', cuotas: debt.cuotas,
+    filter: 'deudas', jarra: asRecurringJar(debt.sourceJarId), frecuencia: 'cuotas', cuotas: debt.totalCuotas(),
   };
 }

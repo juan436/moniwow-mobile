@@ -15,7 +15,7 @@ export interface RecurrenceProps {
   name: string;
   amount: number;
   type: RecurrenceType;
-  /** Día del mes en que cae (1–28). */
+  /** Día del mes en que cae (1–31). El 31 vale como "el último": ningún mes tiene más. */
   dayOfMonth: number;
   /** Jarra de la que SALE (gasto) o a la que ENTRA (ingreso). */
   jarId: string;
@@ -49,10 +49,16 @@ export class Recurrence {
     this.workspaceId = props.workspaceId;
   }
 
-  /** Fecha de vencimiento en un mes dado ('YYYY-MM'). */
+  /**
+   * Fecha de vencimiento en un mes dado ('YYYY-MM'). El día se resuelve AQUÍ, no al guardar: recién
+   * acá se sabe de qué mes se habla. Si el mes no llega al día guardado, cae en el último real —
+   * 31 en febrero → 28 (29 en bisiesto), 31 en abril → 30. Por eso el 31 expresa "el último día del
+   * mes" sin valor especial. Guardar el día ya recortado a 28 volvía "el último" imposible.
+   */
   dueDateFor(month: string): Date {
     const [year, m] = month.split('-').map(Number);
-    return new Date(year, m - 1, this.dayOfMonth);
+    const lastDay = new Date(year, m, 0).getDate();
+    return new Date(year, m - 1, Math.min(this.dayOfMonth, lastDay));
   }
 
   /** ¿La regla aplica en este mes? Dentro de [startMonth, endMonth]. Compara 'YYYY-MM' como texto. */

@@ -77,6 +77,6 @@ export function toDebtBreakdown(debt: Debt, paidCount: number): DebtBreakdown {
     id: debt.id,
     label: debt.description,
     amount: debt.remainingAmount(paidCount),
-    progress: debt.cuotas > 0 ? Math.round((paidCount / debt.cuotas) * 100) : 0,
+    progress: Math.round((paidCount / debt.totalCuotas()) * 100),
   };
 }

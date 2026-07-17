@@ -78,7 +78,11 @@ export type CreateRecurringData = {
   filter: AgendaFilter;
   jarra: RecurringJar;
   frecuencia: RecurringFrequency;
-  cuotas: number; // duración en meses (ingreso/gasto finito) o nº de cuotas (deuda)
+  cuotas: number; // duración en meses (ingreso/gasto finito) o nº de cuotas (deuda a plazos)
+  /** Solo deuda: el total se paga de una vez, en `day`. Con esto, `cuotas` no aplica. */
+  unicoPago: boolean;
+  /** Solo deuda a plazos: cuántas venían pagadas ANTES de registrarla acá. Historia previa. */
+  cuotasPagadas: number;
 };
 export type SaveRecurringData   = CreateRecurringData & { id: string };
 
@@ -89,19 +93,17 @@ export type RecurringActions = {
 };
 
 export type RecurringFrequency = 'indefinido' | 'cuotas';
-export type RecurringDateMode  = 'recurrente' | 'personalizada';
 export type RecurringJar       = 'hogar' | 'goals' | 'libre' | 'transporte' | 'salud' | 'educacion' | 'viajes' | 'emergencias' | 'ocio';
 
 export type RecurringForm = {
   tipo:          AgendaFilter;
   nombre:        string;
   monto:         string;
+  /** Un solo día para los tres tipos. El 31 vale como "el último" — lo resuelve la entidad. */
   dia:           number;
-  mes:           number;
   frecuencia:    RecurringFrequency;
-  modoFecha:     RecurringDateMode;
-  diasFijos:     number[];
-  diasPorMes:    Record<number, number[]>;
+  /** Solo deuda. `true` por defecto: el caso corriente es deberle algo a alguien y pagarlo de una. */
+  unicoPago:     boolean;
   cuotasTotales: number;
   cuotasPagadas: number;
   jarra:         RecurringJar;

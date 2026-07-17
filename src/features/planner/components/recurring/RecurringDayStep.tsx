@@ -5,11 +5,14 @@
  *           (Gasto). Sin mes — son mensuales recurrentes, la duración ya la resuelve
  *           RecurringDurationStep ("¿Tiene fecha de fin?").
  * @receives 2 props: form, onChange
- * @processes Ingreso permite multi-día (ej. sueldo el 15 y el último del mes) — reutiliza
- *           `diasFijos`, mismo campo que usa Deuda en modo Recurrente, sin conflicto porque son
- *           tipos mutuamente excluyentes. Gasto queda en un solo día (`dia`, modo `single` del
- *           picker) — caso simple, sin necesidad confirmada de multi-día.
- * @returns  JSX — título + RecurringDayPicker (single para Gasto, multi para Ingreso).
+ * @processes Un solo día (`dia`), igual para los TRES tipos (Deuda también, desde que murió su paso
+ *           propio). El Ingreso ofrecía multi-día ("sueldo el 15 y el último") pero `Recurrence`
+ *           guarda UN `dayOfMonth` y se guardaba solo el primero: la pantalla prometía lo que el
+ *           modelo no puede guardar. Un sueldo quincenal se modela como DOS reglas ("Sueldo 1" el
+ *           15, "Sueldo 2" el 31), que además es más fiel — son dos cobros que se confirman por
+ *           separado. El 31 vale como "el último": `Recurrence.dueDateFor` lo clampea al último día
+ *           real de cada mes. Ver [[planes/fechas-y-quincenal]] y [[planes/deuda-simple-y-cuotas]].
+ * @returns  JSX — título + RecurringDayPicker single.
  * @props    2: form, onChange
  */
 import { View, Text, StyleSheet } from 'react-native';
@@ -24,16 +27,12 @@ type Props = {
 };
 
 export function RecurringDayStep({ form, onChange }: Props) {
-  const isIngreso = form.tipo === 'ingresos';
-  const title = isIngreso ? '¿Qué día se cobra?' : '¿Qué día se paga?';
+  const title = form.tipo === 'ingresos' ? '¿Qué día se cobra?' : '¿Qué día se paga?';
 
   return (
     <View style={styles.block}>
       <Text style={styles.title}>{title}</Text>
-      {isIngreso
-        ? <RecurringDayPicker selected={form.diasFijos} onChange={(v) => onChange('diasFijos', v)} />
-        : <RecurringDayPicker single selected={[form.dia]} onChange={([d]) => onChange('dia', d)} />
-      }
+      <RecurringDayPicker single selected={[form.dia]} onChange={([d]) => onChange('dia', d)} />
     </View>
   );
 }

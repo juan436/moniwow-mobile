@@ -2,35 +2,26 @@
  * recurringFormHelpers — Utilidad
  *
  * @what     Funciones puras compartidas por Create/EditRecurringModal: estado inicial del
- *           formulario y cálculo del día que se persiste (`CreateRecurringData.day`).
+ *           formulario y reset al cambiar de tipo.
  * @receives N/A — funciones puras, sin estado propio.
- * @processes `primaryDay` resuelve el día real a guardar. Deuda Recurrente e Ingreso (multi-día):
- *           primer día de `diasFijos`. Deuda Personalizada: primer día del primer mes con
- *           selección. Gasto: `form.dia` directo (un solo día).
- * @returns  emptyForm/formFromItem: RecurringForm inicial. primaryDay: number.
+ * @processes `unicoPago` arranca en `true`: el caso corriente de una deuda es deberle algo a
+ *           alguien y pagarlo de una vez. Se desmarca para una deuda a plazos.
+ *           Murió `primaryDay`: resolvía "qué día guardar" cuando el picker devolvía varios y había
+ *           que quedarse con uno — la pantalla prometía multi-día y el modelo guarda uno solo. Hoy
+ *           el picker es de un día para los tres tipos, así que el día es `form.dia` y punto.
+ *           Ver [[planes/fechas-y-quincenal]] y [[planes/deuda-simple-y-cuotas]].
+ * @returns  RecurringForm inicial.
  */
 import type { AgendaFilter, RecurringForm, RecurringDisplay } from '../../types';
 
 export function emptyRecurringForm(tipo: AgendaFilter): RecurringForm {
-  return { tipo, nombre: '', monto: '', dia: 1, mes: 1, frecuencia: 'indefinido', modoFecha: 'recurrente', diasFijos: [], diasPorMes: {}, cuotasTotales: 12, cuotasPagadas: 0, jarra: 'libre' };
+  return { tipo, nombre: '', monto: '', dia: 1, frecuencia: 'indefinido', unicoPago: true, cuotasTotales: 12, cuotasPagadas: 0, jarra: 'libre' };
 }
 
 export function recurringFormFromItem(item: RecurringDisplay): RecurringForm {
-  return { tipo: item.filter, nombre: item.name, monto: item.amount.toString(), dia: item.day, mes: 1, frecuencia: item.frecuencia, modoFecha: 'recurrente', diasFijos: [], diasPorMes: {}, cuotasTotales: item.cuotas, cuotasPagadas: 0, jarra: item.jarra };
+  return { tipo: item.filter, nombre: item.name, monto: item.amount.toString(), dia: item.day, frecuencia: item.frecuencia, unicoPago: item.cuotas <= 1, cuotasTotales: item.cuotas, cuotasPagadas: 0, jarra: item.jarra };
 }
 
 export function resetOnTipoChange(prev: RecurringForm, tipo: AgendaFilter): RecurringForm {
-  return { ...prev, tipo, nombre: '', monto: '', frecuencia: 'indefinido', modoFecha: 'recurrente', diasFijos: [], diasPorMes: {}, cuotasTotales: 12, cuotasPagadas: 0 };
-}
-
-export function primaryDay(form: RecurringForm): number {
-  if (form.tipo === 'ingresos') return form.diasFijos[0] ?? form.dia;
-  if (form.tipo !== 'deudas') return form.dia;
-  if (form.modoFecha === 'recurrente') return form.diasFijos[0] ?? form.dia;
-  const meses = Object.keys(form.diasPorMes).map(Number).sort((a, b) => a - b);
-  for (const m of meses) {
-    const dias = form.diasPorMes[m];
-    if (dias?.length) return dias[0];
-  }
-  return form.dia;
+  return { ...prev, tipo, nombre: '', monto: '', frecuencia: 'indefinido', unicoPago: true, cuotasTotales: 12, cuotasPagadas: 0 };
 }
