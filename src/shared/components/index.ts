@@ -11,5 +11,6 @@ export { EmojiPicker } from './EmojiPicker';
 export { IconPicker } from './IconPicker';
 export { SacrificeSlider } from './SacrificeSlider';
 export { Checkbox } from './Checkbox';
+export { MoniSheet } from './MoniSheet';
 export { WizardSheet } from './WizardSheet';
 export { ProfileSheet } from './ProfileSheet';

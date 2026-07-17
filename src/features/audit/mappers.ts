@@ -10,6 +10,7 @@
 import type { Goal } from '@core/entities/Goal';
 import type { Debt } from '@core/entities/Debt';
 import type { Transaction } from '@core/entities/Transaction';
+import type { DebtStatus } from '@core/use-cases/ComputeDebtStatus';
 import type { MonthTotals } from '@core/use-cases/ComputeMonthlyTotals';
 import type { JarPresentation } from '@shared/styles';
 import type { GoalDisplay, DebtBreakdown, BarChartEntry, LeakDisplay, DistributionEntry } from './types';
@@ -67,16 +68,17 @@ export function toGoalDisplay(goal: Goal): GoalDisplay {
   };
 }
 
-/** progress = % de cuotas pagadas (deriva de la entidad, no texto suelto). */
 /**
  * `amount` = lo que AÚN debes de esa deuda, no lo que pediste. El donut reparte lo que queda vivo.
- * `paidCount` sale del LIBRO (`ComputeDebtStatus`): cuántas cuotas tienen su gasto registrado.
+ * Recibe el `DebtStatus` entero, no `paidCount`: **una deuda cancelada tiene menos cuotas que
+ * `debt.totalCuotas()`**, y la entidad no sabe de `cancelledAt` — quien cuenta las cuotas que
+ * sobreviven es `ComputeDebtStatus`, cruzando la deuda con el libro.
  */
-export function toDebtBreakdown(debt: Debt, paidCount: number): DebtBreakdown {
+export function toDebtBreakdown(debt: Debt, status: DebtStatus): DebtBreakdown {
   return {
     id: debt.id,
     label: debt.description,
-    amount: debt.remainingAmount(paidCount),
-    progress: Math.round((paidCount / debt.totalCuotas()) * 100),
+    amount: status.remaining,
+    progress: status.totalCuotas > 0 ? Math.round((status.paidCount / status.totalCuotas) * 100) : 0,
   };
 }

@@ -6,22 +6,30 @@
  * @receives recurrences, debts (las MISMAS que alimentan la Agenda) + sus setters + jarOf.
  * @processes La lista display se deriva de esas dos entidades — una sola fuente, ya no un mock
  *           (`INITIAL_RECURRENTES`) paralelo. El ícono sale de la jarra (no de un mapa hardcodeado).
- *           `monto` es MENSUAL: para una deuda es la cuota, el total = amount × cuotas. Editar/borrar
- *           enrutan por `filter` (o por membresía en delete, que no lo trae). Al editar se preserva
- *           lo que el form no toca: `createdAt` de la deuda (su calendario) y `startMonth` de la regla.
+ *           Editar/borrar enrutan por `filter` (o por membresía en delete, que no lo trae). Al editar
+ *           se preserva lo que el form no toca: `createdAt` de la deuda y `startMonth` de la regla.
+ *           **Eliminar le pregunta al LIBRO**: con pagos cancela, sin pagos borra — ver `onDelete`.
+ *           Las funciones puras (construir entidades, mapear a display) viven en `recurringMappers`:
+ *           salieron cuando este archivo pasó de 150 líneas.
  * @returns  { recurrentes, recurrenteActions }
  */
 import { useCallback, useMemo } from 'react';
 
 import { Debt } from '@core/entities/Debt';
 import { Recurrence } from '@core/entities/Recurrence';
+import { CancelDebt } from '@core/use-cases/CancelDebt';
+import { CancelRecurrence } from '@core/use-cases/CancelRecurrence';
 import { monthKey } from '@core/use-cases/ComputeMonthlyTotals';
 import { debtRepository, recurrenceRepository } from '@infrastructure/container';
-import { asRecurringJar } from '../jarOptions';
+import { useTransactionsStore } from '@features/transactions/stores/transactionsStore';
+import { buildDebt, buildRecurrence, toDebtRecurringDisplay, toRecurringDisplay } from '../recurringMappers';
 import type { JarPresentation } from '@shared/styles';
 import type { CreateRecurringData, SaveRecurringData, RecurringActions, RecurringDisplay } from '../types';
 
 const WORKSPACE_ID = 'ws1';
+
+const cancelRecurrence = new CancelRecurrence(recurrenceRepository);
+const cancelDebt = new CancelDebt(debtRepository);
 
 type Setter<T> = (fn: (prev: T[]) => T[]) => void;
 
@@ -32,10 +40,16 @@ export function useRecurrentes(
   setDebts: Setter<Debt>,
   jarOf: (jarId: string) => JarPresentation,
 ) {
+  // El libro decide si eliminar cancela o borra. Del store, misma fuente que la Agenda.
+  const transactions = useTransactionsStore((s) => s.transactions);
+  const thisMonth = monthKey(new Date());
+
   const recurrentes: RecurringDisplay[] = useMemo(() => [
-    ...recurrences.map((r) => toRecurringDisplay(r, jarOf(r.jarId))),
-    ...debts.map((d) => toDebtRecurringDisplay(d, jarOf(d.sourceJarId))),
-  ], [recurrences, debts, jarOf]);
+    ...recurrences.map((r) => toRecurringDisplay(r, jarOf(r.jarId),
+      transactions.filter((t) => t.recurrenceId === r.id).length, thisMonth)),
+    ...debts.map((d) => toDebtRecurringDisplay(d, jarOf(d.sourceJarId),
+      transactions.filter((t) => t.debtId === d.id).length, thisMonth)),
+  ], [recurrences, debts, jarOf, transactions, thisMonth]);
 
   const onCreate = useCallback(async (d: CreateRecurringData) => {
     if (d.filter === 'deudas') {
@@ -63,69 +77,36 @@ export function useRecurrentes(
     }
   }, [debts, recurrences, setRecurrences, setDebts]);
 
+  /**
+   * Eliminar un compromiso. **La app decide, el usuario no elige**: le pregunta al libro si tiene
+   * pagos. Con pagos → CANCELA (hay historia que cuidar; borrar la fila la haría desaparecer de
+   * TODOS los meses, incluidos los pagados). Sin pagos → borra de verdad: no significó nada, y
+   * dejarlo cancelado llenaría el historial de ruido. El libro no se toca en ninguno de los dos.
+   */
   const onDelete = useCallback(async (id: string) => {
-    if (recurrences.some((r) => r.id === id)) {
-      await recurrenceRepository.delete(id);
-      setRecurrences((list) => list.filter((r) => r.id !== id));
+    const isRecurrence = recurrences.some((r) => r.id === id);
+    const hasPayments = transactions.some((t) => (isRecurrence ? t.recurrenceId : t.debtId) === id);
+
+    if (isRecurrence) {
+      if (hasPayments) {
+        const { recurrence } = await cancelRecurrence.execute({ recurrenceId: id, today: new Date() });
+        setRecurrences((list) => list.map((r) => (r.id === id ? recurrence : r)));
+      } else {
+        await recurrenceRepository.delete(id);
+        setRecurrences((list) => list.filter((r) => r.id !== id));
+      }
+      return;
+    }
+
+    if (hasPayments) {
+      const { debt } = await cancelDebt.execute({ debtId: id, today: new Date() });
+      setDebts((list) => list.map((d) => (d.id === id ? debt : d)));
     } else {
       await debtRepository.delete(id);
       setDebts((list) => list.filter((x) => x.id !== id));
     }
-  }, [recurrences, setRecurrences, setDebts]);
+  }, [recurrences, transactions, setRecurrences, setDebts]);
 
   const recurrenteActions: RecurringActions = useMemo(() => ({ onCreate, onSave, onDelete }), [onCreate, onSave, onDelete]);
   return { recurrentes, recurrenteActions };
-}
-
-/** 'YYYY-MM' + n meses. */
-function addMonths(month: string, n: number): string {
-  const [year, m] = month.split('-').map(Number);
-  return monthKey(new Date(year, m - 1 + n, 1));
-}
-/** Cuántos meses cubre [start, end] inclusive. */
-function monthsInclusive(start: string, end: string): number {
-  const [sy, sm] = start.split('-').map(Number);
-  const [ey, em] = end.split('-').map(Number);
-  return (ey - sy) * 12 + (em - sm) + 1;
-}
-
-function buildRecurrence(d: CreateRecurringData, id: string, startMonth: string): Recurrence {
-  return new Recurrence({
-    id, name: d.name, amount: d.amount,
-    type: d.filter === 'ingresos' ? 'ingreso' : 'gasto',
-    dayOfMonth: d.day, jarId: d.jarra, startMonth,
-    endMonth: d.frecuencia === 'cuotas' ? addMonths(startMonth, d.cuotas - 1) : undefined,
-    workspaceId: WORKSPACE_ID,
-  });
-}
-/**
- * Único pago: `cuotas` queda ausente y el total ES el monto (no se multiplica por nada — con
- * `cuotas: 0` el total daría 0). A plazos: total = cuota × cuotas, como siempre.
- */
-function buildDebt(d: CreateRecurringData, id: string, createdAt: Date, origin: Debt['origin']): Debt {
-  return new Debt({
-    id, description: d.name,
-    amount: d.unicoPago ? d.amount : d.amount * d.cuotas,
-    cuotas: d.unicoPago ? undefined : d.cuotas,
-    cuotasPagadas: d.unicoPago ? undefined : d.cuotasPagadas,
-    dueDay: d.day, sourceJarId: d.jarra, workspaceId: WORKSPACE_ID, createdAt, origin,
-  });
-}
-
-function toRecurringDisplay(rec: Recurrence, jar: JarPresentation): RecurringDisplay {
-  return {
-    id: rec.id, iconName: jar.iconName, iconColor: jar.iconColor, iconBg: jar.iconBg,
-    name: rec.name, day: rec.dayOfMonth, amount: rec.amount,
-    filter: rec.type === 'ingreso' ? 'ingresos' : 'gastos',
-    jarra: asRecurringJar(rec.jarId),
-    frecuencia: rec.endMonth ? 'cuotas' : 'indefinido',
-    cuotas: rec.endMonth ? monthsInclusive(rec.startMonth, rec.endMonth) : 12,
-  };
-}
-function toDebtRecurringDisplay(debt: Debt, jar: JarPresentation): RecurringDisplay {
-  return {
-    id: debt.id, iconName: jar.iconName, iconColor: jar.iconColor, iconBg: jar.iconBg,
-    name: debt.description, day: debt.dueDay, amount: debt.cuotaAmount(),
-    filter: 'deudas', jarra: asRecurringJar(debt.sourceJarId), frecuencia: 'cuotas', cuotas: debt.totalCuotas(),
-  };
 }

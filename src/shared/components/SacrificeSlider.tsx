@@ -27,7 +27,7 @@ import { GestureDetector, Gesture } from 'react-native-gesture-handler';
 
 import { colors, typography, spacing, radius } from '../styles';
 
-const THUMB_SIZE = 48;
+const THUMB_SIZE = 44;
 const HOLD_MS = 3000;
 const THRESHOLD = 0.85;
 const MINI_TRACK_HEIGHT = 6;
@@ -140,6 +140,6 @@ const styles = StyleSheet.create({
   },
   thumbDisabled: { backgroundColor: colors.outlineVariant },
   thumbGlyph: { fontSize: 22 },
-  hint: { ...typography.labelSm, color: colors.slateGray, textAlign: 'center' },
+  hint: { ...typography.labelXs, color: colors.slateGray, textAlign: 'center', marginTop: spacing.stackXs },
   hintHolding: { color: colors.alertOrange },
 });

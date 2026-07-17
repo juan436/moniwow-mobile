@@ -69,6 +69,18 @@ export type RecurringDisplay = {
   jarra: RecurringJar;
   frecuencia: RecurringFrequency;
   cuotas: number;
+  /**
+   * Pagos suyos que hay en el LIBRO. Decide si al eliminar se cancela (hay historia que cuidar) o
+   * se borra de verdad (no significó nada). El modal lo dice antes de escribir.
+   */
+  paymentCount: number;
+  /**
+   * Ya terminó: su último mes quedó atrás (`endMonth` en la regla, `cancelledAt` en la deuda). No
+   * es "tiene fin" — una regla con duración 12 meses tiene `endMonth` y sigue viva. Lo que se va de
+   * "Compromisos activos" es lo que terminó, no lo que tiene fecha de fin.
+   * Lo que quedó vencido sin pagar no desaparece: sigue en Mi Mes / Atrasados, que es donde se paga.
+   */
+  isOver: boolean;
 };
 
 export type CreateRecurringData = {

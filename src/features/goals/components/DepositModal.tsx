@@ -6,20 +6,20 @@
  * @receives 5 props: visible, goal, available, onClose, onConfirm
  * @processes Valida 0 < monto ≤ available. `available` es el disponible sin asignar del pozo Metas
  *           (modelo "pozo financiado, luego repartido" — ver [[planes/psicologia-ux]]); Aportar
- *           reasigna de ahí, no saca plata nueva de Libre. Popup centrado sube la mitad del alto
- *           del teclado al enfocar el input (autoFocus) para no quedar tapado.
- * @returns  JSX — Modal fade centrado, tono positivo.
+ *           reasigna de ahí, no saca plata nueva de Libre.
+ *           **Se cayó el listener de teclado propio y el `kbHeight / 2`**: la mitad era un parche
+ *           para un popup centrado (subía justo lo necesario para no quedar tapado). Un sheet vive
+ *           pegado abajo y sube el alto completo — eso lo hace `MoniSheet`.
+ * @returns  JSX — sheet con tono positivo.
  * @props    5: visible, goal, available, onClose, onConfirm
  */
 import { useState, useEffect } from 'react';
-import { Modal, Pressable, View, Text, TextInput, Keyboard, Platform, StyleSheet } from 'react-native';
+import { View, Text, TextInput, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { colors, typography, spacing, radius, shadows } from '@shared/styles';
-import { MoniButton } from '@shared/components';
+import { colors, typography, spacing, radius } from '@shared/styles';
+import { MoniButton, MoniSheet } from '@shared/components';
 import type { GoalItem } from '../types';
-
-function handlePopupPress() {}
 
 type Props = {
   visible: boolean;
@@ -32,21 +32,8 @@ type Props = {
 export function DepositModal({ visible, goal, available, onClose, onConfirm }: Props) {
   const insets = useSafeAreaInsets();
   const [monto, setMonto] = useState('');
-  const [kbHeight, setKbHeight] = useState(0);
 
   useEffect(() => { if (visible) setMonto(''); }, [visible]);
-
-  useEffect(() => {
-    const show = Keyboard.addListener(
-      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
-      (e) => setKbHeight(e.endCoordinates.height),
-    );
-    const hide = Keyboard.addListener(
-      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
-      () => setKbHeight(0),
-    );
-    return () => { show.remove(); hide.remove(); };
-  }, []);
 
   const parsedMonto = parseFloat(monto.replace(',', '.'));
   const canConfirm = !isNaN(parsedMonto) && parsedMonto > 0 && parsedMonto <= available;
@@ -58,9 +45,8 @@ export function DepositModal({ visible, goal, available, onClose, onConfirm }: P
   }
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose} statusBarTranslucent navigationBarTranslucent>
-      <Pressable style={styles.backdrop} onPress={onClose}>
-        <Pressable style={[styles.popup, { marginBottom: kbHeight / 2 }]} onPress={handlePopupPress}>
+    <MoniSheet visible={visible} onClose={onClose}>
+      <View style={[styles.content, { paddingBottom: insets.bottom + spacing.stackLg }]}>
 
           <Text style={styles.title}>Aportar a {goal?.name}</Text>
           <Text style={styles.body}>Asigná plata desde tu disponible en Metas.</Text>
@@ -80,16 +66,13 @@ export function DepositModal({ visible, goal, available, onClose, onConfirm }: P
 
           <MoniButton label="Aportar" onPress={handleConfirm} disabled={!canConfirm} />
 
-        </Pressable>
-      </Pressable>
-      <View style={[styles.navBarCover, { height: insets.bottom }]} />
-    </Modal>
+      </View>
+    </MoniSheet>
   );
 }
 
 const styles = StyleSheet.create({
-  backdrop: { flex: 1, backgroundColor: `${colors.navyDark}8C`, justifyContent: 'center', alignItems: 'center', paddingHorizontal: spacing.marginPage },
-  popup:    { backgroundColor: colors.pureWhite, borderRadius: radius.card, width: '100%', padding: spacing.cardPadding, gap: spacing.stackMd, ...shadows.modal },
+  content:  { paddingHorizontal: spacing.cardPadding, paddingTop: spacing.stackSm, gap: spacing.stackMd },
   title:    { ...typography.headlineMd, color: colors.navyDark, textAlign: 'center' },
   body:     { ...typography.bodyMd, color: colors.slateGray, textAlign: 'center' },
   block:      { gap: spacing.stackXs },
@@ -102,5 +85,4 @@ const styles = StyleSheet.create({
     color: colors.onSurface, backgroundColor: colors.pureWhite,
     textAlignVertical: 'center', includeFontPadding: false,
   },
-  navBarCover: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: colors.black },
 });

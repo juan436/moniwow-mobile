@@ -17,15 +17,15 @@
  *           un poco más de aire vertical entre filas. onTransfer/onEdit opcionales — dashboard/ no
  *           los pasa (solo lectura), JarsScreen sí. "Editar jarra" solo aparece si la jarra tiene
  *           alguna capacidad editable (`jarCapabilities`); Libre/Fondo/Metas no editan nada → sin botón.
- * @returns  JSX — Modal fade centrado, sin scroll anidado.
+ * @returns  JSX — sheet, sin scroll anidado.
  * @props    5: item, transactions, onClose, onTransfer?, onEdit?
  */
-import { Modal, Pressable, View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
 
-import { colors, typography, spacing, radius, sizes, shadows } from '@shared/styles';
-import { MoniButton } from '@shared/components';
+import { colors, typography, spacing, radius, sizes } from '@shared/styles';
+import { MoniButton, MoniSheet } from '@shared/components';
 import { truncateLabel } from '@shared/utils';
 import { jarCapabilities } from '@core/entities/Jar';
 import type { JarDisplay } from '../types';
@@ -33,8 +33,6 @@ import type { TransactionDisplay } from '@features/transactions/types';
 
 // Jarra casi vacía = alerta. El nivel alto es lo sano (tienes tu presupuesto intacto).
 const LOW_LEVEL_PCT = 20;
-
-function handlePopupPress() {}
 
 type Props = {
   item: JarDisplay | null;
@@ -52,9 +50,8 @@ export function JarDetailModal({ item, transactions, onClose, onTransfer, onEdit
   const canEdit = !!caps && (caps.canRename || caps.canEditBudget || caps.canToggleBlindado || caps.canDelete);
 
   return (
-    <Modal visible={item !== null} transparent animationType="fade" onRequestClose={onClose} statusBarTranslucent navigationBarTranslucent>
-      <Pressable style={styles.backdrop} onPress={onClose}>
-        <Pressable style={styles.popup} onPress={handlePopupPress}>
+    <MoniSheet visible={item !== null} onClose={onClose}>
+      <View style={[styles.body, { paddingBottom: insets.bottom + spacing.stackLg }]}>
 
           <View style={styles.headerRow}>
             <View style={[styles.iconBox, { backgroundColor: item?.iconBg }]}>
@@ -109,19 +106,16 @@ export function JarDetailModal({ item, transactions, onClose, onTransfer, onEdit
             </>
           )}
 
-          {onTransfer && <MoniButton label="Transferir" onPress={onTransfer} variant="secondary" size="sm" />}
-          {onEdit && canEdit && <MoniButton label="Editar jarra" onPress={onEdit} size="sm" />}
+          {onTransfer && <MoniButton label="Transferir" onPress={onTransfer} variant="secondary" />}
+          {onEdit && canEdit && <MoniButton label="Editar jarra" onPress={onEdit} />}
 
-        </Pressable>
-      </Pressable>
-      <View style={[styles.navBarCover, { height: insets.bottom }]} />
-    </Modal>
+      </View>
+    </MoniSheet>
   );
 }
 
 const styles = StyleSheet.create({
-  backdrop: { flex: 1, backgroundColor: `${colors.navyDark}8C`, justifyContent: 'center', alignItems: 'center', paddingHorizontal: spacing.marginPage },
-  popup:    { backgroundColor: colors.pureWhite, borderRadius: radius.card, width: '100%', padding: spacing.cardPadding, gap: spacing.stackSm, ...shadows.modal },
+  body:     { paddingHorizontal: spacing.cardPadding, paddingTop: spacing.stackSm, gap: spacing.stackSm },
   headerRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.stackSm },
   iconBox:  { width: sizes.iconSm, height: sizes.iconSm, borderRadius: radius.lg, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
   emoji:    { fontSize: sizes.emojiFontMd },
@@ -143,5 +137,4 @@ const styles = StyleSheet.create({
   txDesc:    { ...typography.bodyMd, color: colors.navyDark, flex: 1 },
   txAmount:  { ...typography.bodyMdBold, color: colors.alertOrange },
   txAmountIncome: { color: colors.emeraldSuccess },
-  navBarCover: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: colors.black },
 });

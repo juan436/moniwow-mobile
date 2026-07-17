@@ -26,6 +26,12 @@ export interface DebtProps {
   cuotas?: number;
   /** Cuotas pagadas ANTES de registrar la deuda acá. Ausente o 0 = ninguna. No muta. */
   cuotasPagadas?: number;
+  /**
+   * Mes en que se canceló ('YYYY-MM'). Ausente = viva. Las cuotas que vencen DESPUÉS de este mes
+   * dejan de existir; las vencidas siguen debiéndose aunque no estén pagadas — cancelar corta el
+   * futuro, no perdona el pasado. Mismo idioma que `Recurrence.endMonth`.
+   */
+  cancelledAt?: string;
   sourceJarId: string;
   workspaceId: string;
   createdAt: Date;
@@ -39,6 +45,7 @@ export class Debt {
   readonly dueDay: number;
   readonly cuotas?: number;
   readonly cuotasPagadas?: number;
+  readonly cancelledAt?: string;
   readonly sourceJarId: string;
   readonly workspaceId: string;
   readonly createdAt: Date;
@@ -51,6 +58,7 @@ export class Debt {
     this.dueDay = props.dueDay;
     this.cuotas = props.cuotas;
     this.cuotasPagadas = props.cuotasPagadas;
+    this.cancelledAt = props.cancelledAt;
     this.sourceJarId = props.sourceJarId;
     this.workspaceId = props.workspaceId;
     this.createdAt = props.createdAt;
@@ -86,12 +94,4 @@ export class Debt {
     return new Date(year, month, Math.min(this.dueDay, lastDay));
   }
 
-  /** Cuántas cuotas llevas y cuánto debes son preguntas para el LIBRO: recibe la cuenta. */
-  isPaid(paidCount: number): boolean {
-    return paidCount >= this.totalCuotas();
-  }
-
-  remainingAmount(paidCount: number): number {
-    return this.amount - this.cuotaAmount() * paidCount;
-  }
 }

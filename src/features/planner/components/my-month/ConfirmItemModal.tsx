@@ -7,16 +7,16 @@
  *           una cuota, avanza la deuda. Un toque por error no se puede deshacer todavía, así que
  *           nada se escribe sin un OK explícito. Muestra lo que va a pasar: cuánto, de qué jarra sale
  *           (o a cuál entra, si es un ingreso) y qué compromiso se salda.
- * @returns  JSX — Modal fade con backdrop; `visible` = hay item que confirmar.
+ * @returns  JSX — sheet; `visible` = hay item que confirmar.
  * @props    3: item, onConfirm, onCancel
  */
-import { Modal, Pressable, View, Text, StyleSheet } from 'react-native';
+import { Pressable, View, Text, StyleSheet } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
 
-import { colors, typography, spacing, radius, sizes, shadows } from '@shared/styles';
+import { colors, typography, spacing, radius, sizes } from '@shared/styles';
+import { MoniSheet } from '@shared/components';
 import type { AgendaFilter, AgendaItemDisplay } from '../../types';
-
-function stopPropagation() { return true; }
 
 type Copy = { title: string; jarLabel: string; cta: string };
 
@@ -33,14 +33,14 @@ type Props = {
 };
 
 export function ConfirmItemModal({ item, onConfirm, onCancel }: Props) {
+  const insets    = useSafeAreaInsets();
   const copy      = COPY[item?.filter ?? 'gastos'];
   const isIncome  = item?.filter === 'ingresos';
   const ctaStyle  = isIncome ? styles.ctaIncome : styles.ctaExpense;
 
   return (
-    <Modal visible={item !== null} transparent animationType="fade" onRequestClose={onCancel} statusBarTranslucent>
-      <Pressable style={styles.backdrop} onPress={onCancel}>
-        <View style={styles.popup} onStartShouldSetResponder={stopPropagation}>
+    <MoniSheet visible={item !== null} onClose={onCancel}>
+      <View style={[styles.body, { paddingBottom: insets.bottom + spacing.stackLg }]}>
 
           <Text style={styles.title}>{copy.title}</Text>
 
@@ -71,27 +71,16 @@ export function ConfirmItemModal({ item, onConfirm, onCancel }: Props) {
             </Pressable>
           </View>
 
-        </View>
-      </Pressable>
-    </Modal>
+      </View>
+    </MoniSheet>
   );
 }
 
 const styles = StyleSheet.create({
-  backdrop: {
-    flex: 1,
-    backgroundColor: `${colors.navyDark}8C`,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: spacing.marginPage,
-  },
-  popup: {
-    backgroundColor: colors.pureWhite,
-    borderRadius: radius.card,
-    width: '100%',
-    padding: spacing.cardPadding,
+  body: {
+    paddingHorizontal: spacing.cardPadding,
+    paddingTop: spacing.stackSm,
     gap: spacing.stackMd,
-    ...shadows.modal,
   },
   title:      { ...typography.labelMdBold, color: colors.navyDark, textAlign: 'center' },
   amountZone: { alignItems: 'center', paddingVertical: spacing.stackSm },

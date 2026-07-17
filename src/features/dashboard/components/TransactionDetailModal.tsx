@@ -4,18 +4,17 @@
  * @what     Modal de detalle: monto héroe arriba, chip categoría y descripción abajo.
  * @receives 2 props: item, onClose
  * @processes Calcula color, prefijo y etiqueta tipo por isIncome.
- * @returns  JSX — Modal fade con backdrop y layout monto-primero.
+ * @returns  JSX — sheet con layout monto-primero.
  * @props    2: item, onClose
  */
-import { Modal, Pressable, View, Text, StyleSheet } from 'react-native';
+import { Pressable, View, Text, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 
-import { colors, typography, spacing, radius, sizes, shadows } from '@shared/styles';
+import { colors, typography, spacing, radius, sizes } from '@shared/styles';
+import { MoniSheet } from '@shared/components';
 import type { TransactionDisplay } from '@features/transactions/types';
-
-function stopPropagation() { return true; }
 
 type Props = {
   item: TransactionDisplay | null;
@@ -42,9 +41,8 @@ export function TransactionDetailModal({ item, onClose }: Props) {
   const categoryText  = labelParts.slice(0, -1).join(' ');
 
   return (
-    <Modal visible={item !== null} transparent animationType="fade" onRequestClose={onClose} statusBarTranslucent navigationBarTranslucent>
-      <Pressable style={styles.backdrop} onPress={onClose}>
-        <View style={styles.popup} onStartShouldSetResponder={stopPropagation}>
+    <MoniSheet visible={item !== null} onClose={onClose}>
+      <View style={[styles.body, { paddingBottom: insets.bottom + spacing.stackLg }]}>
 
           <View style={styles.metaZone}>
             <View style={styles.typeRow}>
@@ -92,28 +90,16 @@ export function TransactionDetailModal({ item, onClose }: Props) {
             </Pressable>
           )}
 
-        </View>
-      </Pressable>
-      <View style={[styles.navBarCover, { height: insets.bottom }]} />
-    </Modal>
+      </View>
+    </MoniSheet>
   );
 }
 
 const styles = StyleSheet.create({
-  backdrop: {
-    flex: 1,
-    backgroundColor: `${colors.navyDark}8C`,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: spacing.marginPage,
-  },
-  popup: {
-    backgroundColor: colors.pureWhite,
-    borderRadius: radius.card,
-    width: '100%',
-    padding: spacing.cardPadding,
+  body: {
+    paddingHorizontal: spacing.cardPadding,
+    paddingTop: spacing.stackSm,
     gap: spacing.stackMd,
-    ...shadows.modal,
   },
   metaZone: {
     flexDirection: 'row',
@@ -192,12 +178,5 @@ const styles = StyleSheet.create({
     borderRadius: radius.full,
     paddingVertical: spacing.stackMd,
     alignItems: 'center',
-  },
-  navBarCover: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: colors.black,
   },
 });

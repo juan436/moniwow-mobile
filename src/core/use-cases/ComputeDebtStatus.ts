@@ -33,6 +33,8 @@ export interface CuotaStatus {
 
 export interface DebtStatus {
   paidCount: number;
+  /** Cuotas que EXISTEN. Con `cancelledAt` son menos que `debt.totalCuotas()`. */
+  totalCuotas: number;
   remaining: number;
   isPaid: boolean;
   /** Cuotas vencidas de meses anteriores, sin pagar. Las más viejas primero. */
@@ -56,7 +58,9 @@ export class ComputeDebtStatus {
     for (let n = 1; n <= debt.totalCuotas(); n += 1) {
       const dueDate = debt.cuotaDueDate(n);
       const month   = monthKey(dueDate);
-      const isPaid  = n <= initialPaid || paidMonths.has(month);
+      // Cancelada: las cuotas que vencían DESPUÉS dejan de existir. Las vencidas siguen debiéndose.
+      if (debt.cancelledAt !== undefined && month > debt.cancelledAt) continue;
+      const isPaid = n <= initialPaid || paidMonths.has(month);
       cuotas.push({ month, number: n, dueDate, amount: debt.cuotaAmount(), isPaid });
     }
 
@@ -64,8 +68,9 @@ export class ComputeDebtStatus {
 
     return {
       paidCount,
-      remaining: debt.remainingAmount(paidCount),
-      isPaid: debt.isPaid(paidCount),
+      totalCuotas: cuotas.length,
+      remaining: debt.cuotaAmount() * (cuotas.length - paidCount),
+      isPaid: paidCount >= cuotas.length,
       overdue: cuotas.filter((c) => !c.isPaid && c.month < thisMonth),
       current: cuotas.find((c) => c.month === thisMonth) ?? null,
     };

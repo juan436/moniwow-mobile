@@ -8,24 +8,23 @@
  *           explícito "Este dinero va a tu jarra Libre" — antes retiraba en silencio sin decir a
  *           dónde caía el dinero (`useGoals.handleWithdraw` siempre lo manda a Libre, regla fija,
  *           sin selector — mantenerlo simple es intencional, la fricción del sacrificio ya
- *           desincentiva bastante). Envuelve el contenido en GestureHandlerRootView propio — el
- *           Modal de RN renderiza en ventana nativa separada en Android y gesture-handler no
- *           detecta touches ahí sin su propio root (mismo fix que ReceiptViewerModal, ver
- *           adr_gesture_handler).
- * @returns  JSX — Modal fade centrado, tono de advertencia (mismo layout que DebtDetailModal).
+ *           desincentiva bastante).
+ *           **El `GestureHandlerRootView` ya no vive acá**: lo pone `MoniSheet`, que lo monta
+ *           siempre dentro del Modal. Hace falta porque RN renderiza el Modal en ventana nativa
+ *           separada en Android y gesture-handler no detecta touches ahí sin su propio root — sin
+ *           eso el slider muere (ver adr_gesture_handler). Al vivir en el chrome, no hay forma de
+ *           olvidárselo.
+ * @returns  JSX — sheet con tono de advertencia.
  * @props    4: visible, goal, onClose, onConfirm
  */
 import { useState, useEffect } from 'react';
-import { Modal, Pressable, View, Text, TextInput, StyleSheet } from 'react-native';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { View, Text, TextInput, StyleSheet } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { colors, typography, spacing, radius, shadows } from '@shared/styles';
-import { MoniButton, SacrificeSlider } from '@shared/components';
+import { colors, typography, spacing, radius } from '@shared/styles';
+import { MoniButton, MoniSheet, SacrificeSlider } from '@shared/components';
 import type { GoalItem } from '../types';
-
-function handlePopupPress() {}
 
 type Props = {
   visible: boolean;
@@ -49,10 +48,8 @@ export function SacrificeModal({ visible, goal, onClose, onConfirm }: Props) {
   }
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose} statusBarTranslucent navigationBarTranslucent>
-      <GestureHandlerRootView style={styles.root}>
-        <Pressable style={styles.backdrop} onPress={onClose}>
-          <Pressable style={styles.popup} onPress={handlePopupPress}>
+    <MoniSheet visible={visible} onClose={onClose}>
+      <View style={[styles.content, { paddingBottom: insets.bottom + spacing.stackMd }]}>
 
             <Text style={styles.warning}>⚠️ ¿Vas a sacrificar tu meta?</Text>
             <Text style={styles.body}>
@@ -79,21 +76,16 @@ export function SacrificeModal({ visible, goal, onClose, onConfirm }: Props) {
 
             <SacrificeSlider progress={100} onConfirm={handleConfirm} disabled={!canConfirm} />
 
-            <MoniButton label="NO, QUIERO MI META" onPress={onClose} variant="secondary" />
+            <MoniButton label="No, quiero mi meta" onPress={onClose} variant="secondary" />
 
-          </Pressable>
-        </Pressable>
-        <View style={[styles.navBarCover, { height: insets.bottom }]} />
-      </GestureHandlerRootView>
-    </Modal>
+      </View>
+    </MoniSheet>
   );
 }
 
 const styles = StyleSheet.create({
-  root:     { flex: 1 },
-  backdrop: { flex: 1, backgroundColor: `${colors.navyDark}8C`, justifyContent: 'center', alignItems: 'center', paddingHorizontal: spacing.marginPage },
-  popup:    { backgroundColor: colors.pureWhite, borderRadius: radius.card, width: '100%', padding: spacing.cardPadding, gap: spacing.stackMd, ...shadows.modal },
-  warning:  { ...typography.bodyMdBold, color: colors.alertOrange, textAlign: 'center' },
+  content:  { paddingHorizontal: spacing.cardPadding, paddingTop: spacing.stackSm, gap: spacing.stackMd },
+  warning:  { ...typography.headlineMd, color: colors.alertOrange, textAlign: 'center' },
   body:     { ...typography.bodyMd, color: colors.navyDark, textAlign: 'center' },
   bold:     { ...typography.bodyMdBold, color: colors.navyDark },
   block:      { gap: spacing.stackXs },
@@ -108,5 +100,4 @@ const styles = StyleSheet.create({
     color: colors.onSurface, backgroundColor: colors.pureWhite,
     textAlignVertical: 'center', includeFontPadding: false,
   },
-  navBarCover: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: colors.black },
 });

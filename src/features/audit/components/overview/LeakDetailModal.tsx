@@ -4,17 +4,16 @@
  * @what     Modal de detalle de fuga: monto héroe, preview de últimos 3 movimientos y botón a pantalla completa.
  * @receives 2 props: item, onClose
  * @processes Muestra los 3 primeros items como preview. "Ver detalle" navega a /leak/[id].
- * @returns  JSX — Modal fade con layout monto-primero sin scroll anidado.
+ * @returns  JSX — sheet con layout monto-primero, sin scroll anidado.
  * @props    2: item, onClose
  */
-import { Modal, Pressable, View, Text, StyleSheet } from 'react-native';
+import { Pressable, View, Text, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 
-import { colors, typography, spacing, radius, sizes, shadows } from '@shared/styles';
+import { colors, typography, spacing, radius, sizes } from '@shared/styles';
+import { MoniSheet } from '@shared/components';
 import type { LeakDisplay } from '../../types';
-
-function stopPropagation() { return true; }
 
 type Props = {
   item: LeakDisplay | null;
@@ -31,9 +30,8 @@ export function LeakDetailModal({ item, onClose }: Props) {
   }
 
   return (
-    <Modal visible={item !== null} transparent animationType="fade" onRequestClose={onClose} statusBarTranslucent navigationBarTranslucent>
-      <Pressable style={styles.backdrop} onPress={onClose}>
-        <View style={styles.popup} onStartShouldSetResponder={stopPropagation}>
+    <MoniSheet visible={item !== null} onClose={onClose}>
+      <View style={[styles.body, { paddingBottom: insets.bottom + spacing.stackLg }]}>
 
           <View style={styles.metaZone}>
             <View style={styles.typeRow}>
@@ -75,16 +73,13 @@ export function LeakDetailModal({ item, onClose }: Props) {
             <Text style={styles.chipLabel}>Ver detalle</Text>
           </Pressable>
 
-        </View>
-      </Pressable>
-      <View style={[styles.navBarCover, { height: insets.bottom }]} />
-    </Modal>
+      </View>
+    </MoniSheet>
   );
 }
 
 const styles = StyleSheet.create({
-  backdrop: { flex: 1, backgroundColor: `${colors.navyDark}8C`, justifyContent: 'center', alignItems: 'center', paddingHorizontal: spacing.marginPage },
-  popup: { backgroundColor: colors.pureWhite, borderRadius: radius.card, width: '100%', padding: spacing.cardPadding, gap: spacing.stackMd, ...shadows.modal },
+  body: { paddingHorizontal: spacing.cardPadding, paddingTop: spacing.stackSm, gap: spacing.stackMd },
   metaZone: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   typeRow:  { flexDirection: 'row', alignItems: 'center', gap: spacing.stackSm },
   dot:      { width: sizes.dotSm, height: sizes.dotSm, borderRadius: radius.full, backgroundColor: colors.alertOrange },
@@ -102,5 +97,4 @@ const styles = StyleSheet.create({
   txAmount: { ...typography.labelMd, color: colors.alertOrange },
   txSep:    { height: 1, backgroundColor: colors.surfaceContainerLow },
   detalleBtn: { backgroundColor: colors.alertOrange + '1A', borderRadius: radius.full, paddingVertical: spacing.stackMd, alignItems: 'center' },
-  navBarCover: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: colors.black },
 });

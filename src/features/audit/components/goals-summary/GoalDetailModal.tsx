@@ -4,13 +4,14 @@
  * @what     Modal de detalle de meta: meta héroe, barra progreso, desglose ahorro/restante y emoji.
  * @receives 2 props: item, onClose
  * @processes Calcula restante desde item.target - item.current.
- * @returns  JSX — Modal fade con layout monto-primero alineado a TransactionDetailModal.
+ * @returns  JSX — sheet con layout monto-primero alineado a TransactionDetailModal.
  * @props    2: item, onClose
  */
-import { Modal, Pressable, View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { colors, typography, spacing, radius, sizes, shadows } from '@shared/styles';
+import { colors, typography, spacing, radius, sizes } from '@shared/styles';
+import { MoniSheet } from '@shared/components';
 import type { GoalDisplay } from '../../types';
 
 type Props = {
@@ -18,17 +19,14 @@ type Props = {
   onClose: () => void;
 };
 
-function handlePopupPress() {}
-
 export function GoalDetailModal({ item, onClose }: Props) {
   const insets = useSafeAreaInsets();
   const restante = item ? item.target - item.current : 0;
   const progress = item?.progress ?? 0;
 
   return (
-    <Modal visible={item !== null} transparent animationType="fade" onRequestClose={onClose} statusBarTranslucent navigationBarTranslucent>
-      <Pressable style={styles.backdrop} onPress={onClose}>
-        <Pressable style={styles.popup} onPress={handlePopupPress}>
+    <MoniSheet visible={item !== null} onClose={onClose}>
+      <View style={[styles.body, { paddingBottom: insets.bottom + spacing.stackLg }]}>
 
           <View style={styles.metaZone}>
             <View style={styles.typeRow}>
@@ -73,28 +71,16 @@ export function GoalDetailModal({ item, onClose }: Props) {
             {item?.name}
           </Text>
 
-        </Pressable>
-      </Pressable>
-      <View style={[styles.navBarCover, { height: insets.bottom }]} />
-    </Modal>
+      </View>
+    </MoniSheet>
   );
 }
 
 const styles = StyleSheet.create({
-  backdrop: {
-    flex: 1,
-    backgroundColor: `${colors.navyDark}8C`,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: spacing.marginPage,
-  },
-  popup: {
-    backgroundColor: colors.pureWhite,
-    borderRadius: radius.card,
-    width: '100%',
-    padding: spacing.cardPadding,
+  body: {
+    paddingHorizontal: spacing.cardPadding,
+    paddingTop: spacing.stackSm,
     gap: spacing.stackMd,
-    ...shadows.modal,
   },
   metaZone: {
     flexDirection: 'row',
@@ -181,12 +167,5 @@ const styles = StyleSheet.create({
     ...typography.bodyMd,
     color: colors.navyDark,
     textAlign: 'center',
-  },
-  navBarCover: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: colors.black,
   },
 });

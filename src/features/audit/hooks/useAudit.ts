@@ -110,7 +110,7 @@ export function useAudit() {
       .filter(({ status }) => !status.isPaid);
   }, [debts, transactions]);
 
-  const deudaBreakdown = useMemo(() => vivas.map(({ debt, status }) => toDebtBreakdown(debt, status.paidCount)), [vivas]);
+  const deudaBreakdown = useMemo(() => vivas.map(({ debt, status }) => toDebtBreakdown(debt, status)), [vivas]);
   const deudaTotal     = useMemo(() => vivas.reduce((s, { status }) => s + status.remaining, 0), [vivas]);
   const deudaOriginal  = useMemo(() => debts.reduce((s, d) => s + d.amount, 0), [debts]);
   const pagado         = deudaOriginal - deudaTotal;

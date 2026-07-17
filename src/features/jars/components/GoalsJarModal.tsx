@@ -10,18 +10,16 @@
  *           Ambos botones llaman onClose() antes de navegar — si no, el modal queda montado
  *           (visible=true) debajo de la pantalla nueva y da sensación de lentitud/doble transición.
  *           Navegación pura, sin importar features/goals/ — ver [[planes/psicologia-ux]].
- * @returns  JSX — Modal fade centrado, mismo layout monto-primero que JarDetailModal.
+ * @returns  JSX — sheet, mismo layout monto-primero que JarDetailModal.
  * @props    2: item, onClose
  */
-import { Modal, Pressable, View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 
-import { colors, typography, spacing, radius, shadows } from '@shared/styles';
-import { MoniButton } from '@shared/components';
+import { colors, typography, spacing } from '@shared/styles';
+import { MoniButton, MoniSheet } from '@shared/components';
 import type { JarDisplay } from '../types';
-
-function handlePopupPress() {}
 
 type Props = {
   item: JarDisplay | null;
@@ -41,9 +39,8 @@ export function GoalsJarModal({ item, onClose }: Props) {
   }
 
   return (
-    <Modal visible={item !== null} transparent animationType="fade" onRequestClose={onClose} statusBarTranslucent navigationBarTranslucent>
-      <Pressable style={styles.backdrop} onPress={onClose}>
-        <Pressable style={styles.popup} onPress={handlePopupPress}>
+    <MoniSheet visible={item !== null} onClose={onClose}>
+      <View style={[styles.body, { paddingBottom: insets.bottom + spacing.stackLg }]}>
 
           <View style={styles.amountZone}>
             <Text style={styles.amount} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
@@ -57,19 +54,15 @@ export function GoalsJarModal({ item, onClose }: Props) {
           <MoniButton label="Ir a Mis Metas y Objetivos" onPress={handleGoToGoals} variant="secondary" />
           <MoniButton label="Transferir" onPress={handleGoToTransfer} />
 
-        </Pressable>
-      </Pressable>
-      <View style={[styles.navBarCover, { height: insets.bottom }]} />
-    </Modal>
+      </View>
+    </MoniSheet>
   );
 }
 
 const styles = StyleSheet.create({
-  backdrop: { flex: 1, backgroundColor: `${colors.navyDark}8C`, justifyContent: 'center', alignItems: 'center', paddingHorizontal: spacing.marginPage },
-  popup:    { backgroundColor: colors.pureWhite, borderRadius: radius.card, width: '100%', padding: spacing.cardPadding, gap: spacing.stackMd, ...shadows.modal },
+  body:     { paddingHorizontal: spacing.cardPadding, paddingTop: spacing.stackSm, gap: spacing.stackMd },
   amountZone: { alignItems: 'center', gap: spacing.stackSm, paddingVertical: spacing.stackSm },
   amount:   { ...typography.headlineLg, color: colors.navyDark, textAlign: 'center' },
   jarName:  { ...typography.labelMd, color: colors.slateGray, textAlign: 'center' },
   divider:  { height: 1, backgroundColor: colors.surfaceContainerLow },
-  navBarCover: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: colors.black },
 });
