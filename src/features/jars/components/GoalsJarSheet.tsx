@@ -1,23 +1,22 @@
 /**
  * GoalsJarSheet — Component
  *
- * @what     Modal de la jarra Goals: saldo total + acceso a Mis Metas y Objetivos o a transferir de
- *           una meta puntual. Goals no es un pozo único, es la suma de metas — por eso "Transferir"
- *           primero manda a elegir de cuál.
+ * @what     Modal de la jarra Metas: header por extremos (izq emoji+nombre+blindado · der monto) y
+ *           acceso a Mis Metas y Objetivos o a transferir de una meta puntual. Metas no es un pozo
+ *           único, es la suma de metas — por eso "Transferir" primero manda a elegir de cuál.
  * @receives 2 props: item, onClose
- * @processes "Ir a Mis Metas y Objetivos" → /goals. "Transferir" → /goals-transfer
- *           (GoalsTransferScreen, pantalla propia con el selector de meta + Slider de Sacrificio).
- *           Ambos botones llaman onClose() antes de navegar — si no, el modal queda montado
- *           (visible=true) debajo de la pantalla nueva y da sensación de lentitud/doble transición.
+ * @processes "Ir a Mis Metas y Objetivos" → /goals. "Transferir" → /goals-transfer. Ambos llaman
+ *           onClose() antes de navegar (si no, el modal queda montado debajo y se siente lento).
  *           Navegación pura, sin importar features/goals/ — ver [[planes/psicologia-ux]].
- * @returns  JSX — sheet, mismo layout monto-primero que JarDetailSheet.
+ * @returns  JSX — sheet: header + 2 botones.
  * @props    2: item, onClose
  */
 import { View, Text, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
+import { MaterialIcons } from '@expo/vector-icons';
 
-import { colors, typography, spacing } from '@shared/styles';
+import { colors, typography, spacing, radius, sizes } from '@shared/styles';
 import { MoniButton, MoniSheet } from '@shared/components';
 import type { JarDisplay } from '../types';
 
@@ -42,11 +41,25 @@ export function GoalsJarSheet({ item, onClose }: Props) {
     <MoniSheet visible={item !== null} onClose={onClose}>
       <View style={[styles.body, { paddingBottom: insets.bottom + spacing.stackLg }]}>
 
-          <View style={styles.amountZone}>
+          <View style={styles.headerRow}>
+            <View style={[styles.iconBox, { backgroundColor: item?.iconBg }]}>
+              {item?.emoji
+                ? <Text style={styles.emoji}>{item.emoji}</Text>
+                : item?.iconName && <MaterialIcons name={item.iconName} size={20} color={item.iconColor} />
+              }
+            </View>
+            <View style={styles.headerInfo}>
+              <Text style={styles.jarName} numberOfLines={1}>{item?.name}</Text>
+              {item?.isBlindado && (
+                <View style={styles.chip}>
+                  <MaterialIcons name="lock" size={12} color={colors.goldDreams} />
+                  <Text style={styles.chipLabel}>Blindado</Text>
+                </View>
+              )}
+            </View>
             <Text style={styles.amount} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
               $ {item?.balance.toLocaleString('es')}
             </Text>
-            <Text style={styles.jarName}>Metas</Text>
           </View>
 
           <View style={styles.divider} />
@@ -60,9 +73,14 @@ export function GoalsJarSheet({ item, onClose }: Props) {
 }
 
 const styles = StyleSheet.create({
-  body:     { paddingHorizontal: spacing.cardPadding, paddingTop: spacing.stackSm, gap: spacing.stackMd },
-  amountZone: { alignItems: 'center', gap: spacing.stackSm, paddingVertical: spacing.stackSm },
-  amount:   { ...typography.headlineLg, color: colors.navyDark, textAlign: 'center' },
-  jarName:  { ...typography.labelMd, color: colors.slateGray, textAlign: 'center' },
-  divider:  { height: 1, backgroundColor: colors.surfaceContainerLow },
+  body:      { paddingHorizontal: spacing.cardPadding, paddingTop: spacing.stackSm, gap: spacing.stackMd },
+  headerRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.stackSm },
+  iconBox:   { width: sizes.iconSm, height: sizes.iconSm, borderRadius: radius.lg, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
+  emoji:     { fontSize: sizes.emojiFontMd },
+  headerInfo: { flex: 1, gap: spacing.stackXxs, alignItems: 'flex-start' },
+  jarName:   { ...typography.bodyMdBold, color: colors.navyDark },
+  chip:      { flexDirection: 'row', alignItems: 'center', gap: spacing.stackXxs, paddingHorizontal: spacing.stackSm, paddingVertical: spacing.stackXxs, borderRadius: radius.full, backgroundColor: colors.goldTint },
+  chipLabel: { ...typography.labelXs, color: colors.goldDreams },
+  amount:    { ...typography.headlineMd, color: colors.navyDark, flexShrink: 0 },
+  divider:   { height: 1, backgroundColor: colors.surfaceContainerLow },
 });

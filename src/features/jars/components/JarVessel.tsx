@@ -10,6 +10,7 @@
  * @returns  JSX — Svg con relación de aspecto fija (JAR_GEO).
  * @props    2: jar, width
  */
+import { memo } from 'react';
 import { Svg, Defs, ClipPath, Rect, G, Ellipse, Line, LinearGradient, Stop, Text as SvgText } from 'react-native-svg';
 
 import { colors } from '@shared/styles';
@@ -24,7 +25,7 @@ const BILL_STROKE = '#0F3D28';
 
 type Props = { jar: JarDisplay; width: number };
 
-export function JarVessel({ jar, width }: Props) {
+export const JarVessel = memo(function JarVessel({ jar, width }: Props) {
   const { viewW, viewH, body } = JAR_GEO;
   const level = jar.progress !== undefined ? jar.progress / 100 : 0.24;
   const { coins, bills } = buildJarFill(jar.id, level);
@@ -74,4 +75,4 @@ export function JarVessel({ jar, width }: Props) {
       <Line x1={42} y1={17} x2={98} y2={17} stroke={jar.isBlindado ? colors.pureWhite : colors.outlineVariant} strokeOpacity={jar.isBlindado ? 0.6 : 1} strokeWidth={2} />
     </Svg>
   );
-}
+});

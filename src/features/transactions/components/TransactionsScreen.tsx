@@ -1,14 +1,15 @@
 /**
  * TransactionsScreen — Screen
  *
- * @what     Pantalla completa de todos los movimientos con filtros por tipo y período.
- * @receives —
- * @processes Filtra por isIncome según chip. useMemo para lista derivada. FlatList §9.
+ * @what     Pantalla de movimientos con filtros por tipo y período. Params opcionales `jarId`/`jarName`
+ *           (desde JarDetailSheet) → filtra a esa jarra y titula con su nombre.
+ * @receives params: jarId?, jarName? (useLocalSearchParams).
+ * @processes Filtra por jarra (si hay jarId), por MES/AÑO del navegador y por tipo. El mes no pasa del actual (`atCurrentMonth` deshabilita el arrow siguiente). FlatList §9.
  * @returns  JSX — header fijo + chips tipo (Todos/Ingresos/Gastos) + navegador mes (← mes →) + FlatList + footer.
  */
 import { useState, useCallback, useMemo } from 'react';
 import { View, Text, Pressable, FlatList, StyleSheet } from 'react-native';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -31,19 +32,24 @@ function keyExtractor(item: TransactionDisplay) { return item.id; }
 
 export function TransactionsScreen() {
   const { transactions } = useTransactions();
+  const { jarId, jarName } = useLocalSearchParams<{ jarId?: string; jarName?: string }>();
   const insets = useSafeAreaInsets();
   const [filterTipo, setFilterTipo] = useState<FilterTipo>('todos');
   const [navMonth,   setNavMonth]   = useState(() => new Date().getMonth());
   const [navYear,    setNavYear]    = useState(() => new Date().getFullYear());
   const [selectedTx, setSelectedTx] = useState<TransactionDisplay | null>(null);
   const monthLabel = `${MESES[navMonth]} ${navYear}`;
+  const now = new Date();
+  const atCurrentMonth = navYear === now.getFullYear() && navMonth === now.getMonth();
 
   const filtered = useMemo<TransactionDisplay[]>(() => {
+    const byJar = jarId ? transactions.filter((t) => t.jarId === jarId) : transactions;
+    const byMonth = byJar.filter((t) => t.month === navMonth && t.year === navYear);
     const byTipo = filterTipo === 'todos'
-      ? transactions
-      : transactions.filter((t) => t.isIncome === (filterTipo === 'ingresos'));
+      ? byMonth
+      : byMonth.filter((t) => t.isIncome === (filterTipo === 'ingresos'));
     return byTipo.map((t) => ({ ...t, isLast: true }));
-  }, [transactions, filterTipo]);
+  }, [transactions, filterTipo, jarId, navMonth, navYear]);
 
   function handleBack()      { router.back(); }
   function handlePrevMonth() {
@@ -83,7 +89,7 @@ export function TransactionsScreen() {
               <Pressable style={styles.backBtn} onPress={handleBack}>
                 <MaterialIcons name="arrow-back" size={24} color={colors.navyDark} />
               </Pressable>
-              <Text style={styles.headerTitle}>Movimientos</Text>
+              <Text style={styles.headerTitle} numberOfLines={1}>{jarName ?? 'Movimientos'}</Text>
             </View>
             <View style={styles.filters}>
               <View style={styles.tipoRow}>
@@ -104,8 +110,8 @@ export function TransactionsScreen() {
                   <MaterialIcons name="chevron-left" size={24} color={colors.navyDark} />
                 </Pressable>
                 <Text style={styles.monthLabel}>{monthLabel}</Text>
-                <Pressable style={styles.monthArrow} onPress={handleNextMonth} hitSlop={8}>
-                  <MaterialIcons name="chevron-right" size={24} color={colors.navyDark} />
+                <Pressable style={styles.monthArrow} onPress={handleNextMonth} hitSlop={8} disabled={atCurrentMonth}>
+                  <MaterialIcons name="chevron-right" size={24} color={atCurrentMonth ? colors.slateGray : colors.navyDark} />
                 </Pressable>
               </View>
             </View>

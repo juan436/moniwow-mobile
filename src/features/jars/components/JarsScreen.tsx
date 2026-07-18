@@ -69,7 +69,7 @@ export function JarsScreen() {
     ({ item }: { item: JarDisplay }) =>
       item.id === FILLER_ID
         ? <View style={styles.filler} />
-        : <JarItem jar={item} onPress={() => handleJarPress(item)} />,
+        : <JarItem jar={item} onPress={handleJarPress} />,
     [handleJarPress]
   );
 
@@ -89,6 +89,10 @@ export function JarsScreen() {
         renderItem={renderItem}
         contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing.stackSm }]}
         showsVerticalScrollIndicator={false}
+        removeClippedSubviews
+        initialNumToRender={6}
+        maxToRenderPerBatch={6}
+        windowSize={7}
       />
       <View style={[styles.statusBarBg, { height: insets.top }]} />
       <CreateJarSheet visible={isCreateVisible} onClose={handleCloseCreate} onCreate={handleCreate} />

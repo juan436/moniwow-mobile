@@ -4,12 +4,16 @@
  * @what     Card-jarra para grid 2 columnas en Mis Jarras. Dentro de la card, un frasco de vidrio
  *           (`JarVessel`) se llena de monedas y billetes hasta el % de la meta. El emoji/ícono va
  *           como medallón overlay sobre el frasco.
- * @receives 2 props: jar, onPress?
+ * @receives 2 props: jar, onPress?(jar)
  * @processes El relleno lo pinta `JarVessel` (SVG). El medallón se posiciona sobre el cuello del
  *           frasco (fracción fija del alto del viewBox). Chip Blindado + pill % arriba, saldo abajo.
+ *           **`memo`**: cada vasija son ~250 nodos SVG; sin memo, abrir/cerrar un sheet en JarsScreen
+ *           re-renderizaba las 8 cards enteras (lag al tocar). `onPress` recibe la jarra para que la
+ *           referencia sea estable (nada de closure nueva por render que rompa el memo).
  * @returns  JSX — card flex:1 (top · vasija+medallón · saldo) compatible con FlatList numColumns={2}.
  * @props    2: jar, onPress?
  */
+import { memo } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 
@@ -24,11 +28,11 @@ const VESSEL_H = (VESSEL_W * JAR_GEO.viewH) / JAR_GEO.viewW;
 const MED = 44; // medallón del emoji
 const MED_TOP = (VESSEL_H * 66) / JAR_GEO.viewH - MED / 2; // centro del cuello en el viewBox
 
-type Props = { jar: JarDisplay; onPress?: () => void };
+type Props = { jar: JarDisplay; onPress?: (jar: JarDisplay) => void };
 
-export function JarItem({ jar, onPress }: Props) {
+export const JarItem = memo(function JarItem({ jar, onPress }: Props) {
   return (
-    <Pressable style={({ pressed }) => [styles.card, shadows.card, pressed && styles.pressed]} onPress={onPress}>
+    <Pressable style={({ pressed }) => [styles.card, shadows.card, pressed && styles.pressed]} onPress={() => onPress?.(jar)}>
       <View style={styles.top}>
         <Text style={styles.name} numberOfLines={1}>{jar.name}</Text>
         <View style={styles.topRight}>
@@ -57,7 +61,7 @@ export function JarItem({ jar, onPress }: Props) {
       </View>
     </Pressable>
   );
-}
+});
 
 const styles = StyleSheet.create({
   card:  { flex: 1, backgroundColor: colors.pureWhite, borderRadius: radius.card, padding: spacing.cardPadding },

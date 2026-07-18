@@ -42,6 +42,9 @@ export type TransactionDisplay = {
   isIncome: boolean;
   categoryLabel: string;
   time: string;
+  /** Mes (0–11) y año del movimiento — para filtrar por período en TransactionsScreen. */
+  month: number;
+  year: number;
   iconName: IconName;
   iconBg: string;
   iconColor: string;

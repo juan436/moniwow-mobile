@@ -55,6 +55,8 @@ export function toTransactionDisplay(
     isIncome: tx.type === 'ingreso',
     categoryLabel: categoryLabel(tx, jar),
     time: formatWhen(tx.date),
+    month: tx.date.getMonth(),
+    year: tx.date.getFullYear(),
     iconName: jar.iconName,
     iconBg: jar.iconBg,
     iconColor: jar.iconColor,
