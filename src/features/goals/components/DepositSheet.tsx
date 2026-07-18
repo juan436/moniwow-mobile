@@ -1,5 +1,5 @@
 /**
- * DepositModal — Component
+ * DepositSheet — Component
  *
  * @what     Diálogo para aportar plata a una meta. Sin fricción — a diferencia de retirar, nadie
  *           se arrepiente de ahorrar más.
@@ -29,7 +29,7 @@ type Props = {
   onConfirm: (amount: number) => void;
 };
 
-export function DepositModal({ visible, goal, available, onClose, onConfirm }: Props) {
+export function DepositSheet({ visible, goal, available, onClose, onConfirm }: Props) {
   const insets = useSafeAreaInsets();
   const [monto, setMonto] = useState('');
 

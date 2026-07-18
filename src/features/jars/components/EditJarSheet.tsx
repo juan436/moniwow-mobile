@@ -1,11 +1,11 @@
 /**
- * EditJarModal — Component
+ * EditJarSheet — Component
  *
  * @what     Asistente 3 pasos para editar/eliminar una jarra: P1 nombre + Presupuesto/Blindado,
  *           P2 ícono, P3 preview + guardar/eliminar.
  * @receives 5 props: visible, jar, onClose, onSave, onDelete
  * @processes Pre-llena form con la jar activa. `step` (0..2), chrome/teclado/dots en WizardSheet.
- *           Valida igual que CreateJarModal. Eliminar disponible en el paso final.
+ *           Valida igual que CreateJarSheet. Eliminar disponible en el paso final.
  * @returns  JSX — WizardSheet con los 3 pasos + botón eliminar en el último.
  * @props    5: visible, jar, onClose, onSave, onDelete
  */
@@ -32,7 +32,7 @@ type Props = {
   onDelete: (id: string) => void;
 };
 
-export function EditJarModal({ visible, jar, onClose, onSave, onDelete }: Props) {
+export function EditJarSheet({ visible, jar, onClose, onSave, onDelete }: Props) {
   const [form, setForm] = useState<Form>({ nombre: '', iconName: null, tieneObjetivo: false, monto: '', isBlindado: false });
   const [step, setStep] = useState(0);
 

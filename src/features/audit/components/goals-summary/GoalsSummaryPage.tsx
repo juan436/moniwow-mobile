@@ -14,7 +14,7 @@ import { router } from 'expo-router';
 import { colors, typography, spacing, radius, shadows, sizes } from '@shared/styles';
 import { truncateLabel } from '@shared/utils';
 import { PageIndicator } from '@shared/components';
-import { GoalDetailModal } from './GoalDetailModal';
+import { GoalDetailSheet } from './GoalDetailSheet';
 import type { GoalDisplay } from '../../types';
 
 type Data = {
@@ -98,7 +98,7 @@ export function GoalsSummaryPage({ data, indicator, scrollY, topOffset }: Props)
           </Pressable>
         ))}
       </View>
-      <GoalDetailModal item={selectedGoal} onClose={handleGoalModalClose} />
+      <GoalDetailSheet item={selectedGoal} onClose={handleGoalModalClose} />
     </Animated.ScrollView>
   );
 }

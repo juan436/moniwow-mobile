@@ -48,7 +48,9 @@ export class CancelRecurrence {
       ? thisMonth
       : previousMonth(thisMonth);
 
-    const cancelled = new Recurrence({ ...rec, endMonth });
+    // `endMonth` corta las ocurrencias (D5); `cancelledAt` la marca como cancelada para que salga
+    // de "Compromisos activos" YA, aunque `endMonth` sea este mes (finita viva no se distinguiría).
+    const cancelled = new Recurrence({ ...rec, endMonth, cancelledAt: thisMonth });
     await this.recurrenceRepo.update(cancelled);
 
     return { recurrence: cancelled };

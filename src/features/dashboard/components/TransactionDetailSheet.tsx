@@ -1,5 +1,5 @@
 /**
- * TransactionDetailModal — Component
+ * TransactionDetailSheet — Component
  *
  * @what     Modal de detalle: monto héroe arriba, chip categoría y descripción abajo.
  * @receives 2 props: item, onClose
@@ -21,7 +21,7 @@ type Props = {
   onClose: () => void;
 };
 
-export function TransactionDetailModal({ item, onClose }: Props) {
+export function TransactionDetailSheet({ item, onClose }: Props) {
   const insets = useSafeAreaInsets();
   const isIncome    = item?.isIncome ?? false;
   const amountStyle = isIncome ? styles.amountIncome : styles.amountExpense;

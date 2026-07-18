@@ -1,5 +1,5 @@
 /**
- * CreateListModal — Component
+ * CreateListSheet — Component
  *
  * @what     Asistente 3 pasos para crear una lista de compras: P1 nombre + emoji, P2 jarra de pago,
  *           P3 preview + confirmar.
@@ -36,7 +36,7 @@ function emptyForm(): Form { return { nombre: '', emoji: '', jarra: 'libre' }; }
 
 type Props = { visible: boolean; onClose: () => void };
 
-export function CreateListModal({ visible, onClose }: Props) {
+export function CreateListSheet({ visible, onClose }: Props) {
   const [form, setForm] = useState<Form>(emptyForm);
   const [step, setStep] = useState(0);
 

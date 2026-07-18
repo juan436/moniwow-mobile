@@ -18,7 +18,7 @@ import { Svg, Path } from 'react-native-svg';
 import { colors, typography, spacing, radius, shadows } from '@shared/styles';
 import type { DebtBreakdown } from '../../types';
 import { DebtRow } from './DebtRow';
-import { DebtDetailModal } from './DebtDetailModal';
+import { DebtDetailSheet } from './DebtDetailSheet';
 
 type Props = {
   deudaTotal: number;
@@ -103,7 +103,7 @@ export function DebtCard({ deudaTotal, deudaOriginal, deudaPagada, deudaBreakdow
         ))}
       </View>
 
-      <DebtDetailModal item={selected} color={selectedColor} onClose={handleModalClose} />
+      <DebtDetailSheet item={selected} color={selectedColor} onClose={handleModalClose} />
     </View>
   );
 }

@@ -1,10 +1,10 @@
 /**
- * GoalDetailModal — Component
+ * GoalDetailSheet — Component
  *
  * @what     Modal de detalle de meta: meta héroe, barra progreso, desglose ahorro/restante y emoji.
  * @receives 2 props: item, onClose
  * @processes Calcula restante desde item.target - item.current.
- * @returns  JSX — sheet con layout monto-primero alineado a TransactionDetailModal.
+ * @returns  JSX — sheet con layout monto-primero alineado a TransactionDetailSheet.
  * @props    2: item, onClose
  */
 import { View, Text, StyleSheet } from 'react-native';
@@ -19,7 +19,7 @@ type Props = {
   onClose: () => void;
 };
 
-export function GoalDetailModal({ item, onClose }: Props) {
+export function GoalDetailSheet({ item, onClose }: Props) {
   const insets = useSafeAreaInsets();
   const restante = item ? item.target - item.current : 0;
   const progress = item?.progress ?? 0;

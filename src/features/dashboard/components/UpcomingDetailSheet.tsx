@@ -1,5 +1,5 @@
 /**
- * UpcomingDetailModal — Component
+ * UpcomingDetailSheet — Component
  *
  * @what     Modal de detalle de vencimiento: monto héroe, chip urgencia y nombre.
  * @receives 2 props: item, onClose
@@ -21,7 +21,7 @@ type Props = {
   onClose: () => void;
 };
 
-export function UpcomingDetailModal({ item, onClose }: Props) {
+export function UpcomingDetailSheet({ item, onClose }: Props) {
   const insets = useSafeAreaInsets();
   const isUrgent = item?.isUrgent ?? false;
   const isIncome = item?.isIncome ?? false;

@@ -67,7 +67,9 @@ export function toRecurringDisplay(rec: Recurrence, jar: JarPresentation, paymen
     frecuencia: rec.endMonth ? 'cuotas' : 'indefinido',
     cuotas: rec.endMonth ? monthsInclusive(rec.startMonth, rec.endMonth) : 12,
     paymentCount,
-    isOver: rec.endMonth !== undefined && rec.endMonth < thisMonth,
+    // Sale de "activos" si se canceló (marca propia, aunque `endMonth` sea este mes) o si una
+    // regla finita ya terminó. Lo aún vencido sin pagar sigue en Mi Mes vía `endMonth`.
+    isOver: rec.cancelledAt !== undefined || (rec.endMonth !== undefined && rec.endMonth < thisMonth),
   };
 }
 
@@ -77,6 +79,8 @@ export function toDebtRecurringDisplay(debt: Debt, jar: JarPresentation, payment
     name: debt.description, day: debt.dueDay, amount: debt.cuotaAmount(),
     filter: 'deudas', jarra: asRecurringJar(debt.sourceJarId), frecuencia: 'cuotas', cuotas: debt.totalCuotas(),
     paymentCount,
-    isOver: debt.cancelledAt !== undefined && debt.cancelledAt < thisMonth,
+    // `cancelledAt` solo lo pone CancelDebt (el fin natural es `isPaid`, no este campo): presente =
+    // cancelada → sale de "activos" YA. Lo aún vencido sin pagar sigue en Atrasados vía las cuotas.
+    isOver: debt.cancelledAt !== undefined,
   };
 }

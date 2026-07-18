@@ -3,11 +3,11 @@
  *
  * @what     Selector dedicado de meta para retirar — pantalla propia, distinta de GoalsScreen (M10).
  * @receives —
- * @processes Se llega desde GoalsJarModal → "Transferir". Lista de metas (useGoals, mismo mock que
+ * @processes Se llega desde GoalsJarSheet → "Transferir". Lista de metas (useGoals, mismo mock que
  *           GoalsScreen — no comparten estado entre pantallas, mismo límite mock-stage que el resto
- *           de hooks del proyecto hasta conectar backend). Tap en una card abre SacrificeModal
+ *           de hooks del proyecto hasta conectar backend). Tap en una card abre SacrificeSheet
  *           (Slider de Sacrificio); confirmar llama handleWithdraw y cierra el modal.
- * @returns  JSX — Header con back + lista de GoalCard (sin botón Aportar) + SacrificeModal.
+ * @returns  JSX — Header con back + lista de GoalCard (sin botón Aportar) + SacrificeSheet.
  * @props    —
  */
 import { useCallback, useState } from 'react';
@@ -18,7 +18,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { colors, typography, spacing, radius, sizes } from '@shared/styles';
 import { GoalCard } from './GoalCard';
-import { SacrificeModal } from './SacrificeModal';
+import { SacrificeSheet } from './SacrificeSheet';
 import { useGoals } from '../hooks/useGoals';
 import type { GoalItem } from '../types';
 
@@ -54,7 +54,7 @@ export function GoalsTransferScreen() {
         ))}
       </ScrollView>
 
-      <SacrificeModal visible={selectedGoal !== null} goal={selectedGoal} onClose={handleCloseSacrifice} onConfirm={handleConfirm} />
+      <SacrificeSheet visible={selectedGoal !== null} goal={selectedGoal} onClose={handleCloseSacrifice} onConfirm={handleConfirm} />
     </View>
   );
 }

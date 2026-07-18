@@ -4,12 +4,12 @@
  * @what     Página principal del dashboard: saldo libre + mensaje motivacional + progreso de
  *           metas + jarras + vencimientos + movimientos.
  * @receives 3 props: data, scrollY, topOffset
- * @processes Renderiza secciones verticales. JarCard/JarDisplay/JarDetailModal/GoalsJarModal
+ * @processes Renderiza secciones verticales. JarCard/JarDisplay/JarDetailSheet/GoalsJarSheet
  *           vienen de features/jars/, TransactionDisplay de features/transactions/,
  *           goalProgress/goalsTotal/metaGlobal de features/audit/ — excepciones documentadas a
  *           "features no se conocen entre sí" (dashboard = composition root del home,
- *           unidireccional, ver clean_architecture.md). Tap en jarra Goals abre GoalsJarModal;
- *           cualquier otra (incluida Fondo Seguridad) abre JarDetailModal con su historial
+ *           unidireccional, ver clean_architecture.md). Tap en jarra Goals abre GoalsJarSheet;
+ *           cualquier otra (incluida Fondo Seguridad) abre JarDetailSheet con su historial
  *           filtrado.
  * @returns  JSX — ScrollView vertical con todas las secciones.
  * @props    3: data, scrollY, topOffset
@@ -24,12 +24,12 @@ import { HeroBalance } from './HeroBalance';
 import { MotivationMessage } from './MotivationMessage';
 import { GoalsProgressBanner } from './GoalsProgressBanner';
 import { JarCard } from '@features/jars/components/JarCard';
-import { JarDetailModal } from '@features/jars/components/JarDetailModal';
-import { GoalsJarModal } from '@features/jars/components/GoalsJarModal';
+import { JarDetailSheet } from '@features/jars/components/JarDetailSheet';
+import { GoalsJarSheet } from '@features/jars/components/GoalsJarSheet';
 import { TransactionItem } from './TransactionItem';
-import { TransactionDetailModal } from './TransactionDetailModal';
+import { TransactionDetailSheet } from './TransactionDetailSheet';
 import { UpcomingItem } from './UpcomingItem';
-import { UpcomingDetailModal } from './UpcomingDetailModal';
+import { UpcomingDetailSheet } from './UpcomingDetailSheet';
 import type { JarDisplay } from '@features/jars/types';
 import type { TransactionDisplay } from '@features/transactions/types';
 import type { UpcomingExpense } from '../types';
@@ -116,10 +116,10 @@ export function DashboardPage({ data, scrollY, topOffset }: Props) {
           ))}
         </View>
       </View>
-      <TransactionDetailModal item={selectedTx} onClose={handleTxModalClose} />
-      <UpcomingDetailModal item={selectedUpcoming} onClose={handleUpcomingModalClose} />
-      <GoalsJarModal item={isGoalsSelected ? selectedJar : null} onClose={handleJarModalClose} />
-      <JarDetailModal item={!isGoalsSelected ? selectedJar : null} transactions={transactions} onClose={handleJarModalClose} />
+      <TransactionDetailSheet item={selectedTx} onClose={handleTxModalClose} />
+      <UpcomingDetailSheet item={selectedUpcoming} onClose={handleUpcomingModalClose} />
+      <GoalsJarSheet item={isGoalsSelected ? selectedJar : null} onClose={handleJarModalClose} />
+      <JarDetailSheet item={!isGoalsSelected ? selectedJar : null} transactions={transactions} onClose={handleJarModalClose} />
     </Animated.ScrollView>
   );
 }

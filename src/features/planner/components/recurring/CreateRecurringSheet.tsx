@@ -1,5 +1,5 @@
 /**
- * CreateRecurringModal — Component
+ * CreateRecurringSheet — Component
  *
  * @what     Modal formulario para crear un recurrente nuevo: Ingreso, Gasto o Deuda. Siempre 4
  *           pasos, uno por pregunta — más liviano que amontonar toggles en una sola pantalla.
@@ -32,7 +32,7 @@ const STEPS: StepKey[] = ['datos', 'fecha', 'cuotas', 'jarra'];
 
 type Props = { visible: boolean; initialType: AgendaFilter; onClose: () => void; onCreate: (data: CreateRecurringData) => void };
 
-export function CreateRecurringModal({ visible, initialType, onClose, onCreate }: Props) {
+export function CreateRecurringSheet({ visible, initialType, onClose, onCreate }: Props) {
   const insets = useSafeAreaInsets();
   const [form, setForm] = useState<RecurringForm>(() => emptyRecurringForm(initialType));
   const [stepIndex, setStepIndex] = useState(0);

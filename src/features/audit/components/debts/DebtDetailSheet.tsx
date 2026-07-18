@@ -1,5 +1,5 @@
 /**
- * DebtDetailModal — Component
+ * DebtDetailSheet — Component
  *
  * @what     Modal de detalle de deuda: monto total héroe, barra progreso y desglose pagado/restante.
  * @receives 3 props: item, color, onClose
@@ -20,7 +20,7 @@ type Props = {
   onClose: () => void;
 };
 
-export function DebtDetailModal({ item, color, onClose }: Props) {
+export function DebtDetailSheet({ item, color, onClose }: Props) {
   const insets = useSafeAreaInsets();
   const pagado   = item ? Math.round(item.amount * item.progress / 100) : 0;
   const restante = item ? item.amount - pagado : 0;

@@ -4,10 +4,10 @@
  * @what     Paso 1 del formulario de compromiso recurrente: tipo (Ingreso/Gasto/Deuda) + nombre +
  *           monto. Lo esencial, antes de programar los detalles.
  * @receives 3 props: form, onChange, lockTipo
- * @processes Presentación pura, delega estado al padre (Create/EditRecurringModal). `lockTipo`
+ * @processes Presentación pura, delega estado al padre (Create/EditRecurringSheet). `lockTipo`
  *           oculta el selector de tipo — no tiene sentido cambiar Ingreso↔Gasto↔Deuda al editar un
  *           compromiso existente (cada tipo tiene su propia estructura de fecha/cuotas). Solo
- *           CreateRecurringModal lo deja editable.
+ *           CreateRecurringSheet lo deja editable.
  * @returns  JSX — Fragment: selector tipo (si no lockTipo) + MoniInput nombre + input monto.
  * @props    3: form, onChange, lockTipo
  */

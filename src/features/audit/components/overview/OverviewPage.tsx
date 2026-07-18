@@ -18,7 +18,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { colors, typography, spacing, radius, shadows, sizes } from '@shared/styles';
 import { truncateLabel } from '@shared/utils';
 import { PageIndicator } from '@shared/components';
-import { LeakDetailModal } from './LeakDetailModal';
+import { LeakDetailSheet } from './LeakDetailSheet';
 import { MonthlyBalanceCard } from './MonthlyBalanceCard';
 import type { BarChartEntry, LeakDisplay, DistributionEntry } from '../../types';
 
@@ -87,7 +87,7 @@ export function OverviewPage({ data, indicator, scrollY, topOffset }: Props) {
           </View>
         ))}
       </View>
-      <LeakDetailModal item={selectedFuga} onClose={handleFugaModalClose} />
+      <LeakDetailSheet item={selectedFuga} onClose={handleFugaModalClose} />
     </Animated.ScrollView>
   );
 }

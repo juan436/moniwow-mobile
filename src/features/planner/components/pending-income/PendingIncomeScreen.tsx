@@ -19,7 +19,7 @@ import { colors, typography, spacing, radius, shadows, sizes } from '@shared/sty
 import { usePlanner } from '@features/planner/hooks/usePlanner';
 import { useConfirmFlow } from '@features/planner/hooks/useConfirmFlow';
 import { PlannerItem } from '@features/planner/components/shared/PlannerItem';
-import { ConfirmItemModal } from '@features/planner/components/my-month/ConfirmItemModal';
+import { ConfirmItemSheet } from '@features/planner/components/my-month/ConfirmItemSheet';
 import type { AgendaItemDisplay } from '@features/planner/types';
 
 function keyExtractor(item: AgendaItemDisplay) { return item.id; }
@@ -76,7 +76,7 @@ export function PendingIncomeScreen() {
         }
       />
 
-      <ConfirmItemModal item={asking} onConfirm={confirm} onCancel={cancel} />
+      <ConfirmItemSheet item={asking} onConfirm={confirm} onCancel={cancel} />
     </View>
   );
 }

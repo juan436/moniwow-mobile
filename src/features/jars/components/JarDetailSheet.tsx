@@ -1,5 +1,5 @@
 /**
- * JarDetailModal — Component
+ * JarDetailSheet — Component
  *
  * @what     Modal de detalle de jarra: header ícono+nombre+monto en una sola fila (antes el monto
  *           vivía debajo como hero, descuadraba el modal), badge Blindado, progreso/breakdown
@@ -42,7 +42,7 @@ type Props = {
   onEdit?: () => void;
 };
 
-export function JarDetailModal({ item, transactions, onClose, onTransfer, onEdit }: Props) {
+export function JarDetailSheet({ item, transactions, onClose, onTransfer, onEdit }: Props) {
   const insets = useSafeAreaInsets();
   const preview = item ? transactions.filter((t) => t.jarId === item.id).slice(0, 3) : [];
   // Sin ninguna capacidad editable (Libre/Fondo/Metas) no hay nada que tocar → ocultar "Editar jarra".

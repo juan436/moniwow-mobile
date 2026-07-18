@@ -15,8 +15,8 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { colors, typography, spacing, radius } from '@shared/styles';
 import { MoniButton } from '@shared/components';
 import { ListCard } from './ListCard';
-import { CreateListModal } from './CreateListModal';
-import { CreateItemModal } from './CreateItemModal';
+import { CreateListSheet } from './CreateListSheet';
+import { CreateItemSheet } from './CreateItemSheet';
 import { useLists } from '../../hooks/useLists';
 
 const MIC_SIZE = 36;
@@ -108,8 +108,8 @@ export function ListsPage({ scrollY, topOffset }: Props) {
         </View>
       </Animated.ScrollView>
 
-      <CreateListModal visible={showAnadirLista} onClose={handleCloseLista} />
-      <CreateItemModal
+      <CreateListSheet visible={showAnadirLista} onClose={handleCloseLista} />
+      <CreateItemSheet
         visible={!!itemTarget}
         listaId={itemTarget?.listaId ?? ''}
         listaName={itemTarget?.listaName ?? ''}

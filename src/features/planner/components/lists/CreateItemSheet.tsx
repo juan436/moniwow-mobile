@@ -1,5 +1,5 @@
 /**
- * CreateItemModal — Component
+ * CreateItemSheet — Component
  *
  * @what     Modal bottom sheet para añadir un ítem a una lista existente.
  * @receives 4 props: visible, listaId, listaName, onClose
@@ -20,7 +20,7 @@ function emptyForm(): Form { return { nombre: '', montoAprox: '' }; }
 
 type Props = { visible: boolean; listaId: string; listaName: string; onClose: () => void };
 
-export function CreateItemModal({ visible, listaName, onClose }: Props) {
+export function CreateItemSheet({ visible, listaName, onClose }: Props) {
   const insets = useSafeAreaInsets();
   const [form, setForm] = useState<Form>(emptyForm);
 

@@ -1,11 +1,11 @@
 /**
- * EditRecurringModal — Component
+ * EditRecurringSheet — Component
  *
  * @what     Modal formulario para editar o eliminar un recurrente existente. Siempre 4 pasos, uno
- *           por pregunta — mismo patrón que CreateRecurringModal.
+ *           por pregunta — mismo patrón que CreateRecurringSheet.
  * @receives 5 props: visible, item, onClose, onSave, onDelete
- * @processes Paso 1: tipo + nombre + monto + "Eliminar" (acceso rápido, no obliga a pasar los pasos
- *           siguientes solo para borrar). Mismos 4 pasos que CreateRecurringModal, contenido según
+ * @processes Paso 1: tipo + nombre + monto + "Cancelar compromiso" (acceso rápido, no obliga a pasar
+ *           los pasos siguientes). Mismos 4 pasos que CreateRecurringSheet, contenido según
  *           tipo. El chrome (sheet + header + teclado) lo pone `MoniSheet`: paso 0 cierra, siguientes
  *           retroceden con la flecha (`onBack`). Cambiar Tipo resetea el form y vuelve al paso 1.
  * @returns  JSX — bottom sheet slide-up con el paso activo y su CTA.
@@ -36,7 +36,7 @@ type Props = {
   onDelete: (id: string) => void;
 };
 
-export function EditRecurringModal({ visible, item, onClose, onSave, onDelete }: Props) {
+export function EditRecurringSheet({ visible, item, onClose, onSave, onDelete }: Props) {
   const insets = useSafeAreaInsets();
   const [form, setForm] = useState<RecurringForm | null>(null);
   const [stepIndex, setStepIndex] = useState(0);
@@ -96,7 +96,7 @@ export function EditRecurringModal({ visible, item, onClose, onSave, onDelete }:
           ? <MoniButton label="Continuar" onPress={() => setStepIndex(stepIndex + 1)} disabled={!canContinue} />
           : <MoniButton label="Guardar cambios" onPress={handleSave} disabled={!canContinue} />
         }
-        {stepIndex === 0 && <MoniButton label="Eliminar compromiso" onPress={handleDelete} variant="danger" />}
+        {stepIndex === 0 && <MoniButton label="Cancelar compromiso" onPress={handleDelete} variant="danger" />}
       </ScrollView>
     </MoniSheet>
   );

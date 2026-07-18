@@ -11,7 +11,7 @@ export interface ListItem {
 export interface ListProps {
   id: string;
   name: string;
-  // El emoji lo ELIGE el usuario al crear la lista (CreateListModal): es dato suyo, se guarda.
+  // El emoji lo ELIGE el usuario al crear la lista (CreateListSheet): es dato suyo, se guarda.
   // No se deriva del jar (cf. H18 aplica al ícono de agenda, no a este avatar propio de la lista).
   emoji: string;
   // Referencia a una jarra real (no label). La etiqueta de la jarra se deriva del jarId en el mapper.

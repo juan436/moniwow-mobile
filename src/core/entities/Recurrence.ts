@@ -23,6 +23,13 @@ export interface RecurrenceProps {
   startMonth: string;
   /** Último mes inclusive, 'YYYY-MM'. Ausente = indefinida. */
   endMonth?: string;
+  /**
+   * Mes en que se CANCELÓ ('YYYY-MM'). Ausente = no cancelada. Separado de `endMonth` a propósito:
+   * `endMonth` no distingue "cancelada" de "termina por diseño" (una regla de 12 meses tiene
+   * `endMonth` y sigue viva). Presente = sale de "Compromisos activos" YA, aunque `endMonth` sea
+   * este mes. Lo que aún se deba sigue en Mi Mes/Atrasados vía `endMonth` — este campo no lo toca.
+   */
+  cancelledAt?: string;
   workspaceId: string;
 }
 
@@ -35,6 +42,7 @@ export class Recurrence {
   readonly jarId: string;
   readonly startMonth: string;
   readonly endMonth?: string;
+  readonly cancelledAt?: string;
   readonly workspaceId: string;
 
   constructor(props: RecurrenceProps) {
@@ -46,6 +54,7 @@ export class Recurrence {
     this.jarId = props.jarId;
     this.startMonth = props.startMonth;
     this.endMonth = props.endMonth;
+    this.cancelledAt = props.cancelledAt;
     this.workspaceId = props.workspaceId;
   }
 

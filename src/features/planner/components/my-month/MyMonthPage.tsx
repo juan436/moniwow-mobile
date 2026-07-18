@@ -8,7 +8,7 @@
  *           `useState` local: la fila se tachaba, no se escribía nada, y al volver a entrar reaparecía
  *           sin pagar. Ahora la acción sube al hook, que escribe el movimiento en el libro y confirma
  *           el compromiso en la BD.
- *           **El toque no escribe: pregunta.** Abre `ConfirmItemModal`. El movimiento es real e
+ *           **El toque no escribe: pregunta.** Abre `ConfirmItemSheet`. El movimiento es real e
  *           irreversible (baja una jarra, avanza una deuda) y todavía no hay deshacer.
  * @returns  JSX — ScrollView con chips + header + lista o MonthCalendar + modal de confirmación.
  * @props    5: agenda, activeFilter, onFilterChange, scrollY, topOffset
@@ -21,7 +21,7 @@ import { MonthHeader } from './MonthHeader';
 import { PlannerItem } from '../shared/PlannerItem';
 import { PlannerFilterChips } from '../shared/PlannerFilterChips';
 import { MonthCalendar } from './MonthCalendar';
-import { ConfirmItemModal } from './ConfirmItemModal';
+import { ConfirmItemSheet } from './ConfirmItemSheet';
 import { OverdueBanner } from './OverdueBanner';
 import { ConfirmIncomeBanner } from './ConfirmIncomeBanner';
 import { useConfirmFlow } from '../../hooks/useConfirmFlow';
@@ -82,7 +82,7 @@ export function MyMonthPage({ agenda, activeFilter, onFilterChange, scrollY, top
         onToggleView={handleToggleView}
       />
       {content}
-      <ConfirmItemModal item={asking} onConfirm={confirm} onCancel={cancel} />
+      <ConfirmItemSheet item={asking} onConfirm={confirm} onCancel={cancel} />
     </Animated.ScrollView>
   );
 }

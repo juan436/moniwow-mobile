@@ -1,7 +1,7 @@
 /**
  * recurringFormHelpers — Utilidad
  *
- * @what     Funciones puras compartidas por Create/EditRecurringModal: estado inicial del
+ * @what     Funciones puras compartidas por Create/EditRecurringSheet: estado inicial del
  *           formulario y reset al cambiar de tipo.
  * @receives N/A — funciones puras, sin estado propio.
  * @processes `unicoPago` arranca en `true`: el caso corriente de una deuda es deberle algo a

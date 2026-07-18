@@ -1,5 +1,5 @@
 /**
- * ConfirmItemModal — Component
+ * ConfirmItemSheet — Component
  *
  * @what     Confirmación antes de escribir un compromiso en el libro (Pagar / ¡Llegó! / pagar cuota).
  * @receives 3 props: item, onConfirm, onCancel
@@ -32,7 +32,7 @@ type Props = {
   onCancel: () => void;
 };
 
-export function ConfirmItemModal({ item, onConfirm, onCancel }: Props) {
+export function ConfirmItemSheet({ item, onConfirm, onCancel }: Props) {
   const insets    = useSafeAreaInsets();
   const copy      = COPY[item?.filter ?? 'gastos'];
   const isIncome  = item?.filter === 'ingresos';

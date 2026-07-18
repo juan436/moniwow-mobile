@@ -6,13 +6,13 @@
  * @receives —
  * @processes Carga jars + CRUD desde useJars (dueño real del estado). Si el total es impar,
  *           agrega un ítem invisible (FILLER_ID) para que la última card no estire flex:1 sobre
- *           las 2 columnas. Tocar la jarra Goals abre GoalsJarModal (Ir a Metas / Transferir),
- *           nunca resta directo. Cualquier otra (incluida Fondo Seguridad) abre JarDetailModal, que
- *           a su vez puede abrir TransferSheet o EditJarModal sobre la misma jarra activa
+ *           las 2 columnas. Tocar la jarra Goals abre GoalsJarSheet (Ir a Metas / Transferir),
+ *           nunca resta directo. Cualquier otra (incluida Fondo Seguridad) abre JarDetailSheet, que
+ *           a su vez puede abrir TransferSheet o EditJarSheet sobre la misma jarra activa
  *           (`activeJar` + `mode`).
  * @returns  JSX — content-first (sin AppTopBar; la barra global vive solo en Dashboard): FlatList 2
- *           columnas liderada por su propio summaryCard + JarsListHeader + CreateJarModal +
- *           JarDetailModal + GoalsJarModal + TransferSheet + EditJarModal.
+ *           columnas liderada por su propio summaryCard + JarsListHeader + CreateJarSheet +
+ *           JarDetailSheet + GoalsJarSheet + TransferSheet + EditJarSheet.
  * @props    —
  */
 import { useCallback, useMemo, useState } from 'react';
@@ -22,11 +22,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, spacing } from '@shared/styles';
 import { JarItem } from './JarItem';
 import { JarsListHeader } from './JarsListHeader';
-import { CreateJarModal } from './CreateJarModal';
-import { JarDetailModal } from './JarDetailModal';
-import { GoalsJarModal } from './GoalsJarModal';
+import { CreateJarSheet } from './CreateJarSheet';
+import { JarDetailSheet } from './JarDetailSheet';
+import { GoalsJarSheet } from './GoalsJarSheet';
 import { TransferSheet } from './TransferSheet';
-import { EditJarModal } from './EditJarModal';
+import { EditJarSheet } from './EditJarSheet';
 import { useJars } from '../hooks/useJars';
 import { useTransactions } from '@features/transactions/hooks/useTransactions';
 import type { JarDisplay } from '../types';
@@ -91,9 +91,9 @@ export function JarsScreen() {
         showsVerticalScrollIndicator={false}
       />
       <View style={[styles.statusBarBg, { height: insets.top }]} />
-      <CreateJarModal visible={isCreateVisible} onClose={handleCloseCreate} onCreate={handleCreate} />
-      <GoalsJarModal item={mode === 'goals' ? activeJar : null} onClose={handleCloseModals} />
-      <JarDetailModal
+      <CreateJarSheet visible={isCreateVisible} onClose={handleCloseCreate} onCreate={handleCreate} />
+      <GoalsJarSheet item={mode === 'goals' ? activeJar : null} onClose={handleCloseModals} />
+      <JarDetailSheet
         item={mode === 'detail' ? activeJar : null}
         transactions={transactions}
         onClose={handleCloseModals}
@@ -107,7 +107,7 @@ export function JarsScreen() {
         onClose={handleCloseModals}
         onTransfer={handleConfirmTransfer}
       />
-      <EditJarModal
+      <EditJarSheet
         visible={mode === 'edit'}
         jar={activeJar}
         onClose={handleCloseModals}

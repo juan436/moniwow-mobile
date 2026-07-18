@@ -1,5 +1,5 @@
 /**
- * LeakDetailModal — Component
+ * LeakDetailSheet — Component
  *
  * @what     Modal de detalle de fuga: monto héroe, preview de últimos 3 movimientos y botón a pantalla completa.
  * @receives 2 props: item, onClose
@@ -20,7 +20,7 @@ type Props = {
   onClose: () => void;
 };
 
-export function LeakDetailModal({ item, onClose }: Props) {
+export function LeakDetailSheet({ item, onClose }: Props) {
   const insets = useSafeAreaInsets();
   const preview = item?.items.slice(0, 3) ?? [];
 

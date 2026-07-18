@@ -21,8 +21,8 @@ import { colors, typography, spacing } from '@shared/styles';
 import { MoniButton } from '@shared/components';
 import { PlannerFilterChips } from '../shared/PlannerFilterChips';
 import { RecurringItem } from './RecurringItem';
-import { CreateRecurringModal } from './CreateRecurringModal';
-import { EditRecurringModal } from './EditRecurringModal';
+import { CreateRecurringSheet } from './CreateRecurringSheet';
+import { EditRecurringSheet } from './EditRecurringSheet';
 import { DeleteRecurringSheet } from './DeleteRecurringSheet';
 import type { RecurringDisplay, AgendaFilter, RecurringActions } from '../../types';
 
@@ -88,13 +88,13 @@ export function RecurringPage({ recurrentes, activeFilter, onFilterChange, layou
         </View>
       </Animated.ScrollView>
 
-      <CreateRecurringModal
+      <CreateRecurringSheet
         visible={showAddModal}
         initialType={activeFilter}
         onClose={handleCloseAdd}
         onCreate={actions.onCreate}
       />
-      <EditRecurringModal
+      <EditRecurringSheet
         visible={editingItem !== null}
         item={editingItem}
         onClose={handleCloseEdit}

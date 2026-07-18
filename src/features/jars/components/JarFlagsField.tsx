@@ -5,7 +5,7 @@
  * @receives 2 props: presupuesto, blindado
  * @processes Ambos checkboxes en una sola fila para ahorrar espacio vertical (antes uno debajo del
  *           otro). Presupuesto marcado muestra el input "Presupuesto ($)" debajo. Compartido entre
- *           CreateJarModal y EditJarModal.
+ *           CreateJarSheet y EditJarSheet.
  * @returns  JSX — Fragment: fila con 2 Checkbox + MoniInput condicional.
  * @props    2: presupuesto, blindado
  */

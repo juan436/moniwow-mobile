@@ -1,5 +1,5 @@
 /**
- * SacrificeModal — Component
+ * SacrificeSheet — Component
  *
  * @what     Diálogo de retiro con fricción: monto + destino + SacrificeSlider + botón cancelar.
  * @receives 4 props: visible, goal, onClose, onConfirm
@@ -33,7 +33,7 @@ type Props = {
   onConfirm: (amount: number) => void;
 };
 
-export function SacrificeModal({ visible, goal, onClose, onConfirm }: Props) {
+export function SacrificeSheet({ visible, goal, onClose, onConfirm }: Props) {
   const insets = useSafeAreaInsets();
   const [monto, setMonto] = useState('');
 

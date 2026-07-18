@@ -15,7 +15,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, typography, spacing, radius, shadows } from '@shared/styles';
 import { useTransactions } from '@features/transactions/hooks/useTransactions';
 import { TransactionItem } from '@features/dashboard/components/TransactionItem';
-import { TransactionDetailModal } from '@features/dashboard/components/TransactionDetailModal';
+import { TransactionDetailSheet } from '@features/dashboard/components/TransactionDetailSheet';
 import type { TransactionDisplay } from '@features/transactions/types';
 
 type FilterTipo = 'todos' | 'ingresos' | 'gastos';
@@ -116,7 +116,7 @@ export function TransactionsScreen() {
       <View style={[styles.statusBarCover, { height: insets.top }]} />
 
       <View style={[styles.footer, { paddingBottom: insets.bottom }]} />
-      <TransactionDetailModal item={selectedTx} onClose={handleTxModalClose} />
+      <TransactionDetailSheet item={selectedTx} onClose={handleTxModalClose} />
 
     </View>
   );

@@ -1,5 +1,5 @@
 /**
- * GoalsJarModal — Component
+ * GoalsJarSheet — Component
  *
  * @what     Modal de la jarra Goals: saldo total + acceso a Mis Metas y Objetivos o a transferir de
  *           una meta puntual. Goals no es un pozo único, es la suma de metas — por eso "Transferir"
@@ -10,7 +10,7 @@
  *           Ambos botones llaman onClose() antes de navegar — si no, el modal queda montado
  *           (visible=true) debajo de la pantalla nueva y da sensación de lentitud/doble transición.
  *           Navegación pura, sin importar features/goals/ — ver [[planes/psicologia-ux]].
- * @returns  JSX — sheet, mismo layout monto-primero que JarDetailModal.
+ * @returns  JSX — sheet, mismo layout monto-primero que JarDetailSheet.
  * @props    2: item, onClose
  */
 import { View, Text, StyleSheet } from 'react-native';
@@ -26,7 +26,7 @@ type Props = {
   onClose: () => void;
 };
 
-export function GoalsJarModal({ item, onClose }: Props) {
+export function GoalsJarSheet({ item, onClose }: Props) {
   const insets = useSafeAreaInsets();
 
   function handleGoToGoals() {

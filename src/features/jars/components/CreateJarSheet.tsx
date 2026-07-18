@@ -1,5 +1,5 @@
 /**
- * CreateJarModal — Component
+ * CreateJarSheet — Component
  *
  * @what     Asistente 3 pasos para crear una jarra: P1 nombre + Presupuesto/Blindado, P2 ícono,
  *           P3 preview + confirmar.
@@ -28,7 +28,7 @@ const TITLES = ['Nueva jarra', 'Elige un ícono', 'Confirmar'];
 
 type Props = { visible: boolean; onClose: () => void; onCreate: (data: CreateJarData) => void };
 
-export function CreateJarModal({ visible, onClose, onCreate }: Props) {
+export function CreateJarSheet({ visible, onClose, onCreate }: Props) {
   const [form, setForm] = useState<Form>(emptyForm);
   const [step, setStep] = useState(0);
 

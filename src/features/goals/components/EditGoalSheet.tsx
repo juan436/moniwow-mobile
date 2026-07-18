@@ -1,5 +1,5 @@
 /**
- * EditGoalModal — Component
+ * EditGoalSheet — Component
  *
  * @what     Modal bottom sheet para editar o eliminar una meta existente (M10).
  * @receives 5 props: visible, goal, onClose, onSave, onDelete
@@ -26,7 +26,7 @@ type Props = {
   onDelete: (id: string) => void;
 };
 
-export function EditGoalModal({ visible, goal, onClose, onSave, onDelete }: Props) {
+export function EditGoalSheet({ visible, goal, onClose, onSave, onDelete }: Props) {
   const insets = useSafeAreaInsets();
   const [form, setForm] = useState<Form>({ nombre: '', emoji: '', monto: '' });
 

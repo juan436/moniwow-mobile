@@ -16,9 +16,9 @@ import { colors, typography, spacing, radius } from '@shared/styles';
 import { GoalCard } from './GoalCard';
 import { GoalsHeader } from './GoalsHeader';
 import { GoalsSummaryCard } from './GoalsSummaryCard';
-import { CreateGoalModal } from './CreateGoalModal';
-import { EditGoalModal } from './EditGoalModal';
-import { DepositModal } from './DepositModal';
+import { CreateGoalSheet } from './CreateGoalSheet';
+import { EditGoalSheet } from './EditGoalSheet';
+import { DepositSheet } from './DepositSheet';
 import { useGoals } from '../hooks/useGoals';
 import type { GoalItem } from '../types';
 
@@ -72,9 +72,9 @@ export function GoalsScreen() {
         </View>
       </Animated.ScrollView>
 
-      <CreateGoalModal visible={isAddVisible} onClose={handleCloseAdd} onCreate={handleCreate} />
-      <EditGoalModal visible={selectedGoal !== null} goal={selectedGoal} onClose={handleCloseEdit} onSave={handleSave} onDelete={handleDelete} />
-      <DepositModal visible={depositGoal !== null} goal={depositGoal} available={disponible} onClose={() => setDepositGoal(null)} onConfirm={handleConfirmDeposit} />
+      <CreateGoalSheet visible={isAddVisible} onClose={handleCloseAdd} onCreate={handleCreate} />
+      <EditGoalSheet visible={selectedGoal !== null} goal={selectedGoal} onClose={handleCloseEdit} onSave={handleSave} onDelete={handleDelete} />
+      <DepositSheet visible={depositGoal !== null} goal={depositGoal} available={disponible} onClose={() => setDepositGoal(null)} onConfirm={handleConfirmDeposit} />
 
       <View style={[styles.statusBarBg, { height: insets.top }]} />
       <Animated.View

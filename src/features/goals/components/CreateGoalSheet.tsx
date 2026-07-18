@@ -1,5 +1,5 @@
 /**
- * CreateGoalModal — Component
+ * CreateGoalSheet — Component
  *
  * @what     Modal bottom sheet para crear nueva meta (M10).
  * @receives 3 props: visible, onClose, onCreate
@@ -21,7 +21,7 @@ function emptyForm(): Form { return { nombre: '', emoji: '', monto: '' }; }
 
 type Props = { visible: boolean; onClose: () => void; onCreate: (data: CreateGoalData) => void };
 
-export function CreateGoalModal({ visible, onClose, onCreate }: Props) {
+export function CreateGoalSheet({ visible, onClose, onCreate }: Props) {
   const insets = useSafeAreaInsets();
   const [form, setForm] = useState<Form>(emptyForm);
 
