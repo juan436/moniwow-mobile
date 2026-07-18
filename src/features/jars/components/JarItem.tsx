@@ -1,43 +1,38 @@
 /**
  * JarItem — Component
  *
- * @what     Card-jarra para grid 2 columnas en pantalla Mis Jarras. La tarjeta ES la jarra: su fondo
- *           se llena desde abajo con el tinte de la jarra hasta el % de progreso (metáfora de líquido,
- *           mismo lenguaje que el track de fuego del SacrificeSlider).
+ * @what     Card-jarra para grid 2 columnas en Mis Jarras. Dentro de la card, un frasco de vidrio
+ *           (`JarVessel`) se llena de monedas y billetes hasta el % de la meta. El emoji/ícono va
+ *           como medallón overlay sobre el frasco.
  * @receives 2 props: jar, onPress?
- * @processes El líquido (nivel medido con meta · wash SVG sin meta) lo pinta `JarLiquid` compartido,
- *           como primer hijo absoluto. `overflow: hidden` lo recorta a las esquinas redondeadas.
- * @returns  JSX — card flex:1 (JarLiquid + contenido) compatible con FlatList numColumns={2}.
+ * @processes El relleno lo pinta `JarVessel` (SVG). El medallón se posiciona sobre el cuello del
+ *           frasco (fracción fija del alto del viewBox). Chip Blindado + pill % arriba, saldo abajo.
+ * @returns  JSX — card flex:1 (top · vasija+medallón · saldo) compatible con FlatList numColumns={2}.
  * @props    2: jar, onPress?
  */
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 
 import { colors, typography, spacing, radius, shadows, sizes } from '@shared/styles';
-import { JarLiquid } from './JarLiquid';
+import { JarVessel } from './JarVessel';
+import { JAR_GEO } from './jarFillModel';
 import type { JarDisplay } from '../types';
 
-const PCT_ALPHA = '26'; // ~15% — tinte pill de porcentaje (misma convención que JarLiquid/colors.*Tint)
+const PCT_ALPHA = '26'; // ~15% — tinte del pill de porcentaje
+const VESSEL_W = 104;
+const VESSEL_H = (VESSEL_W * JAR_GEO.viewH) / JAR_GEO.viewW;
+const MED = 44; // medallón del emoji
+const MED_TOP = (VESSEL_H * 66) / JAR_GEO.viewH - MED / 2; // centro del cuello en el viewBox
 
 type Props = { jar: JarDisplay; onPress?: () => void };
 
 export function JarItem({ jar, onPress }: Props) {
   return (
     <Pressable style={({ pressed }) => [styles.card, shadows.card, pressed && styles.pressed]} onPress={onPress}>
-      <JarLiquid jar={jar} />
       <View style={styles.top}>
-        <View style={[styles.icon, { backgroundColor: jar.iconBg }]}>
-          {jar.emoji
-            ? <Text style={styles.emoji}>{jar.emoji}</Text>
-            : jar.iconName && <MaterialIcons name={jar.iconName} size={22} color={jar.iconColor} />
-          }
-        </View>
+        <Text style={styles.name} numberOfLines={1}>{jar.name}</Text>
         <View style={styles.topRight}>
-          {jar.isBlindado && (
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>Blindado</Text>
-            </View>
-          )}
+          {jar.isBlindado && <MaterialIcons name="lock" size={18} color={colors.goldDreams} />}
           {jar.progress !== undefined && (
             <View style={[styles.pctPill, { backgroundColor: jar.iconColor + PCT_ALPHA }]}>
               <Text style={[styles.pctText, { color: jar.iconColor }]}>{jar.progress}%</Text>
@@ -45,8 +40,19 @@ export function JarItem({ jar, onPress }: Props) {
           )}
         </View>
       </View>
+
+      <View style={styles.vesselWrap}>
+        <JarVessel jar={jar} width={VESSEL_W} />
+        <View style={styles.medWrap} pointerEvents="none">
+          <View style={styles.medallion}>
+            {jar.emoji
+              ? <Text style={styles.emoji}>{jar.emoji}</Text>
+              : jar.iconName && <MaterialIcons name={jar.iconName} size={22} color={jar.iconColor} />}
+          </View>
+        </View>
+      </View>
+
       <View style={styles.info}>
-        <Text style={styles.name} numberOfLines={1}>{jar.name}</Text>
         <Text style={styles.balance}>$ {jar.balance.toLocaleString('es')}</Text>
       </View>
     </Pressable>
@@ -54,17 +60,17 @@ export function JarItem({ jar, onPress }: Props) {
 }
 
 const styles = StyleSheet.create({
-  card:  { flex: 1, backgroundColor: colors.pureWhite, borderRadius: radius.card, padding: spacing.cardPadding, overflow: 'hidden' },
+  card:  { flex: 1, backgroundColor: colors.pureWhite, borderRadius: radius.card, padding: spacing.cardPadding },
   pressed: { opacity: 0.9, transform: [{ scale: 0.98 }] },
-  top:   { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  top:   { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: spacing.stackSm },
   topRight: { flexDirection: 'row', alignItems: 'center', gap: spacing.stackXs },
-  info:  { marginTop: spacing.stackSm, gap: spacing.stackXxs },
-  icon:  { width: sizes.iconSm, height: sizes.iconSm, borderRadius: radius.lg, alignItems: 'center', justifyContent: 'center' },
-  emoji: { fontSize: sizes.emojiFontMd },
-  badge: { paddingHorizontal: spacing.stackSm, paddingVertical: spacing.stackXxs, backgroundColor: colors.goldTint, borderRadius: radius.full },
-  badgeText: { ...typography.labelXs, color: colors.goldDreams },
+  name:  { ...typography.labelMd, color: colors.slateGray, flexShrink: 1 },
   pctPill: { paddingHorizontal: spacing.stackSm, paddingVertical: spacing.stackXxs, borderRadius: radius.full },
   pctText: { ...typography.labelMdBold },
-  name:    { ...typography.labelMd, color: colors.slateGray },
+  vesselWrap: { height: VESSEL_H, alignItems: 'center', justifyContent: 'center', marginVertical: spacing.stackXs },
+  medWrap:  { position: 'absolute', top: MED_TOP, left: 0, right: 0, alignItems: 'center' },
+  medallion: { width: MED, height: MED, borderRadius: MED / 2, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.pureWhite, borderWidth: 1, borderColor: colors.outlineVariant, ...shadows.card },
+  emoji: { fontSize: sizes.emojiFontMd },
+  info:  { alignItems: 'center' },
   balance: { ...typography.headlineMd, color: colors.navyDark },
 });

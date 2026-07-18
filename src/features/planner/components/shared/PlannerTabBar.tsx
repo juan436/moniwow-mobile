@@ -70,6 +70,7 @@ export function PlannerTabBar({ activeTab, onTabChange }: Props) {
 const styles = StyleSheet.create({
   wrapper: {
     backgroundColor: colors.pureWhite,
+    paddingTop: spacing.stackSm,
     borderBottomWidth: 1,
     borderBottomColor: colors.outlineVariant + '4D',
   },

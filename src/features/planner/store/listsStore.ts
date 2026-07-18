@@ -10,8 +10,9 @@
  *           requisito de useSyncExternalStore para detectar el cambio. Cada mutación crea una `List`
  *           nueva (no muta la vieja) y la manda a listRepository.update. `hydrate` es idempotente:
  *           carga una sola vez (el primer tab que monte). Mutadores: toggleItem, clearList,
- *           markPurchased (lo llama Quick Add al confirmar una compra hecha desde esa lista).
- * @returns  { getSnapshot, subscribe, hydrate, toggleItem, clearList, markPurchased }
+ *           markPurchased (lo llama Quick Add al confirmar una compra hecha desde esa lista),
+ *           deleteItem (basura por fila en el detalle) y deleteList (swipe en el índice).
+ * @returns  { getSnapshot, subscribe, hydrate, toggleItem, clearList, markPurchased, deleteItem, deleteList }
  */
 import { List, type ListItem } from '@core/entities/List';
 import { listRepository } from '@infrastructure/container';
@@ -65,5 +66,15 @@ export const listsStore = {
     const target = lists.find((l) => l.id === listId);
     if (!target) return;
     replaceItems(listId, target.items.map((i) => ({ ...i, isChecked: true })));
+  },
+  deleteItem(listId: string, itemId: string) {
+    const target = lists.find((l) => l.id === listId);
+    if (!target) return;
+    replaceItems(listId, target.items.filter((i) => i.id !== itemId));
+  },
+  deleteList(listId: string) {
+    if (!lists.some((l) => l.id === listId)) return;
+    emit(lists.filter((l) => l.id !== listId));
+    void listRepository.delete(listId);
   },
 };
