@@ -2,11 +2,12 @@
  * CreateItemSheet — Component
  *
  * @what     Modal bottom sheet para añadir un ítem a una lista existente.
- * @receives 4 props: visible, listaId, listaName, onClose
- * @processes Form local: nombre (requerido), montoAprox (opcional). Valida nombre no vacío. El chrome
- *           (sheet + backdrop + header + teclado) lo pone `MoniSheet`; acá solo viven los campos.
+ * @receives 5 props: visible, listaId, listaName, onClose, onAdd(listId, name, approxAmount?)
+ * @processes Form local: nombre (requerido), montoAprox (opcional). Valida nombre no vacío. Al guardar
+ *           llama `onAdd` (persiste vía store→repo). El monto se parsea a número; vacío/inválido → sin
+ *           monto (opcional en el modelo). El chrome (sheet/backdrop/header/teclado) lo pone `MoniSheet`.
  * @returns  JSX — bottom sheet slide-up con campos y CTA.
- * @props    4: visible, listaId, listaName, onClose
+ * @props    5: visible, listaId, listaName, onClose, onAdd
  */
 import { useState, useEffect } from 'react';
 import { View, Text, TextInput, ScrollView, StyleSheet } from 'react-native';
@@ -18,9 +19,9 @@ import { MoniInput, MoniButton, MoniSheet } from '@shared/components';
 type Form = { nombre: string; montoAprox: string };
 function emptyForm(): Form { return { nombre: '', montoAprox: '' }; }
 
-type Props = { visible: boolean; listaId: string; listaName: string; onClose: () => void };
+type Props = { visible: boolean; listaId: string; listaName: string; onClose: () => void; onAdd: (listId: string, name: string, approxAmount?: number) => void };
 
-export function CreateItemSheet({ visible, listaName, onClose }: Props) {
+export function CreateItemSheet({ visible, listaId, listaName, onClose, onAdd }: Props) {
   const insets = useSafeAreaInsets();
   const [form, setForm] = useState<Form>(emptyForm);
 
@@ -34,7 +35,8 @@ export function CreateItemSheet({ visible, listaName, onClose }: Props) {
 
   function handleSave() {
     if (!canSave) return;
-    // TODO: conectar use-case cuando backend listo
+    const amount = parseFloat(form.montoAprox.replace(',', '.'));
+    onAdd(listaId, form.nombre.trim(), Number.isFinite(amount) && amount > 0 ? amount : undefined);
     onClose();
   }
 

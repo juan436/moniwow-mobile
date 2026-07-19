@@ -8,7 +8,7 @@
  *           useSyncExternalStore — re-renderiza cuando cualquier tab muta las listas. Mapea las
  *           entidades `List` a `ListDisplay` (deriva la etiqueta de la jarra). Expone los mutadores
  *           del store (referencias estables, no hace falta useCallback al pasarlos como prop).
- * @returns  { listas, toggleItem, clearList, markPurchased, deleteItem, deleteList }
+ * @returns  { listas, createList, addItem, toggleItem, clearList, markPurchased, deleteItem, deleteList }
  */
 import { useEffect, useMemo, useSyncExternalStore } from 'react';
 
@@ -23,6 +23,8 @@ export function useLists() {
 
   return {
     listas,
+    createList: listsStore.createList,
+    addItem: listsStore.addItem,
     toggleItem: listsStore.toggleItem,
     clearList: listsStore.clearList,
     markPurchased: listsStore.markPurchased,

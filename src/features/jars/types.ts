@@ -21,6 +21,8 @@ export type JarDisplay = {
   progress?: number;
   targetAmount?: number;
   isBlindado?: boolean;
+  /** Balance < 0: la jarra quedó "en rojo" (M03 §3). Deriva de `Jar.isNegative()`. */
+  isNegative?: boolean;
 };
 
 export type CreateJarData = { name: string; iconName: IconName; targetAmount?: number; isBlindado?: boolean };

@@ -53,6 +53,10 @@ export type ListDisplay = {
   name: string;
   jarLabel: string;
   items: ListItemDisplay[];
+  /** Cuánto costaría comprar toda la lista. Los ítems sin precio suman 0 (`List.approxTotal()`). */
+  approxTotal: number;
+  /** Cuánto llevas gastado: suma de los ítems ya marcados (`List.purchasedTotal()`). Solo lectura. */
+  purchasedTotal: number;
 };
 
 export type RecurringDisplay = {

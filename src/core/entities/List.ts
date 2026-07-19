@@ -42,6 +42,12 @@ export class List {
     return this.items.reduce((sum, item) => sum + (item.approxAmount ?? 0), 0);
   }
 
+  // Lo que ya va en el carrito: suma de los ítems marcados. Mismo criterio que approxTotal (sin
+  // precio = 0). Deriva; sirve para ir viendo el gasto mientras se compra.
+  purchasedTotal(): number {
+    return this.items.reduce((sum, item) => sum + (item.isChecked ? item.approxAmount ?? 0 : 0), 0);
+  }
+
   checkedCount(): number {
     return this.items.filter((item) => item.isChecked).length;
   }

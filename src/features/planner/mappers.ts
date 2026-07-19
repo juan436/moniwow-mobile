@@ -24,7 +24,8 @@ import { jarLabelOf } from './jarOptions';
 /**
  * `List` (dominio) → `ListDisplay` (presentación). El `emoji` es dato de la lista (lo eligió el
  * usuario); la `jarLabel` se DERIVA del `jarId` — la lista referencia la jarra por id, no guarda su
- * nombre. Los ítems se copian tal cual (misma forma display que dominio).
+ * nombre. Los ítems se copian tal cual (misma forma display que dominio). El `approxTotal` lo calcula
+ * la ENTIDAD (`List.approxTotal()`), no este mapper: sumar es regla de negocio, acá solo se transporta.
  */
 export function toListDisplay(list: List): ListDisplay {
   return {
@@ -38,6 +39,8 @@ export function toListDisplay(list: List): ListDisplay {
       approxAmount: i.approxAmount,
       isChecked: i.isChecked,
     })),
+    approxTotal: list.approxTotal(),
+    purchasedTotal: list.purchasedTotal(),
   };
 }
 

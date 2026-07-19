@@ -7,9 +7,10 @@
  * @receives 2 props: jar, onPress?(jar)
  * @processes El relleno lo pinta `JarVessel` (SVG). El medallón se posiciona sobre el cuello del
  *           frasco (fracción fija del alto del viewBox). Chip Blindado + pill % arriba, saldo abajo.
- *           **`memo`**: cada vasija son ~250 nodos SVG; sin memo, abrir/cerrar un sheet en JarsScreen
- *           re-renderizaba las 8 cards enteras (lag al tocar). `onPress` recibe la jarra para que la
- *           referencia sea estable (nada de closure nueva por render que rompa el memo).
+ *           **`memo`**: sin él, abrir/cerrar un sheet en JarsScreen re-renderizaba las 8 cards enteras
+ *           (lag al tocar). `onPress` recibe la jarra para que la referencia sea estable (nada de
+ *           closure nueva por render que rompa el memo). El `memo` evita **re-renders**; el costo de
+ *           **dibujo** lo bajó FB-012 aparte (relleno colapsado a 5 `Path`, ver `jarFillModel`).
  * @returns  JSX — card flex:1 (top · vasija+medallón · saldo) compatible con FlatList numColumns={2}.
  * @props    2: jar, onPress?
  */
@@ -37,11 +38,13 @@ export const JarItem = memo(function JarItem({ jar, onPress }: Props) {
         <Text style={styles.name} numberOfLines={1}>{jar.name}</Text>
         <View style={styles.topRight}>
           {jar.isBlindado && <MaterialIcons name="lock" size={18} color={colors.goldDreams} />}
-          {jar.progress !== undefined && (
-            <View style={[styles.pctPill, { backgroundColor: jar.iconColor + PCT_ALPHA }]}>
-              <Text style={[styles.pctText, { color: jar.iconColor }]}>{jar.progress}%</Text>
-            </View>
-          )}
+          {jar.isNegative
+            ? <View style={styles.redPill}><Text style={styles.redText}>En rojo</Text></View>
+            : jar.progress !== undefined && (
+              <View style={[styles.pctPill, { backgroundColor: jar.iconColor + PCT_ALPHA }]}>
+                <Text style={[styles.pctText, { color: jar.iconColor }]}>{jar.progress}%</Text>
+              </View>
+            )}
         </View>
       </View>
 
@@ -57,7 +60,7 @@ export const JarItem = memo(function JarItem({ jar, onPress }: Props) {
       </View>
 
       <View style={styles.info}>
-        <Text style={styles.balance}>$ {jar.balance.toLocaleString('es')}</Text>
+        <Text style={[styles.balance, jar.isNegative && styles.balanceNeg]}>$ {jar.balance.toLocaleString('es')}</Text>
       </View>
     </Pressable>
   );
@@ -71,6 +74,9 @@ const styles = StyleSheet.create({
   name:  { ...typography.labelMd, color: colors.slateGray, flexShrink: 1 },
   pctPill: { paddingHorizontal: spacing.stackSm, paddingVertical: spacing.stackXxs, borderRadius: radius.full },
   pctText: { ...typography.labelMdBold },
+  redPill: { paddingHorizontal: spacing.stackSm, paddingVertical: spacing.stackXxs, borderRadius: radius.full, backgroundColor: colors.errorContainer },
+  redText: { ...typography.labelMdBold, color: colors.error },
+  balanceNeg: { color: colors.error },
   vesselWrap: { height: VESSEL_H, alignItems: 'center', justifyContent: 'center', marginVertical: spacing.stackXs },
   medWrap:  { position: 'absolute', top: MED_TOP, left: 0, right: 0, alignItems: 'center' },
   medallion: { width: MED, height: MED, borderRadius: MED / 2, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.pureWhite, borderWidth: 1, borderColor: colors.outlineVariant, ...shadows.card },

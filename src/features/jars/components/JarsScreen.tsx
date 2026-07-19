@@ -32,7 +32,7 @@ import { useTransactions } from '@features/transactions/hooks/useTransactions';
 import type { JarDisplay } from '../types';
 
 const FILLER_ID = '__filler__';
-type Mode = 'detail' | 'edit' | 'transfer' | 'goals' | null;
+type Mode = 'detail' | 'edit' | 'transfer' | 'rebalance' | 'goals' | null;
 
 function RowSeparator() { return <View style={styles.rowSep} />; }
 
@@ -59,11 +59,15 @@ export function JarsScreen() {
     setMode(jar.id === 'goals' ? 'goals' : 'detail');
   }, []);
   const handleCloseModals = useCallback(() => setMode(null), []);
-  const handleOpenTransfer = useCallback(() => setMode('transfer'), []);
-  const handleOpenEdit     = useCallback(() => setMode('edit'), []);
-  const handleConfirmTransfer = useCallback((toId: string, amount: number) => {
-    if (activeJar) handleTransfer(activeJar.id, toId, amount);
-  }, [activeJar, handleTransfer]);
+  const handleOpenTransfer  = useCallback(() => setMode('transfer'), []);
+  const handleOpenRebalance = useCallback(() => setMode('rebalance'), []);
+  const handleOpenEdit      = useCallback(() => setMode('edit'), []);
+  // En rebalance el dinero ENTRA a la jarra en rojo: destino fijo = activeJar, origen = el elegido.
+  const handleConfirmTransfer = useCallback((pickedId: string, amount: number) => {
+    if (!activeJar) return;
+    if (mode === 'rebalance') handleTransfer(pickedId, activeJar.id, amount);
+    else handleTransfer(activeJar.id, pickedId, amount);
+  }, [activeJar, mode, handleTransfer]);
 
   const renderItem = useCallback(
     ({ item }: { item: JarDisplay }) =>
@@ -103,10 +107,12 @@ export function JarsScreen() {
         onClose={handleCloseModals}
         onTransfer={handleOpenTransfer}
         onEdit={handleOpenEdit}
+        onRebalance={handleOpenRebalance}
       />
       <TransferSheet
-        visible={mode === 'transfer'}
+        visible={mode === 'transfer' || mode === 'rebalance'}
         fromJar={activeJar}
+        rebalanceInto={mode === 'rebalance' ? activeJar : null}
         jars={jars}
         onClose={handleCloseModals}
         onTransfer={handleConfirmTransfer}

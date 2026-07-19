@@ -1,16 +1,13 @@
 /**
  * JarDetailSheet — Component
  *
- * @what     Modal de detalle de jarra: header (ícono+nombre+monto en una fila), progreso/nivel
- *           compacto, preview de 3 movimientos con estilo de movimiento (barra de acento + monto de
- *           color) y el botón-ícono → → movimientos filtrados por esta jarra.
- * @receives 5 props: item, transactions, onClose, onTransfer?, onEdit?
- * @processes Filtra transactions por jarId. El progreso es el NIVEL (`balance / presupuesto`): cuánto
- *           te QUEDA (lleno = bueno; naranja ≤20%). el botón-ícono → cierra el sheet y navega a
- *           /transactions con `jarId`+`jarName`. onTransfer/onEdit opcionales (dashboard no los pasa);
- *           "Editar jarra" solo si la jarra tiene alguna capacidad editable (`jarCapabilities`).
+ * @what     Modal de detalle de jarra: header (ícono+nombre+monto), barra de nivel compacta, preview
+ *           de 3 movimientos (acento + monto de color) y botón-ícono → movimientos de esta jarra.
+ * @receives 6 props: item, transactions, onClose, onTransfer?, onEdit?, onRebalance?
+ * @processes Filtra transactions por jarId. Progreso = NIVEL (`balance/presupuesto`, lleno=bueno,
+ *           naranja ≤20%). onTransfer/onEdit opcionales; "Editar jarra" solo si hay capacidad editable.
+ *           **Negativo (M03 §3)**: saldo en rojo, oculta la barra, `JarRedNudge` con "Reequilibrar".
  * @returns  JSX — sheet, sin scroll anidado.
- * @props    5: item, transactions, onClose, onTransfer?, onEdit?
  */
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -21,6 +18,7 @@ import { colors, typography, spacing, radius, sizes } from '@shared/styles';
 import { MoniButton, MoniSheet } from '@shared/components';
 import { truncateLabel } from '@shared/utils';
 import { jarCapabilities } from '@core/entities/Jar';
+import { JarRedNudge } from './JarRedNudge';
 import type { JarDisplay } from '../types';
 import type { TransactionDisplay } from '@features/transactions/types';
 
@@ -32,9 +30,10 @@ type Props = {
   onClose: () => void;
   onTransfer?: () => void;
   onEdit?: () => void;
+  onRebalance?: () => void;
 };
 
-export function JarDetailSheet({ item, transactions, onClose, onTransfer, onEdit }: Props) {
+export function JarDetailSheet({ item, transactions, onClose, onTransfer, onEdit, onRebalance }: Props) {
   const insets = useSafeAreaInsets();
   const preview = item ? transactions.filter((t) => t.jarId === item.id).slice(0, 3) : [];
   const caps = item ? jarCapabilities(item.type) : null;
@@ -66,12 +65,14 @@ export function JarDetailSheet({ item, transactions, onClose, onTransfer, onEdit
                 </View>
               )}
             </View>
-            <Text style={styles.amount} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
+            <Text style={[styles.amount, item?.isNegative && styles.amountNeg]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
               $ {item?.balance.toLocaleString('es')}
             </Text>
           </View>
 
-          {item?.progress !== undefined && (
+          {item?.isNegative && onRebalance && <JarRedNudge deficit={Math.abs(item.balance)} onRebalance={onRebalance} />}
+
+          {item?.progress !== undefined && !item.isNegative && (
             <View style={styles.progressBlock}>
               <View style={styles.barTrack}>
                 <View style={[styles.barFill, { width: `${item.progress}%` as `${number}%`, backgroundColor: item.progress <= LOW_LEVEL_PCT ? colors.alertOrange : item.iconColor }]} />
@@ -129,6 +130,7 @@ const styles = StyleSheet.create({
   chip:      { flexDirection: 'row', alignItems: 'center', gap: spacing.stackXxs, paddingHorizontal: spacing.stackSm, paddingVertical: spacing.stackXxs, borderRadius: radius.full, backgroundColor: colors.goldTint },
   chipLabel: { ...typography.labelXs, color: colors.goldDreams },
   amount:    { ...typography.headlineMd, color: colors.navyDark, flexShrink: 0 },
+  amountNeg: { color: colors.error },
   progressBlock: { backgroundColor: colors.surfaceContainerLow, borderRadius: radius.md, padding: spacing.stackSm, gap: spacing.stackXs },
   barTrack:  { height: sizes.trackXs, width: '100%', backgroundColor: colors.surfaceContainerHigh, borderRadius: radius.full, overflow: 'hidden' },
   barFill:   { height: '100%', borderRadius: radius.full },

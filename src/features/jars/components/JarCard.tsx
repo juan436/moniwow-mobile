@@ -33,11 +33,13 @@ export function JarCard({ jar, onPress }: Props) {
         <Text style={styles.name} numberOfLines={1} ellipsizeMode="tail">{truncateLabel(jar.name, 18)}</Text>
         <View style={styles.topRight}>
           {jar.isBlindado && <MaterialIcons name="lock" size={18} color={colors.goldDreams} />}
-          {jar.progress !== undefined && (
-            <View style={[styles.pctPill, { backgroundColor: jar.iconColor + PCT_ALPHA }]}>
-              <Text style={[styles.pctText, { color: jar.iconColor }]}>{jar.progress}%</Text>
-            </View>
-          )}
+          {jar.isNegative
+            ? <View style={styles.redPill}><Text style={styles.redText}>En rojo</Text></View>
+            : jar.progress !== undefined && (
+              <View style={[styles.pctPill, { backgroundColor: jar.iconColor + PCT_ALPHA }]}>
+                <Text style={[styles.pctText, { color: jar.iconColor }]}>{jar.progress}%</Text>
+              </View>
+            )}
         </View>
       </View>
 
@@ -52,7 +54,7 @@ export function JarCard({ jar, onPress }: Props) {
         </View>
       </View>
 
-      <Text style={styles.balance}>$ {jar.balance.toFixed(2)}</Text>
+      <Text style={[styles.balance, jar.isNegative && styles.balanceNeg]}>$ {jar.balance.toFixed(2)}</Text>
     </Pressable>
   );
 }
@@ -65,6 +67,9 @@ const styles = StyleSheet.create({
   name:  { ...typography.labelMd, color: colors.slateGray, flexShrink: 1 },
   pctPill: { paddingHorizontal: spacing.stackSm, paddingVertical: spacing.stackXxs, borderRadius: radius.full },
   pctText: { ...typography.labelMdBold },
+  redPill: { paddingHorizontal: spacing.stackSm, paddingVertical: spacing.stackXxs, borderRadius: radius.full, backgroundColor: colors.errorContainer },
+  redText: { ...typography.labelMdBold, color: colors.error },
+  balanceNeg: { color: colors.error },
   vesselWrap: { height: VESSEL_H, alignItems: 'center', justifyContent: 'center', marginVertical: spacing.stackSm },
   medWrap:  { position: 'absolute', top: MED_TOP, left: 0, right: 0, alignItems: 'center' },
   medallion: { width: MED, height: MED, borderRadius: MED / 2, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.pureWhite, borderWidth: 1, borderColor: colors.outlineVariant, ...shadows.card },

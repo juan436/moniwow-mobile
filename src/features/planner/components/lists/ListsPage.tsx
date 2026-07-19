@@ -26,7 +26,7 @@ type Props = {
 };
 
 export function ListsPage({ scrollY, topOffset }: Props) {
-  const { listas, deleteList }                = useLists();
+  const { listas, deleteList, createList }    = useLists();
   const [showAnadirLista, setShowAnadirLista] = useState(false);
 
   const handleAnadir     = useCallback(() => setShowAnadirLista(true), []);
@@ -52,7 +52,7 @@ export function ListsPage({ scrollY, topOffset }: Props) {
         </View>
       </Animated.ScrollView>
 
-      <CreateListSheet visible={showAnadirLista} onClose={handleCloseLista} />
+      <CreateListSheet visible={showAnadirLista} onClose={handleCloseLista} onCreate={createList} />
     </>
   );
 }

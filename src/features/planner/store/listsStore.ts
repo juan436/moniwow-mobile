@@ -9,10 +9,11 @@
  * @processes Guarda entidades `List` y publica un snapshot NUEVO (array inmutable) en cada mutación —
  *           requisito de useSyncExternalStore para detectar el cambio. Cada mutación crea una `List`
  *           nueva (no muta la vieja) y la manda a listRepository.update. `hydrate` es idempotente:
- *           carga una sola vez (el primer tab que monte). Mutadores: toggleItem, clearList,
- *           markPurchased (lo llama Quick Add al confirmar una compra hecha desde esa lista),
- *           deleteItem (basura por fila en el detalle) y deleteList (swipe en el índice).
- * @returns  { getSnapshot, subscribe, hydrate, toggleItem, clearList, markPurchased, deleteItem, deleteList }
+ *           carga una sola vez (el primer tab que monte). Mutadores: createList (nueva lista vacía →
+ *           repo.save), addItem (ítem nuevo a una lista), toggleItem, clearList, markPurchased (lo
+ *           llama Quick Add al confirmar una compra hecha desde esa lista), deleteItem (basura por
+ *           fila en el detalle) y deleteList (swipe en el índice).
+ * @returns  { getSnapshot, subscribe, hydrate, createList, addItem, toggleItem, clearList, markPurchased, deleteItem, deleteList }
  */
 import { List, type ListItem } from '@core/entities/List';
 import { listRepository } from '@infrastructure/container';
@@ -51,6 +52,19 @@ export const listsStore = {
     if (hydrated) return;
     hydrated = true;
     emit(await listRepository.findByWorkspace(WORKSPACE_ID));
+  },
+  createList(name: string, emoji: string, jarId: string) {
+    const list = new List({
+      id: `list-${Date.now()}`, name, emoji, jarId, workspaceId: WORKSPACE_ID, items: [],
+    });
+    emit([...lists, list]);
+    void listRepository.save(list);
+  },
+  addItem(listId: string, name: string, approxAmount?: number) {
+    const target = lists.find((l) => l.id === listId);
+    if (!target) return;
+    const item: ListItem = { id: `li-${Date.now()}`, name, isChecked: false, ...(approxAmount !== undefined ? { approxAmount } : {}) };
+    replaceItems(listId, [...target.items, item]);
   },
   toggleItem(listId: string, itemId: string) {
     const target = lists.find((l) => l.id === listId);

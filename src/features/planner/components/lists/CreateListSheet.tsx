@@ -3,11 +3,12 @@
  *
  * @what     Asistente 3 pasos para crear una lista de compras: P1 nombre + emoji, P2 jarra de pago,
  *           P3 preview + confirmar.
- * @receives 2 props: visible, onClose
+ * @receives 3 props: visible, onClose, onCreate(name, emoji, jarId)
  * @processes Form local (nombre, emoji, jarra) + `step` (0..2). Chrome/teclado/dots en WizardSheet.
- *           P1 valida nombre no vacío. Jarra usa RecurringJarSelector (MaterialIcons reales).
+ *           P1 valida nombre no vacío. Jarra usa RecurringJarSelector (MaterialIcons reales). Al
+ *           confirmar llama `onCreate` (persiste vía store→repo); sin emoji elegido, cae a 🛒.
  * @returns  JSX — WizardSheet con los 3 pasos.
- * @props    2: visible, onClose
+ * @props    3: visible, onClose, onCreate
  */
 import { useState, useEffect } from 'react';
 import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
@@ -34,9 +35,9 @@ const TITLES = ['Nueva lista', '¿De qué jarra sale?', 'Confirmar'];
 type Form = { nombre: string; emoji: string; jarra: RecurringJar };
 function emptyForm(): Form { return { nombre: '', emoji: '', jarra: 'libre' }; }
 
-type Props = { visible: boolean; onClose: () => void };
+type Props = { visible: boolean; onClose: () => void; onCreate: (name: string, emoji: string, jarId: string) => void };
 
-export function CreateListSheet({ visible, onClose }: Props) {
+export function CreateListSheet({ visible, onClose, onCreate }: Props) {
   const [form, setForm] = useState<Form>(emptyForm);
   const [step, setStep] = useState(0);
 
@@ -50,7 +51,7 @@ export function CreateListSheet({ visible, onClose }: Props) {
 
   function handleSave() {
     if (!step1Ok) return;
-    // TODO: conectar use-case cuando backend listo
+    onCreate(form.nombre.trim(), form.emoji || '🛒', form.jarra);
     onClose();
   }
 

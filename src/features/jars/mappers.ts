@@ -26,6 +26,8 @@ export function toJarDisplay(jar: Jar, balance: number): JarDisplay {
     balance,
     isBlindado: jar.isBlindado,
     targetAmount: jar.targetAmount,
-    progress: withBalance.hasBudget() ? Math.round(withBalance.budgetPercent()) : undefined,
+    // Clamp a ≥0: con balance negativo `budgetPercent` da negativo y la barra `width:%` reventaría.
+    progress: withBalance.hasBudget() ? Math.max(0, Math.round(withBalance.budgetPercent())) : undefined,
+    isNegative: withBalance.isNegative(),
   };
 }
