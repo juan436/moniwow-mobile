@@ -26,7 +26,7 @@ export class JsonTransactionRepository implements ITransactionRepository {
     return this.txs.filter((t) => t.workspaceId === workspaceId);
   }
   async findHormigas(workspaceId: string): Promise<Transaction[]> {
-    return this.txs.filter((t) => t.workspaceId === workspaceId && t.isHormiga());
+    return this.txs.filter((t) => t.workspaceId === workspaceId && t.isHormiga);
   }
   async save(transaction: Transaction): Promise<void> {
     this.txs = [...this.txs, transaction];

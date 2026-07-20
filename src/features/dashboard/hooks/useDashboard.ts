@@ -3,84 +3,79 @@
  *
  * @what     Provee datos de presentación del dashboard central.
  * @receives Ninguno.
- * @processes `saldoLibre` = balance de la jarra Libre, **derivado del libro en vivo** (C4). Antes era
- *           el literal `1285.50` escrito a mano: registrabas un ingreso y el saldo grande del
- *           dashboard no se movía, porque no miraba tus datos — miraba una constante.
- *           **`upcoming` derivado (C5).** Era `MOCK_UPCOMING`: 6 nombres inventados ("Electricidad CFE",
- *           "Gimnasio Smart Fit"…) que no existían en ninguna tabla. El Dashboard y la Agenda pedían
- *           cosas distintas: pagabas la renta en la Agenda y aquí te la seguían reclamando. Ahora
- *           ambos salen de `recurrences` + `debts` vía `ComputeUpcoming` — **una sola verdad**.
+ * @processes **Todo sale de `GET /summary`**, que compone los cinco números con una sola lectura del
+ *           libro del lado servidor. `saldoLibre` = el balance de la jarra Libre; `upcoming` = los
+ *           próximos compromisos, la misma lista que ve la Agenda (C5: antes el Dashboard tenía su
+ *           propio `MOCK_UPCOMING` y te reclamaba la renta ya pagada).
+ *           Antes esto se derivaba acá con `ComputeJarBalances` y `ComputeUpcoming` sobre el libro
+ *           entero en memoria. **La jarra Libre se busca por `type`, no por id**: `'libre'` como id
+ *           solo funcionaba con el workspace sembrado — a un usuario nuevo, con ids UUID, este número
+ *           le habría dado 0 para siempre sin un solo error en pantalla.
  *           Jarras vive en features/jars/useJars, transacciones en features/transactions/useTransactions
  *           (ver ADR excepciones dashboard→jars, dashboard→transactions en clean_architecture.md).
  * @returns  { saldoLibre, upcoming, isLoading, error }
  */
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { ComputeJarBalances } from '@core/use-cases/ComputeJarBalances';
-import { ComputeUpcoming } from '@core/use-cases/ComputeUpcoming';
-import { recurrenceRepository, debtRepository, jarRepository } from '@infrastructure/container';
+import { summaryRepository, jarRepository } from '@infrastructure/container';
 import { useTransactionsStore } from '@features/transactions/stores/transactionsStore';
 import { toJarPresentation, colorByType, type JarPresentation } from '@shared/styles';
 import { toUpcomingExpense } from '../mappers';
-import type { Debt } from '@core/entities/Debt';
-import type { Recurrence } from '@core/entities/Recurrence';
+import type { Jar } from '@core/entities/Jar';
+import type { Summary } from '@core/types/Summary';
 
 const WORKSPACE_ID = 'ws1'; // mock-stage: único workspace sembrado
-const LIBRE_JAR_ID = 'libre';
 const UPCOMING_LIMIT = 6;
 const FALLBACK: JarPresentation = { name: 'Libre', iconName: 'account-balance-wallet', ...colorByType('libre') };
 
-const computeBalances = new ComputeJarBalances();
-const computeUpcoming = new ComputeUpcoming();
-
 export function useDashboard() {
   const transactions = useTransactionsStore((s) => s.transactions);
-  const isLoading    = useTransactionsStore((s) => s.isLoading);
-  const ledgerError  = useTransactionsStore((s) => s.error);
-  const load         = useTransactionsStore((s) => s.load);
+  const loadLedger   = useTransactionsStore((s) => s.load);
 
-  const [recurrences, setRecurrences] = useState<Recurrence[]>([]);
-  const [debts, setDebts] = useState<Debt[]>([]);
-  const [presById, setPresById] = useState<Map<string, JarPresentation>>(new Map());
+  const [summary, setSummary] = useState<Summary | null>(null);
+  const [jars, setJars] = useState<Jar[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => { void loadLedger(); }, [loadLedger]);
 
-  const loadCommitments = useCallback(async () => {
+  const load = useCallback(async () => {
     try {
-      const [recs, ds, jars] = await Promise.all([
-        recurrenceRepository.findByWorkspace(WORKSPACE_ID),
-        debtRepository.findByWorkspace(WORKSPACE_ID),
+      const [s, js] = await Promise.all([
+        summaryRepository.find({ upcomingLimit: UPCOMING_LIMIT }),
         jarRepository.findByWorkspace(WORKSPACE_ID),
       ]);
-      setRecurrences(recs);
-      setDebts(ds);
-      setPresById(new Map(jars.map((j) => [j.id, toJarPresentation(j)])));
+      setSummary(s);
+      setJars(js);
+      setError(null);
     } catch {
-      setError('No se pudieron cargar los próximos compromisos');
+      setError('No se pudo cargar el resumen');
+    } finally {
+      setIsLoading(false);
     }
   }, []);
 
-  // Relee al crecer el libro: confirmar en la Agenda escribe una tx Y marca el compromiso. El estado
-  // del compromiso vive en la BD, no aquí — sin esto el Dashboard seguiría pidiendo la renta ya pagada.
-  useEffect(() => { void loadCommitments(); }, [loadCommitments, transactions.length]);
+  // Relee al crecer el libro: confirmar en la Agenda escribe una tx Y marca el compromiso. Ahora los
+  // números los suma el servidor, así que sin este efecto el saldo se quedaría clavado.
+  useEffect(() => { void load(); }, [load, transactions.length]);
 
-  const saldoLibre = useMemo(
-    () => computeBalances.execute(transactions).get(LIBRE_JAR_ID) ?? 0,
-    [transactions],
+  const presById = useMemo(
+    () => new Map(jars.map((j) => [j.id, toJarPresentation(j)])),
+    [jars],
   );
+
+  // Por `type`, no por id: la identidad de una jarra base es su tipo (decisión 2026-07-20).
+  const saldoLibre = useMemo(() => {
+    const libre = jars.find((j) => j.type === 'libre');
+    return libre ? (summary?.balances.get(libre.id) ?? libre.balance) : 0;
+  }, [jars, summary]);
 
   const upcoming = useMemo(() => {
     const today = new Date();
-    return computeUpcoming
-      .execute(recurrences, debts, transactions, today, UPCOMING_LIMIT)
-      .map((c) => toUpcomingExpense(c, presById.get(c.jarId) ?? FALLBACK, today));
-  }, [recurrences, debts, transactions, presById]);
+    return (summary?.upcoming ?? []).map((c) =>
+      toUpcomingExpense(c, presById.get(c.jarId) ?? FALLBACK, today),
+    );
+  }, [summary, presById]);
 
-  return {
-    saldoLibre,
-    upcoming,
-    isLoading,
-    error: error ?? ledgerError,
-  };
+  return { saldoLibre, upcoming, isLoading, error };
 }

@@ -3,23 +3,24 @@
  *
  * @what     Orquesta la selección y creación del workspace en el primer uso.
  * @receives Ningún parámetro.
- * @processes Delega la creación al UseCase CreateWorkspace. Maneja estado,
- *            loading y errores del flujo de onboarding.
+ * @processes Llama a `POST /workspaces`, **que es quien crea el espacio de verdad**: le pone nombre
+ *            según el modo, siembra las 4 jarras base y devuelve un token nuevo (el adapter lo
+ *            guarda). Antes esto llamaba al use-case local `CreateWorkspace`, que fabricaba una
+ *            entidad con `ownerId: 'user_local'` y **la tiraba**: elegías modo, la pantalla avanzaba
+ *            y no había pasado nada. Maneja estado, loading y errores del onboarding.
  * @returns  { selected, isLoading, error, handleSelect, handleConfirm }
  * @props    —
  */
 import { useState, useCallback } from 'react';
 
 import type { WorkspaceType } from '@core/entities/Workspace';
-import { CreateWorkspace } from '@core/use-cases/CreateWorkspace';
+import { workspaceActions } from '@infrastructure/container';
 
 type WorkspaceSetupState = {
   selected: WorkspaceType | null;
   isLoading: boolean;
   error: string | null;
 };
-
-const createWorkspace = new CreateWorkspace();
 
 export function useWorkspaceSetup() {
   const [state, setState] = useState<WorkspaceSetupState>({
@@ -40,7 +41,7 @@ export function useWorkspaceSetup() {
 
     try {
       setState((prev) => ({ ...prev, isLoading: true, error: null }));
-      createWorkspace.execute({ ownerId: 'user_local', type: state.selected });
+      await workspaceActions.create(state.selected);
       return true;
     } catch (e) {
       const message = e instanceof Error ? e.message : 'Error al crear el espacio';

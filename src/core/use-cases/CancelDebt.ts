@@ -19,7 +19,7 @@
  */
 import { Debt } from '../entities/Debt';
 import { IDebtRepository } from '../ports/IDebtRepository';
-import { monthKey } from './ComputeMonthlyTotals';
+import { monthKey } from '../utils/monthKey';
 
 export interface CancelDebtInput {
   debtId: string;

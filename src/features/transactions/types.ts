@@ -1,5 +1,6 @@
 import type { ComponentProps } from 'react';
 import type { MaterialIcons } from '@expo/vector-icons';
+import type { JarType } from '@core/entities/Jar';
 
 type IconName = ComponentProps<typeof MaterialIcons>['name'];
 
@@ -7,7 +8,12 @@ export type JarId = 'hogar' | 'fondo_seguridad' | 'goals' | 'libre';
 
 /** Jarra real del workspace (M03: 4 base + N personalizadas — no solo hogar/fondo_seguridad/goals/libre).
  *  iconName o emoji: jarras creadas por el usuario usan emoji en vez de ícono Material. */
-export type JarOption = { id: string; name: string; iconColor: string; iconBg: string; iconName?: IconName; emoji?: string };
+/**
+ * `type` viaja además del `id` porque **la identidad de una jarra base es su tipo, no su id**: los
+ * ids son UUID opacos desde 2026-07-20, así que buscar la jarra Libre por `id === 'libre'` solo
+ * funcionaba en el workspace sembrado.
+ */
+export type JarOption = { id: string; type: JarType; name: string; iconColor: string; iconBg: string; iconName?: IconName; emoji?: string };
 
 /** Distribución de ingreso: monto en $ por id de jarra (dinámico, no fijo a 3). */
 export type IncomeDistribution = Record<string, number>;

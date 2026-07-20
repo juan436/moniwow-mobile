@@ -63,7 +63,8 @@ export function DashboardPage({ data, scrollY, topOffset }: Props) {
   const [selectedJar, setSelectedJar] = useState<JarDisplay | null>(null);
   const handleJarPress = useCallback((jar: JarDisplay) => setSelectedJar(jar), []);
   const handleJarModalClose = useCallback(() => setSelectedJar(null), []);
-  const isGoalsSelected = selectedJar?.id === 'goals';
+  // Por `type`: el id de la jarra Metas es un UUID opaco, no la cadena 'goals'.
+  const isGoalsSelected = selectedJar?.type === 'goals';
 
   return (
     <Animated.ScrollView

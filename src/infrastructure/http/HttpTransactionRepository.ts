@@ -33,7 +33,7 @@ export class HttpTransactionRepository implements ITransactionRepository {
 
   async findHormigas(workspaceId: string): Promise<Transaction[]> {
     const txs = await this.findByWorkspace(workspaceId);
-    return txs.filter((t) => t.isHormiga());
+    return txs.filter((t) => t.isHormiga);
   }
 
   /** No hay `GET /transactions/:id`: se filtra sobre el libro, que ya viene entero. */

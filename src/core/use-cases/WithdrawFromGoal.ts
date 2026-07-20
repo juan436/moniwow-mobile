@@ -63,6 +63,9 @@ export class WithdrawFromGoal {
       date: new Date(),
       workspaceId: input.workspaceId,
       userId: input.userId,
+      // Mover dinero entre jarras propias no es un gasto: ni hormiga, ni nada que reste patrimonio.
+      isHormiga: false,
+      isTransfer: true,
     });
 
     await this.goalRepo.update(goal);

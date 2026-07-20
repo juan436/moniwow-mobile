@@ -29,6 +29,9 @@ export interface TransactionDto {
   recurrenceMonth?: string;
   items?: TransactionItem[];
   receiptUri?: string;
+  /** Derivados que calcula el servidor: mobile ya no los recalcula. */
+  isHormiga: boolean;
+  isTransfer: boolean;
 }
 
 export const toTransaction = (dto: TransactionDto): Transaction =>

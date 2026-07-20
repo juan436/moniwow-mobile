@@ -14,7 +14,7 @@
  */
 import { Debt } from '@core/entities/Debt';
 import { Recurrence } from '@core/entities/Recurrence';
-import { monthKey } from '@core/use-cases/ComputeMonthlyTotals';
+import { monthKey } from '@core/utils/monthKey';
 import { asRecurringJar } from './jarOptions';
 import type { JarPresentation } from '@shared/styles';
 import type { CreateRecurringData, RecurringDisplay } from './types';

@@ -2,46 +2,36 @@
  * useJars — Hook
  *
  * @what     Wrapper sobre `useJarsStore` (Zustand). Mantiene la firma que ya consumen
- *           JarsScreen/DashboardScreen/modales, pero los datos salen del repositorio — no de una
- *           lista hardcodeada. Reglas de protección viven en el store + dominio (jarCapabilities).
+ *           JarsScreen/DashboardScreen/modales. Reglas de protección viven en el store + dominio
+ *           (jarCapabilities).
  * @receives Ninguno.
- * @processes Hidrata jarras y libro al montar. **El balance se deriva del libro EN VIVO**
- *           (`ComputeJarBalances` sobre `transactionsStore`): al registrar un gasto en Quick Add, la
- *           jarra baja sola, sin recargar nada. Si se leyera el balance de una foto tomada al
- *           arrancar, un gasto nuevo no movería el número.
- * @returns  { jars, isLoading, error, handleCreate, handleSave, handleDelete, handleTransfer }
+ * @processes Hidrata jarras al montar. **El balance llega calculado por el servidor** (`GET /jars` lo
+ *           deriva del libro allá). Antes se recalculaba acá con `ComputeJarBalances` sobre el libro
+ *           entero en memoria: para saber cuánto había en Hogar, el teléfono se bajaba las 359
+ *           transacciones. Lo que se pierde es el refresco instantáneo al escribir; lo repone
+ *           `reload()`, que quien escribe llama después — el número lo dice quien lo calcula.
+ * @returns  { jars, isLoading, error, reload, handleCreate, handleSave, handleDelete, handleTransfer }
  */
-import { useEffect, useMemo } from 'react';
+import { useEffect } from 'react';
+import { useMemo } from 'react';
 
-import { ComputeJarBalances } from '@core/use-cases/ComputeJarBalances';
-import { useTransactionsStore } from '@features/transactions/stores/transactionsStore';
 import { useJarsStore } from '../stores/jarsStore';
 import { toJarDisplay } from '../mappers';
-
-const computeBalances = new ComputeJarBalances();
 
 export function useJars() {
   const entities       = useJarsStore((s) => s.jars);
   const isLoading      = useJarsStore((s) => s.isLoading);
   const error          = useJarsStore((s) => s.error);
   const loadJars       = useJarsStore((s) => s.load);
+  const reload         = useJarsStore((s) => s.reload);
   const handleCreate   = useJarsStore((s) => s.create);
   const handleSave     = useJarsStore((s) => s.save);
   const handleDelete   = useJarsStore((s) => s.remove);
   const handleTransfer = useJarsStore((s) => s.transfer);
 
-  const transactions = useTransactionsStore((s) => s.transactions);
-  const loadLedger   = useTransactionsStore((s) => s.load);
+  useEffect(() => { void loadJars(); }, [loadJars]);
 
-  useEffect(() => {
-    void loadJars();
-    void loadLedger();
-  }, [loadJars, loadLedger]);
+  const jars = useMemo(() => entities.map((jar) => toJarDisplay(jar, jar.balance)), [entities]);
 
-  const jars = useMemo(() => {
-    const balances = computeBalances.execute(transactions);
-    return entities.map((jar) => toJarDisplay(jar, balances.get(jar.id) ?? 0));
-  }, [entities, transactions]);
-
-  return { jars, isLoading, error, handleCreate, handleSave, handleDelete, handleTransfer };
+  return { jars, isLoading, error, reload, handleCreate, handleSave, handleDelete, handleTransfer };
 }

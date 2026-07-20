@@ -10,7 +10,7 @@
  *           El ícono sale de la JARRA que paga, igual que en la Agenda.
  * @returns  UpcomingExpense
  */
-import type { UpcomingCommitment } from '@core/use-cases/ComputeUpcoming';
+import type { UpcomingCommitment } from '@core/types/Summary';
 import type { JarPresentation } from '@shared/styles';
 import type { UpcomingExpense } from './types';
 

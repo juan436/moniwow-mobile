@@ -20,11 +20,13 @@ import { IGoalRepository } from '@core/ports/IGoalRepository';
 import { IDebtRepository } from '@core/ports/IDebtRepository';
 import { IListRepository } from '@core/ports/IListRepository';
 import { IRecurrenceRepository } from '@core/ports/IRecurrenceRepository';
+import { ISummaryRepository } from '@core/ports/ISummaryRepository';
 import { IWorkspaceRepository } from '@core/ports/IWorkspaceRepository';
 import { IDebtActions } from '@core/ports/IDebtActions';
 import { IRecurrenceActions } from '@core/ports/IRecurrenceActions';
 import { IJarActions } from '@core/ports/IJarActions';
 import { ITransactionActions } from '@core/ports/ITransactionActions';
+import { IWorkspaceActions } from '@core/ports/IWorkspaceActions';
 
 import { JsonWorkspaceRepository } from './json/JsonWorkspaceRepository';
 import { HttpAuthRepository } from './http/HttpAuthRepository';
@@ -34,10 +36,12 @@ import { HttpGoalRepository } from './http/HttpGoalRepository';
 import { HttpDebtRepository } from './http/HttpDebtRepository';
 import { HttpListRepository } from './http/HttpListRepository';
 import { HttpRecurrenceRepository } from './http/HttpRecurrenceRepository';
+import { HttpSummaryRepository } from './http/HttpSummaryRepository';
 import { HttpDebtActions } from './http/HttpDebtActions';
 import { HttpRecurrenceActions } from './http/HttpRecurrenceActions';
 import { HttpJarActions } from './http/HttpJarActions';
 import { HttpTransactionActions } from './http/HttpTransactionActions';
+import { HttpWorkspaceActions } from './http/HttpWorkspaceActions';
 
 export const transactionRepository: ITransactionRepository = new HttpTransactionRepository();
 // El balance YA viene calculado por la API (`FindJarsByWorkspace` suma el libro del lado servidor),
@@ -48,6 +52,11 @@ export const goalRepository: IGoalRepository = new HttpGoalRepository();
 export const debtRepository: IDebtRepository = new HttpDebtRepository();
 export const listRepository: IListRepository = new HttpListRepository();
 export const recurrenceRepository: IRecurrenceRepository = new HttpRecurrenceRepository();
+
+// `GET /summary` trae patrimonio, balances, totales por mes, gasto por jarra y próximos compromisos
+// **en una sola lectura del libro**. Sustituye a los cuatro `Compute*` que mobile corría sobre las
+// 359 transacciones en cada arranque. No tiene adapter JSON: nació después de que la API mandara.
+export const summaryRepository: ISummaryRepository = new HttpSummaryRepository();
 
 // **`workspaces` sigue en JSON y no por olvido: la API no tiene ese controller.** Es el agujero que
 // documenta [[planes/moniwow-multitenant]] — `POST /auth/register` deja `workspaceId: ''` y no hay
@@ -67,3 +76,8 @@ export const debtActions: IDebtActions = new HttpDebtActions();
 export const recurrenceActions: IRecurrenceActions = new HttpRecurrenceActions();
 export const jarActions: IJarActions = new HttpJarActions();
 export const transactionActions: ITransactionActions = new HttpTransactionActions();
+
+// Crear el espacio también es acción: siembra las 4 jarras base y devuelve un token NUEVO (el viejo
+// lleva `workspaceId: ''` dentro). El `workspaceRepository` JSON de arriba sigue ahí solo para las
+// lecturas que nadie ha migrado — `POST /workspaces` ya es real.
+export const workspaceActions: IWorkspaceActions = new HttpWorkspaceActions();

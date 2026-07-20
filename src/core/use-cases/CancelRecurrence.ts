@@ -19,7 +19,7 @@
  */
 import { Recurrence } from '../entities/Recurrence';
 import { IRecurrenceRepository } from '../ports/IRecurrenceRepository';
-import { monthKey } from './ComputeMonthlyTotals';
+import { monthKey } from '../utils/monthKey';
 
 export interface CancelRecurrenceInput {
   recurrenceId: string;

@@ -25,8 +25,13 @@ import type { JarOption, DraftPurchaseItem, PickableList } from '../types';
 
 type Step = 1 | 2 | 3;
 
+/**
+ * Jarra por defecto: Libre. **Se busca por `type`, no por `id === 'libre'`** — ese id solo existe en
+ * el workspace sembrado; con un usuario nuevo (ids UUID) caía en `jars[0]`, que es la que estuviera
+ * primera, sin que nada avisara. Un gasto en Libre es lo que define un gasto hormiga (M04).
+ */
 function defaultJarId(jars: JarOption[]): string {
-  return jars.find(j => j.id === 'libre')?.id ?? jars[0]?.id ?? 'libre';
+  return jars.find(j => j.type === 'libre')?.id ?? jars[0]?.id ?? '';
 }
 
 export function useQuickAdd(jars: JarOption[], onListPurchased?: (listId: string) => void) {

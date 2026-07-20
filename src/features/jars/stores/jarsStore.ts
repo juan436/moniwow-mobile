@@ -55,6 +55,8 @@ type JarsState = {
   isLoading: boolean;
   error: string | null;
   load: () => Promise<void>;
+  /** Vuelve a preguntarle al servidor, ignorando la hidratación ya hecha. */
+  reload: () => Promise<void>;
   create: (data: CreateJarData) => void;
   save: (data: SaveJarData) => void;
   remove: (id: string) => void;
@@ -64,6 +66,15 @@ type JarsState = {
 // Hidratación en vuelo: varias pantallas montan a la vez y todas piden load().
 let hydrating: Promise<void> | null = null;
 
+type SetState = (partial: Partial<JarsState>) => void;
+
+function fetchJars(set: SetState): Promise<void> {
+  return jarRepository
+    .findByWorkspace(WORKSPACE_ID)
+    .then((jars) => set({ jars, isLoading: false, error: null }))
+    .catch(() => set({ error: 'No se pudieron cargar las jarras', isLoading: false }));
+}
+
 export const useJarsStore = create<JarsState>((set, get) => ({
   jars: [],
   isLoading: true,
@@ -71,10 +82,15 @@ export const useJarsStore = create<JarsState>((set, get) => ({
 
   load: () => {
     if (hydrating) return hydrating;
-    hydrating = jarRepository
-      .findByWorkspace(WORKSPACE_ID)
-      .then((jars) => set({ jars, isLoading: false }))
-      .catch(() => set({ error: 'No se pudieron cargar las jarras', isLoading: false }));
+    hydrating = fetchJars(set);
+    return hydrating;
+  },
+
+  // El balance ya no se deriva del libro en memoria: lo suma el servidor. Por eso quien escribe
+  // (Quick Add, transferir, confirmar un compromiso) tiene que volver a preguntar — antes el número
+  // se movía solo porque lo calculaba el propio teléfono.
+  reload: () => {
+    hydrating = fetchJars(set);
     return hydrating;
   },
 
@@ -100,12 +116,16 @@ export const useJarsStore = create<JarsState>((set, get) => ({
   },
 
   // Una transferencia es UN movimiento del libro, no dos balances tecleados: el balance se deriva
-  // (C4), así que escribir la jarra aquí no haría nada. Publicarla al libro sí mueve las dos jarras.
-  // La escribe la API (`jarActions`) y el movimiento que devuelve entra al libro local, que es de
-  // donde los hooks derivan el saldo — por eso las dos jarras se mueven al instante sin recargar.
+  // (C4), así que escribir la jarra aquí no haría nada. La escribe la API (`jarActions`); el
+  // movimiento que devuelve entra al libro local para que Movimientos lo muestre ya, y las jarras se
+  // releen porque **el balance lo suma el servidor**: sin este `reload` las dos jarras se quedarían
+  // con el número viejo hasta remontar la pantalla.
   transfer: (fromId, toId, amount) => {
     void jarActions
       .transfer(fromId, toId, amount)
-      .then((transaction) => useTransactionsStore.getState().add(transaction));
+      .then((transaction) => {
+        useTransactionsStore.getState().add(transaction);
+        return get().reload();
+      });
   },
 }));

@@ -15,8 +15,8 @@
 import type { Debt } from '@core/entities/Debt';
 import type { List } from '@core/entities/List';
 import type { Recurrence } from '@core/entities/Recurrence';
-import type { CuotaStatus } from '@core/use-cases/ComputeDebtStatus';
-import type { RecurrenceOccurrence } from '@core/use-cases/ComputeRecurringOccurrences';
+import type { CuotaStatus } from '@core/types/DebtStatus';
+import type { RecurrenceOccurrence } from '@core/types/RecurrenceStatus';
 import type { JarPresentation } from '@shared/styles';
 import type { AgendaItemDisplay, ListDisplay } from './types';
 import { jarLabelOf } from './jarOptions';

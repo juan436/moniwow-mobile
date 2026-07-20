@@ -10,8 +10,8 @@
 import type { Goal } from '@core/entities/Goal';
 import type { Debt } from '@core/entities/Debt';
 import type { Transaction } from '@core/entities/Transaction';
-import type { DebtStatus } from '@core/use-cases/ComputeDebtStatus';
-import type { MonthTotals } from '@core/use-cases/ComputeMonthlyTotals';
+import type { DebtStatus } from '@core/types/DebtStatus';
+import type { MonthTotals } from '@core/types/Summary';
 import type { JarPresentation } from '@shared/styles';
 import type { GoalDisplay, DebtBreakdown, BarChartEntry, LeakDisplay, DistributionEntry } from './types';
 

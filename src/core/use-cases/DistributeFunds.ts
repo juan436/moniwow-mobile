@@ -64,6 +64,10 @@ export class DistributeFunds {
       date: now,
       workspaceId: input.workspaceId,
       userId: input.userId,
+      // Un ingreso nunca es hormiga (hormiga es un GASTO de dinero sin asignar) y no es transferencia.
+      // Los dos salen del `type`, no de comparar ids de jarra.
+      isHormiga: false,
+      isTransfer: false,
     });
     await this.transactionRepo.save(income);
 
@@ -82,6 +86,8 @@ export class DistributeFunds {
         date: now,
         workspaceId: input.workspaceId,
         userId: input.userId,
+        isHormiga: false,
+        isTransfer: true,
       });
       await this.transactionRepo.save(transfer);
       transfers.push(transfer);

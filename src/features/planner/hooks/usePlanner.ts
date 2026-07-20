@@ -4,8 +4,9 @@
  * @what     Estado y datos de la Agenda + CRUD local de compromisos recurrentes.
  * @receives —
  * @processes La Agenda se DERIVA: reglas recurrentes (`recurrenceRepository`) + deudas
- *           (`debtRepository`), cruzadas con el libro. **Ya no hay `pendingItems`**: cada ocurrencia
- *           del mes y las atrasadas salen de `ComputeRecurringOccurrences` / `ComputeDebtStatus`.
+ *           (`debtRepository`), **que ya llegan cruzadas con el libro por el servidor**. Cada
+ *           ocurrencia del mes y las atrasadas vienen en su `status`; mobile ya no las calcula
+ *           (`ComputeRecurringOccurrences` / `ComputeDebtStatus` se fueron). **Ya no hay `pendingItems`**.
  *           **Confirmar ESCRIBE en el libro, y lo hace la API**: recurrente → `recurrenceActions`;
  *           cuota → `debtActions` (ambos con `recurrenceMonth`/`cuotaMonth`: QUÉ ocurrencia se cubre,
  *           no cuándo). Antes un booleano en memoria: marcabas la renta pagada y el balance de Hogar
@@ -22,9 +23,9 @@ import { useTransactionsStore } from '@features/transactions/stores/transactions
 import { toJarPresentation, colorByType, type JarPresentation } from '@shared/styles';
 import { buildAgenda } from '../agenda';
 import { useRecurrentes } from './useRecurrentes';
-import type { Debt } from '@core/entities/Debt';
-import type { Recurrence } from '@core/entities/Recurrence';
 import type { Transaction } from '@core/entities/Transaction';
+import type { DebtWithStatus } from '@core/types/DebtStatus';
+import type { RecurrenceWithStatus } from '@core/types/RecurrenceStatus';
 import type { AgendaTab, AgendaFilter } from '../types';
 
 // Solo para LEER: los repos aún piden el workspace por firma aunque el servidor lo saque del token.
@@ -35,8 +36,8 @@ const FALLBACK: JarPresentation = { name: 'Libre', iconName: 'account-balance-wa
 export function usePlanner() {
   const [activeTab, setActiveTab] = useState<AgendaTab>('mi-mes');
   const [activeFilter, setActiveFilter] = useState<AgendaFilter>('gastos');
-  const [recurrences, setRecurrences] = useState<Recurrence[]>([]);
-  const [debts, setDebts] = useState<Debt[]>([]);
+  const [recurrences, setRecurrences] = useState<RecurrenceWithStatus[]>([]);
+  const [debts, setDebts] = useState<DebtWithStatus[]>([]);
   const [presById, setPresById] = useState<Map<string, JarPresentation>>(new Map());
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -73,8 +74,8 @@ export function usePlanner() {
   const jarOf = useCallback((id: string) => presById.get(id) ?? FALLBACK, [presById]);
 
   const { data, overdue, toConfirm } = useMemo(
-    () => buildAgenda(recurrences, debts, transactions, jarOf, new Date()),
-    [recurrences, debts, jarOf, transactions],
+    () => buildAgenda(recurrences, debts, jarOf, new Date()),
+    [recurrences, debts, jarOf],
   );
 
   const { recurrentes, recurrenteActions } = useRecurrentes(recurrences, debts, setRecurrences, setDebts, jarOf);

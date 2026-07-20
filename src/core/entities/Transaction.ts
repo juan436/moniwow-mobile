@@ -9,9 +9,6 @@ export interface TransactionItem {
   amount?: number;
 }
 
-// Jarra de dinero no asignado. Un gasto que sale de aquí es, por definición, un gasto hormiga.
-const LIBRE_JAR_ID = 'libre';
-
 export interface TransactionProps {
   id: string;
   amount: number;
@@ -38,6 +35,13 @@ export interface TransactionProps {
   recurrenceMonth?: string;
   items?: TransactionItem[];
   receiptUri?: string;
+  // Sale de dinero NO asignado (la jarra Libre). **Lo decide el servidor**: antes se derivaba acá
+  // comparando `jarId === 'libre'`, y ese id solo existe en el workspace sembrado — con un usuario
+  // nuevo, cuyas jarras llevan UUID, `isHormiga` habría dado `false` siempre y M04 se habría quedado
+  // muerto sin un solo error en pantalla. La identidad de una jarra base es su `type`, y el `type` lo
+  // sabe quien tiene la jarra delante.
+  isHormiga: boolean;
+  isTransfer: boolean;
 }
 
 export class Transaction {
@@ -56,6 +60,8 @@ export class Transaction {
   readonly recurrenceMonth?: string;
   readonly items?: TransactionItem[];
   readonly receiptUri?: string;
+  readonly isHormiga: boolean;
+  readonly isTransfer: boolean;
 
   constructor(props: TransactionProps) {
     this.id = props.id;
@@ -73,18 +79,7 @@ export class Transaction {
     this.recurrenceMonth = props.recurrenceMonth;
     this.items = props.items;
     this.receiptUri = props.receiptUri;
-  }
-
-  isTransfer(): boolean {
-    return this.type === 'transferencia';
-  }
-
-  /**
-   * Gasto hormiga: sale de dinero NO asignado. Es una regla derivada, no un campo — guardarlo
-   * permitiría que contradijera a `jarId`, que ya lo dice. Decisión 2026-07-14.
-   * Ojo: hormiga ≠ fuga. Esto dice de DÓNDE salió el dinero, no si el gasto valía la pena.
-   */
-  isHormiga(): boolean {
-    return this.type === 'gasto' && this.jarId === LIBRE_JAR_ID;
+    this.isHormiga = props.isHormiga;
+    this.isTransfer = props.isTransfer;
   }
 }

@@ -19,10 +19,12 @@ import { Debt } from '@core/entities/Debt';
 import { Recurrence } from '@core/entities/Recurrence';
 import { CancelDebt } from '@core/use-cases/CancelDebt';
 import { CancelRecurrence } from '@core/use-cases/CancelRecurrence';
-import { monthKey } from '@core/use-cases/ComputeMonthlyTotals';
+import { monthKey } from '@core/utils/monthKey';
 import { debtRepository, recurrenceRepository } from '@infrastructure/container';
 import { useTransactionsStore } from '@features/transactions/stores/transactionsStore';
 import { buildDebt, buildRecurrence, toDebtRecurringDisplay, toRecurringDisplay } from '../recurringMappers';
+import type { DebtWithStatus } from '@core/types/DebtStatus';
+import type { RecurrenceWithStatus } from '@core/types/RecurrenceStatus';
 import type { JarPresentation } from '@shared/styles';
 import type { CreateRecurringData, SaveRecurringData, RecurringActions, RecurringDisplay } from '../types';
 
@@ -33,11 +35,19 @@ const cancelDebt = new CancelDebt(debtRepository);
 
 type Setter<T> = (fn: (prev: T[]) => T[]) => void;
 
+/**
+ * Una entidad recién creada aún no tiene estado servido: sus ocurrencias las deriva el servidor al
+ * volver a leer. Se mete vacío para no inventar cuotas que nadie calculó — y hoy este camino ni
+ * siquiera llega, porque `save()` lanza mientras falte `POST /recurrences`.
+ */
+const NO_RECURRENCE_STATUS = { overdue: [], current: null };
+const NO_DEBT_STATUS = { paidCount: 0, totalCuotas: 0, remaining: 0, isPaid: false, overdue: [], current: null };
+
 export function useRecurrentes(
-  recurrences: Recurrence[],
-  debts: Debt[],
-  setRecurrences: Setter<Recurrence>,
-  setDebts: Setter<Debt>,
+  recurrences: RecurrenceWithStatus[],
+  debts: DebtWithStatus[],
+  setRecurrences: Setter<RecurrenceWithStatus>,
+  setDebts: Setter<DebtWithStatus>,
   jarOf: (jarId: string) => JarPresentation,
 ) {
   // El libro decide si eliminar cancela o borra. Del store, misma fuente que la Agenda.
@@ -45,9 +55,9 @@ export function useRecurrentes(
   const thisMonth = monthKey(new Date());
 
   const recurrentes: RecurringDisplay[] = useMemo(() => [
-    ...recurrences.map((r) => toRecurringDisplay(r, jarOf(r.jarId),
+    ...recurrences.map(({ recurrence: r }) => toRecurringDisplay(r, jarOf(r.jarId),
       transactions.filter((t) => t.recurrenceId === r.id).length, thisMonth)),
-    ...debts.map((d) => toDebtRecurringDisplay(d, jarOf(d.sourceJarId),
+    ...debts.map(({ debt: d }) => toDebtRecurringDisplay(d, jarOf(d.sourceJarId),
       transactions.filter((t) => t.debtId === d.id).length, thisMonth)),
   ], [recurrences, debts, jarOf, transactions, thisMonth]);
 
@@ -55,25 +65,25 @@ export function useRecurrentes(
     if (d.filter === 'deudas') {
       const debt = buildDebt(d, `debt-${Date.now()}`, new Date(), 'cuotas');
       await debtRepository.save(debt);
-      setDebts((prev) => [...prev, debt]);
+      setDebts((prev) => [...prev, { debt, status: NO_DEBT_STATUS }]);
     } else {
       const rec = buildRecurrence(d, `rec-${Date.now()}`, monthKey(new Date()));
       await recurrenceRepository.save(rec);
-      setRecurrences((prev) => [...prev, rec]);
+      setRecurrences((prev) => [...prev, { recurrence: rec, status: NO_RECURRENCE_STATUS }]);
     }
   }, [setRecurrences, setDebts]);
 
   const onSave = useCallback(async (d: SaveRecurringData) => {
     if (d.filter === 'deudas') {
-      const prev = debts.find((x) => x.id === d.id);
-      const debt = buildDebt(d, d.id, prev?.createdAt ?? new Date(), prev?.origin ?? 'cuotas');
+      const prev = debts.find((x) => x.debt.id === d.id);
+      const debt = buildDebt(d, d.id, prev?.debt.createdAt ?? new Date(), prev?.debt.origin ?? 'cuotas');
       await debtRepository.update(debt);
-      setDebts((list) => list.map((x) => (x.id === d.id ? debt : x)));
+      setDebts((list) => list.map((x) => (x.debt.id === d.id ? { ...x, debt } : x)));
     } else {
-      const prev = recurrences.find((x) => x.id === d.id);
-      const rec = buildRecurrence(d, d.id, prev?.startMonth ?? monthKey(new Date()));
+      const prev = recurrences.find((x) => x.recurrence.id === d.id);
+      const rec = buildRecurrence(d, d.id, prev?.recurrence.startMonth ?? monthKey(new Date()));
       await recurrenceRepository.update(rec);
-      setRecurrences((list) => list.map((x) => (x.id === d.id ? rec : x)));
+      setRecurrences((list) => list.map((x) => (x.recurrence.id === d.id ? { ...x, recurrence: rec } : x)));
     }
   }, [debts, recurrences, setRecurrences, setDebts]);
 
@@ -84,26 +94,26 @@ export function useRecurrentes(
    * dejarlo cancelado llenaría el historial de ruido. El libro no se toca en ninguno de los dos.
    */
   const onDelete = useCallback(async (id: string) => {
-    const isRecurrence = recurrences.some((r) => r.id === id);
+    const isRecurrence = recurrences.some((r) => r.recurrence.id === id);
     const hasPayments = transactions.some((t) => (isRecurrence ? t.recurrenceId : t.debtId) === id);
 
     if (isRecurrence) {
       if (hasPayments) {
         const { recurrence } = await cancelRecurrence.execute({ recurrenceId: id, today: new Date() });
-        setRecurrences((list) => list.map((r) => (r.id === id ? recurrence : r)));
+        setRecurrences((list) => list.map((r) => (r.recurrence.id === id ? { ...r, recurrence } : r)));
       } else {
         await recurrenceRepository.delete(id);
-        setRecurrences((list) => list.filter((r) => r.id !== id));
+        setRecurrences((list) => list.filter((r) => r.recurrence.id !== id));
       }
       return;
     }
 
     if (hasPayments) {
       const { debt } = await cancelDebt.execute({ debtId: id, today: new Date() });
-      setDebts((list) => list.map((d) => (d.id === id ? debt : d)));
+      setDebts((list) => list.map((d) => (d.debt.id === id ? { ...d, debt } : d)));
     } else {
       await debtRepository.delete(id);
-      setDebts((list) => list.filter((x) => x.id !== id));
+      setDebts((list) => list.filter((x) => x.debt.id !== id));
     }
   }, [recurrences, transactions, setRecurrences, setDebts]);
 

@@ -56,7 +56,8 @@ export function JarsScreen() {
 
   const handleJarPress = useCallback((jar: JarDisplay) => {
     setActiveJar(jar);
-    setMode(jar.id === 'goals' ? 'goals' : 'detail');
+    // Por `type`: el id de la jarra Metas es un UUID opaco, no la cadena 'goals'.
+    setMode(jar.type === 'goals' ? 'goals' : 'detail');
   }, []);
   const handleCloseModals = useCallback(() => setMode(null), []);
   const handleOpenTransfer  = useCallback(() => setMode('transfer'), []);

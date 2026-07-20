@@ -2,10 +2,11 @@
  * agenda — Planner Feature
  *
  * @what     Construye la Agenda: los compromisos de este mes + lo que está vencido.
- * @receives recurrences: Recurrence[] · debts: Debt[] · txs: Transaction[] · jarOf · today
- * @processes **La unidad de deuda es la CUOTA, no la deuda.** `ComputeDebtStatus` cruza el calendario
- *           de cada deuda con el libro y devuelve la del mes y las atrasadas — que **se acumulan**:
- *           saltarte julio no borra julio.
+ * @receives recurrences: RecurrenceWithStatus[] · debts: DebtWithStatus[] · jarOf · today
+ * @processes **La unidad de deuda es la CUOTA, no la deuda.** El SERVIDOR cruza el calendario de cada
+ *           deuda con el libro y devuelve la del mes y las atrasadas — que **se acumulan**: saltarte
+ *           julio no borra julio. Acá ya no se calcula nada de eso: llega en `status`, y esta función
+ *           solo decide en qué lista va cada cosa (que es presentación).
  *           **Cada compromiso vive en UN sitio.** Si venció, en `overdue` (Atrasados); si no, en Mi
  *           Mes. Antes un gasto vencido salía en los dos y pagarlo en uno lo borraba del otro:
  *           parecía un bug. Por eso el hero "te falta pagar este mes" ya no cuenta lo vencido — eso
@@ -18,19 +19,13 @@
  *           Extraído de `usePlanner` (se pasaba de 150 líneas).
  * @returns  { data, overdue, toConfirm }
  */
-import { ComputeDebtStatus } from '@core/use-cases/ComputeDebtStatus';
-import { ComputeRecurringOccurrences } from '@core/use-cases/ComputeRecurringOccurrences';
-import { monthKey } from '@core/use-cases/ComputeMonthlyTotals';
+import { monthKey } from '@core/utils/monthKey';
 import { toRecurrenceAgendaItem, toCuotaAgendaItem, hasPassed } from './mappers';
 import { computeTotals } from './totals';
-import type { Debt } from '@core/entities/Debt';
-import type { Recurrence } from '@core/entities/Recurrence';
-import type { Transaction } from '@core/entities/Transaction';
+import type { DebtWithStatus } from '@core/types/DebtStatus';
+import type { RecurrenceWithStatus } from '@core/types/RecurrenceStatus';
 import type { JarPresentation } from '@shared/styles';
 import type { AgendaData, AgendaItemDisplay } from './types';
-
-const computeDebtStatus = new ComputeDebtStatus();
-const computeRecurring = new ComputeRecurringOccurrences();
 
 export interface AgendaBundle {
   data: AgendaData;
@@ -39,9 +34,8 @@ export interface AgendaBundle {
 }
 
 export function buildAgenda(
-  recurrences: Recurrence[],
-  debts: Debt[],
-  txs: Transaction[],
+  recurrences: RecurrenceWithStatus[],
+  debts: DebtWithStatus[],
   jarOf: (jarId: string) => JarPresentation,
   today: Date,
 ): AgendaBundle {
@@ -58,8 +52,7 @@ export function buildAgenda(
     if (isIncome && !item.isPaid && hasPassed(dueDate, today)) toConfirm.push(item);
   };
 
-  for (const rec of recurrences) {
-    const status  = computeRecurring.execute(rec, txs, today);
+  for (const { recurrence: rec, status } of recurrences) {
     const jar     = jarOf(rec.jarId);
     const isIncome = rec.type === 'ingreso';
 
@@ -75,8 +68,7 @@ export function buildAgenda(
     }
   }
 
-  for (const debt of debts) {
-    const status = computeDebtStatus.execute(debt, txs, today);
+  for (const { debt, status } of debts) {
     const jar    = jarOf(debt.sourceJarId);
 
     if (status.current) place(toCuotaAgendaItem(debt, status.current, status.paidCount, jar, today));

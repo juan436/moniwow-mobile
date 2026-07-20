@@ -19,7 +19,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { Goal } from '@core/entities/Goal';
-import { ComputeJarBalances } from '@core/use-cases/ComputeJarBalances';
 import { WithdrawFromGoal } from '@core/use-cases/WithdrawFromGoal';
 import { goalRepository, jarRepository, transactionRepository } from '@infrastructure/container';
 import { useTransactionsStore } from '@features/transactions/stores/transactionsStore';
@@ -28,9 +27,7 @@ import type { GoalItem, CreateGoalData, SaveGoalData } from '../types';
 
 const WORKSPACE_ID = 'ws1'; // mock-stage: único workspace sembrado
 const USER_ID = 'u1';
-const GOALS_JAR_ID = 'goals';
 
-const computeBalances = new ComputeJarBalances();
 const withdrawFromGoal = new WithdrawFromGoal(goalRepository, jarRepository, transactionRepository);
 
 /** Reconstruye la meta preservando lo que el form no toca (saldo asignado, fecha objetivo). */
@@ -50,12 +47,21 @@ function reassign(goal: Goal, currentAmount: number): Goal {
 
 export function useGoals() {
   const [goals, setGoals] = useState<Goal[]>([]);
+  const [poolTotal, setPoolTotal] = useState(0);
   const [isAddVisible, setIsAddVisible] = useState(false);
   const [selectedGoal, setSelectedGoal] = useState<GoalItem | null>(null);
 
   const transactions = useTransactionsStore((s) => s.transactions);
   const loadLedger   = useTransactionsStore((s) => s.load);
   const addToLedger  = useTransactionsStore((s) => s.add);
+
+  // El pozo es el balance de la jarra Metas. Sigue sin almacenarse (C4) — solo que ahora lo suma el
+  // servidor. **La jarra se busca por `type`, no por el id `'goals'`**: ese id solo existe en el
+  // workspace sembrado; con un usuario nuevo el pozo habría dado 0 sin ningún error visible.
+  const loadPool = useCallback(async () => {
+    const jars = await jarRepository.findByWorkspace(WORKSPACE_ID);
+    setPoolTotal(jars.find((j) => j.type === 'goals')?.balance ?? 0);
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -68,12 +74,10 @@ export function useGoals() {
     };
   }, [loadLedger]);
 
+  // Relee el pozo cuando crece el libro: sacar de una meta mueve dinero de verdad.
+  useEffect(() => { void loadPool(); }, [loadPool, transactions.length]);
+
   const goalItems = useMemo(() => goals.map(toGoalItem), [goals]);
-  // El pozo es el balance de la jarra Metas — derivado del libro, no un campo guardado (C4).
-  const poolTotal  = useMemo(
-    () => computeBalances.execute(transactions).get(GOALS_JAR_ID) ?? 0,
-    [transactions],
-  );
   const asignado   = useMemo(() => goals.reduce((sum, g) => sum + g.currentAmount, 0), [goals]);
   const disponible = poolTotal - asignado;
 
