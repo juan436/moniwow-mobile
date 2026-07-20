@@ -30,7 +30,8 @@
     },
     "plugins": [
       "expo-router",
-      "expo-navigation-bar"
+      "expo-navigation-bar",
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true

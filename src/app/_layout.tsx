@@ -6,6 +6,7 @@ import { Inter_400Regular, Inter_500Medium } from '@expo-google-fonts/inter';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as NavigationBar from 'expo-navigation-bar';
+import { AuthProvider } from '@shared/context/AuthProvider';
 import { colors } from '@shared/styles';
 
 export default function RootLayout() {
@@ -27,7 +28,10 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView style={styles.root}>
-      <Stack screenOptions={{ headerShown: false }} />
+      {/* Envuelve TODAS las rutas: la sesión se restaura una vez, no una por pantalla. */}
+      <AuthProvider>
+        <Stack screenOptions={{ headerShown: false }} />
+      </AuthProvider>
       <View style={[styles.navBarCover, { height: insets.bottom }]} />
     </GestureHandlerRootView>
   );

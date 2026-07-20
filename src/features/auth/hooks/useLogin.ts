@@ -3,13 +3,15 @@
  *
  * @what     Orquesta el flujo de inicio de sesión.
  * @receives Ningún parámetro.
- * @processes Delega validación a LoginUser. Llama a authService. Maneja estado, loading y error.
+ * @processes Delega la validación del formulario a `LoginUser` (no toca red) y las credenciales a la
+ *           API. El mensaje de error que se muestra es **el que manda el servidor** — está en
+ *           español y a propósito no distingue "email no existe" de "contraseña mala".
  * @returns  { email, password, isLoading, error, handleEmailChange, handlePasswordChange, handleLogin }
  */
 import { useState, useCallback } from 'react';
 import type { User } from '@core/entities/User';
 import { LoginUser } from '@core/use-cases/LoginUser';
-import { authService } from '@features/auth/services/authService';
+import { authRepository } from '@infrastructure/container';
 
 type LoginState = {
   email: string;
@@ -40,7 +42,7 @@ export function useLogin() {
     try {
       setState((prev) => ({ ...prev, isLoading: true, error: null }));
       loginUser.execute({ email: state.email, password: state.password });
-      const user = await authService.login(state.email, state.password);
+      const user = await authRepository.login(state.email, state.password);
       return user;
     } catch (e) {
       const message = e instanceof Error ? e.message : 'Error al iniciar sesión';

@@ -1,9 +1,10 @@
 /**
  * WorkspaceSetupScreen — Component (Screen)
  *
- * @what     Pantalla de configuración inicial del workspace con layout hero+sheet.
- * @receives Ninguna prop — se usa como screen desde app/index.tsx.
- * @processes Delega selección y confirmación a useWorkspaceSetup. Navega a /login al confirmar.
+ * @what     Paso 2 del registro: elegir cómo se usa MoniWow. Layout hero+sheet.
+ * @receives Ninguna prop — se usa como screen desde app/workspace-setup.tsx.
+ * @processes Delega selección y confirmación a useWorkspaceSetup. Al confirmar entra a la app
+ *           (/(tabs)): la cuenta ya existe, este era el último paso del alta.
  * @returns  JSX — pantalla hero+bottom-sheet con 2 opciones de workspace y footer CTA.
  * @props    —
  */
@@ -38,7 +39,7 @@ export function WorkspaceSetupScreen() {
 
   async function handleStart() {
     const success = await handleConfirm();
-    if (success) router.replace('/login' as never);
+    if (success) router.replace('/(tabs)' as never);
   }
 
   return (

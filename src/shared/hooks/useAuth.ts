@@ -1,30 +1,11 @@
 /**
  * useAuth — Hook
  *
- * @what     Estado global de sesión del usuario autenticado.
+ * @what     Sesión del usuario autenticado.
  * @receives Ningún parámetro.
- * @processes Expone usuario activo, signIn y signOut.
- *            Stub para fase demo — requiere React Context para persistencia real.
- * @returns  { user, isAuthenticated, signIn, signOut }
+ * @processes Reexporta el hook del contexto. La implementación vive en `AuthProvider` porque el
+ *           estado es COMPARTIDO: antes esto era un `useState` local y cada pantalla tenía su
+ *           propia copia de la sesión, que además se perdía al recargar.
+ * @returns  { user, isAuthenticated, isLoading, signIn, signOut }
  */
-import { useState, useCallback } from 'react';
-import type { User } from '@core/entities/User';
-
-export function useAuth() {
-  const [user, setUser] = useState<User | null>(null);
-
-  const signIn = useCallback((authenticatedUser: User) => {
-    setUser(authenticatedUser);
-  }, []);
-
-  const signOut = useCallback(() => {
-    setUser(null);
-  }, []);
-
-  return {
-    user,
-    isAuthenticated: user !== null,
-    signIn,
-    signOut,
-  };
-}
+export { useAuth } from '@shared/context/AuthProvider';

@@ -15,15 +15,12 @@
 import { create } from 'zustand';
 
 import { Jar, jarCapabilities } from '@core/entities/Jar';
-import { TransferFunds } from '@core/use-cases/TransferFunds';
-import { jarRepository, transactionRepository } from '@infrastructure/container';
+import { jarRepository, jarActions } from '@infrastructure/container';
 import { useTransactionsStore } from '@features/transactions/stores/transactionsStore';
 import type { CreateJarData, SaveJarData } from '../types';
 
-const WORKSPACE_ID = 'ws1'; // mock-stage: único workspace sembrado
-const USER_ID = 'u1';
-
-const transferFunds = new TransferFunds(jarRepository, transactionRepository);
+// Solo para LEER: el repo aún pide el workspace por firma aunque el servidor lo saque del token.
+const WORKSPACE_ID = 'ws1';
 
 function buildCustomJar(data: CreateJarData): Jar {
   return new Jar({
@@ -104,16 +101,11 @@ export const useJarsStore = create<JarsState>((set, get) => ({
 
   // Una transferencia es UN movimiento del libro, no dos balances tecleados: el balance se deriva
   // (C4), así que escribir la jarra aquí no haría nada. Publicarla al libro sí mueve las dos jarras.
+  // La escribe la API (`jarActions`) y el movimiento que devuelve entra al libro local, que es de
+  // donde los hooks derivan el saldo — por eso las dos jarras se mueven al instante sin recargar.
   transfer: (fromId, toId, amount) => {
-    void transferFunds
-      .execute({
-        id: `tx-${Date.now()}`,
-        sourceJarId: fromId,
-        destinationJarId: toId,
-        amount,
-        workspaceId: WORKSPACE_ID,
-        userId: USER_ID,
-      })
-      .then(({ transaction }) => useTransactionsStore.getState().add(transaction));
+    void jarActions
+      .transfer(fromId, toId, amount)
+      .then((transaction) => useTransactionsStore.getState().add(transaction));
   },
 }));

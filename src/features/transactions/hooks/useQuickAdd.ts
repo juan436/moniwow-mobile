@@ -8,7 +8,7 @@
  * @processes Maneja string del monto (applyKey), concepto, ítems en borrador (solo nombre), jarra
  *           seleccionada y paso activo. El paso Detalle (ítems) es opcional: se avanza con Continuar
  *           u Omitir por igual. Default de selectedJar: "libre" si existe, si no la primera jarra.
- *           **Confirmar PERSISTE**: delega en `CreateTransaction` (core) y publica la transacción al
+ *           **Confirmar PERSISTE**: lo escribe la API (`transactionActions`) y publica la respuesta al
  *           `transactionsStore`. Antes era un TODO y el gasto se evaporaba: el libro nunca se llenaba
  *           y todo lo que se deriva de él (balances, patrimonio, Revisión) se quedaba en mock.
  *           El balance de la jarra NO se toca — se deriva del libro (C4).
@@ -18,18 +18,12 @@
  */
 import { useState, useCallback, useRef } from 'react';
 
-import { CreateTransaction } from '@core/use-cases/CreateTransaction';
-import { jarRepository, transactionRepository } from '@infrastructure/container';
+import { transactionActions } from '@infrastructure/container';
 import { applyNumpadKey } from '@shared/utils';
 import { useTransactionsStore } from '../stores/transactionsStore';
 import type { JarOption, DraftPurchaseItem, PickableList } from '../types';
 
 type Step = 1 | 2 | 3;
-
-const WORKSPACE_ID = 'ws1'; // mock-stage: único workspace sembrado
-const USER_ID = 'u1';
-
-const createTransaction = new CreateTransaction(jarRepository, transactionRepository);
 
 function defaultJarId(jars: JarOption[]): string {
   return jars.find(j => j.id === 'libre')?.id ?? jars[0]?.id ?? 'libre';
@@ -86,15 +80,12 @@ export function useQuickAdd(jars: JarOption[], onListPurchased?: (listId: string
     try {
       setError(null);
       // Los ítems van sin precio: el usuario teclea QUÉ compró, no a cuánto (el precio llega con M09).
-      const { transaction } = await createTransaction.execute({
-        id: `tx-${Date.now()}`,
+      const transaction = await transactionActions.create({
         amount: parseFloat(amount),
         description: concept.trim() || 'Gasto',
         type: 'gasto',
         jarId: selectedJar,
-        workspaceId: WORKSPACE_ID,
-        userId: USER_ID,
-        items: items.length > 0 ? items.map((i) => ({ id: i.id, name: i.name })) : undefined,
+        items: items.length > 0 ? items.map((i) => ({ name: i.name })) : undefined,
       });
 
       await addToLedger(transaction);

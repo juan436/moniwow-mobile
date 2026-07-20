@@ -3,7 +3,9 @@
  *
  * @what     Pantalla de inicio de sesión con layout hero+sheet: hero navyDark superior, form blanco inferior.
  * @receives Ninguna prop — se usa como screen desde app/login.tsx.
- * @processes Delega estado y lógica a useLogin. Navega a /(tabs) si el login es exitoso.
+ * @processes Delega estado y lógica a useLogin. Si el login es exitoso, **guarda la sesión en el
+ *           contexto** (`signIn`) y navega a /(tabs). Sin el `signIn`, el token queda guardado pero
+ *           la app seguiría creyendo que no hay nadie dentro.
  * @returns  JSX — pantalla hero+bottom-sheet con formulario email+contraseña y footer CTA.
  * @props    —
  */
@@ -13,10 +15,12 @@ import { router } from 'expo-router';
 
 import { useLogin } from '@features/auth/hooks/useLogin';
 import { MoniButton, MoniInput, MoniLogo } from '@shared/components';
+import { useAuth } from '@shared/hooks/useAuth';
 import { colors, typography, spacing, radius, shadows } from '@shared/styles';
 
 export function LoginScreen() {
   const insets = useSafeAreaInsets();
+  const { signIn } = useAuth();
   const {
     email, password, isLoading, error,
     handleEmailChange, handlePasswordChange, handleLogin,
@@ -24,7 +28,9 @@ export function LoginScreen() {
 
   async function handleStart() {
     const user = await handleLogin();
-    if (user) router.replace('/(tabs)' as never);
+    if (!user) return;
+    signIn(user);
+    router.replace('/(tabs)' as never);
   }
 
   const canSubmit = email.length > 0 && password.length > 0 && !isLoading;

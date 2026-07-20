@@ -6,9 +6,10 @@
  * @processes La Agenda se DERIVA: reglas recurrentes (`recurrenceRepository`) + deudas
  *           (`debtRepository`), cruzadas con el libro. **Ya no hay `pendingItems`**: cada ocurrencia
  *           del mes y las atrasadas salen de `ComputeRecurringOccurrences` / `ComputeDebtStatus`.
- *           **Confirmar ESCRIBE en el libro**: recurrente → `ConfirmRecurrence`; cuota → `PayDebtCuota`
- *           (ambos con `recurrenceMonth`/`cuotaMonth`: QUÉ ocurrencia se cubre, no cuándo). Antes un
- *           booleano en memoria: marcabas la renta pagada y el balance de Hogar ni se enteraba.
+ *           **Confirmar ESCRIBE en el libro, y lo hace la API**: recurrente → `recurrenceActions`;
+ *           cuota → `debtActions` (ambos con `recurrenceMonth`/`cuotaMonth`: QUÉ ocurrencia se cubre,
+ *           no cuándo). Antes un booleano en memoria: marcabas la renta pagada y el balance de Hogar
+ *           ni se enteraba.
  *           El CRUD del tab Recurrentes vive en `useRecurrentes` (enruta a Recurrence / Debt).
  *           `inFlight` bloquea el doble toque mientras se guarda.
  * @returns  { activeTab, setActiveTab, activeFilter, setActiveFilter, data, onConfirmItem, overdue,
@@ -16,9 +17,7 @@
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { ConfirmRecurrence } from '@core/use-cases/ConfirmRecurrence';
-import { PayDebtCuota } from '@core/use-cases/PayDebtCuota';
-import { recurrenceRepository, debtRepository, jarRepository, transactionRepository } from '@infrastructure/container';
+import { recurrenceRepository, debtRepository, jarRepository, debtActions, recurrenceActions } from '@infrastructure/container';
 import { useTransactionsStore } from '@features/transactions/stores/transactionsStore';
 import { toJarPresentation, colorByType, type JarPresentation } from '@shared/styles';
 import { buildAgenda } from '../agenda';
@@ -28,12 +27,10 @@ import type { Recurrence } from '@core/entities/Recurrence';
 import type { Transaction } from '@core/entities/Transaction';
 import type { AgendaTab, AgendaFilter } from '../types';
 
-const WORKSPACE_ID = 'ws1'; // mock-stage: único workspace sembrado
-const USER_ID = 'u1';
+// Solo para LEER: los repos aún piden el workspace por firma aunque el servidor lo saque del token.
+// Escribir ya no lo necesita — las acciones no lo mandan.
+const WORKSPACE_ID = 'ws1';
 const FALLBACK: JarPresentation = { name: 'Libre', iconName: 'account-balance-wallet', ...colorByType('libre') };
-
-const confirmRecurrence = new ConfirmRecurrence(recurrenceRepository, jarRepository, transactionRepository);
-const payDebtCuota = new PayDebtCuota(debtRepository, jarRepository, transactionRepository);
 
 export function usePlanner() {
   const [activeTab, setActiveTab] = useState<AgendaTab>('mi-mes');
@@ -90,21 +87,16 @@ export function usePlanner() {
     inFlight.current.add(id);
     try {
       setError(null);
-      const txId = `tx-${Date.now()}`;
 
+      // El id del movimiento, el monto y la jarra los pone el SERVIDOR: solo se dice qué cuota u
+      // ocurrencia se cubre. Ver la decisión B en los ports de acción.
       let transaction: Transaction;
       if (item.debtId && item.cuotaMonth) {
         // QUÉ cuota se salda; la jarra la pone la deuda.
-        ({ transaction } = await payDebtCuota.execute({
-          id: txId, debtId: item.debtId, cuotaMonth: item.cuotaMonth,
-          workspaceId: WORKSPACE_ID, userId: USER_ID,
-        }));
+        transaction = await debtActions.payCuota(item.debtId, item.cuotaMonth);
       } else if (item.recurrenceId && item.recurrenceMonth) {
-        // QUÉ ocurrencia se cubre; la jarra la pone la regla.
-        ({ transaction } = await confirmRecurrence.execute({
-          id: txId, recurrenceId: item.recurrenceId, recurrenceMonth: item.recurrenceMonth,
-          workspaceId: WORKSPACE_ID, userId: USER_ID,
-        }));
+        // QUÉ ocurrencia se cubre; la jarra y el signo los pone la regla.
+        transaction = await recurrenceActions.confirm(item.recurrenceId, item.recurrenceMonth);
       } else {
         return; // sin enlace no hay qué confirmar
       }

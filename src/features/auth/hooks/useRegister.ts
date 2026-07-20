@@ -3,13 +3,14 @@
  *
  * @what     Orquesta el flujo de registro de nuevo usuario.
  * @receives Ningún parámetro.
- * @processes Delega validación a RegisterUser. Llama a authService. Maneja estado, loading y error.
+ * @processes Delega la validación del formulario a `RegisterUser` (no toca red) y el alta a la API.
+ *           `confirmPassword` no viaja: es una comprobación de la UI, no un dato del servidor.
  * @returns  { name, email, password, confirmPassword, isLoading, error, handle* }
  */
 import { useState, useCallback } from 'react';
 import type { User } from '@core/entities/User';
 import { RegisterUser } from '@core/use-cases/RegisterUser';
-import { authService } from '@features/auth/services/authService';
+import { authRepository } from '@infrastructure/container';
 
 type RegisterState = {
   name: string;
@@ -57,7 +58,7 @@ export function useRegister() {
         password: state.password,
         confirmPassword: state.confirmPassword,
       });
-      const user = await authService.register(state.name, state.email, state.password);
+      const user = await authRepository.register(state.name, state.email, state.password);
       return user;
     } catch (e) {
       const message = e instanceof Error ? e.message : 'Error al crear la cuenta';

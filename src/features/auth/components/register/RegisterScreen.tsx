@@ -3,7 +3,8 @@
  *
  * @what     Pantalla de registro con layout hero+sheet: hero navyDark superior, form blanco inferior.
  * @receives Ninguna prop — se usa como screen desde app/register.tsx.
- * @processes Delega estado y lógica a useRegister. Navega a /(tabs) si el registro es exitoso.
+ * @processes Delega estado y lógica a useRegister. Si el registro es exitoso navega a
+ *           /workspace-setup — el paso 2 del alta, donde se elige cómo se usará la app.
  * @returns  JSX — pantalla hero+bottom-sheet con 4 campos agrupados y footer CTA.
  * @props    —
  */
@@ -13,10 +14,12 @@ import { router } from 'expo-router';
 
 import { useRegister } from '@features/auth/hooks/useRegister';
 import { MoniButton, MoniInput, MoniLogo } from '@shared/components';
+import { useAuth } from '@shared/hooks/useAuth';
 import { colors, typography, spacing, radius, shadows } from '@shared/styles';
 
 export function RegisterScreen() {
   const insets = useSafeAreaInsets();
+  const { signIn } = useAuth();
   const {
     name, email, password, confirmPassword, isLoading, error,
     handleNameChange, handleEmailChange, handlePasswordChange,
@@ -25,7 +28,9 @@ export function RegisterScreen() {
 
   async function handleStart() {
     const user = await handleRegister();
-    if (user) router.replace('/(tabs)' as never);
+    if (!user) return;
+    signIn(user);
+    router.replace('/workspace-setup' as never);
   }
 
   const canSubmit =

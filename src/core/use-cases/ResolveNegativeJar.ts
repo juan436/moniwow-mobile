@@ -18,6 +18,7 @@ import { Jar } from '../entities/Jar';
 import { Transaction } from '../entities/Transaction';
 import { IJarRepository } from '../ports/IJarRepository';
 import { ITransactionRepository } from '../ports/ITransactionRepository';
+import { ComputeJarBalances } from './ComputeJarBalances';
 import { IDebtRepository } from '../ports/IDebtRepository';
 
 export type ResolveChoice = 'rebalance' | 'debt' | 'reclassify';
@@ -42,6 +43,8 @@ export type ResolveNegativeJarResult =
   | { choice: 'reclassify'; jar: Jar; targetJar: Jar; transaction: Transaction };
 
 export class ResolveNegativeJar {
+  private readonly computeBalances = new ComputeJarBalances();
+
   constructor(
     private readonly jarRepo: IJarRepository,
     private readonly transactionRepo: ITransactionRepository,
@@ -51,6 +54,12 @@ export class ResolveNegativeJar {
   async execute(input: ResolveNegativeJarInput): Promise<ResolveNegativeJarResult> {
     const jar = await this.jarRepo.findById(input.negativeJarId);
     if (!jar) throw new Error(`Jar ${input.negativeJarId} not found`);
+
+    // El repo devuelve `balance: 0` — el saldo se deriva del libro (C4). Sin esto, `isNegative()`
+    // sería siempre falso y este use-case rechazaría jarras que SÍ están en rojo.
+    const txs = await this.transactionRepo.findByWorkspace(jar.workspaceId);
+    jar.balance = this.computeBalances.execute(txs).get(jar.id) ?? 0;
+
     if (!jar.isNegative()) throw new Error('Jar is not negative');
 
     const deficit = Math.abs(jar.balance);
