@@ -1,22 +1,21 @@
 /**
- * listsStore — Store (external, sobre repo)
+ * listsStore — Store (external, sobre repo + acciones)
  *
  * @what     Estado compartido de las listas de compra entre tabs (Listas y Quick Add). HIDRATA desde
- *           listRepository (fuente única) y PERSISTE cada mutación de vuelta al repo — ya no hay una
- *           lista hardcodeada aquí. Se consume con useSyncExternalStore para que ambos tabs (hooks
- *           separados, montados por separado) vean y muten el MISMO estado.
+ *           listRepository (lectura) y ESCRIBE por listActions (el servidor pone los ids y devuelve la
+ *           lista fresca). Se consume con useSyncExternalStore para que ambos tabs (hooks separados)
+ *           vean y muten el MISMO estado.
  * @receives —
- * @processes Guarda entidades `List` y publica un snapshot NUEVO (array inmutable) en cada mutación —
- *           requisito de useSyncExternalStore para detectar el cambio. Cada mutación crea una `List`
- *           nueva (no muta la vieja) y la manda a listRepository.update. `hydrate` es idempotente:
- *           carga una sola vez (el primer tab que monte). Mutadores: createList (nueva lista vacía →
- *           repo.save), addItem (ítem nuevo a una lista), toggleItem, clearList, markPurchased (lo
- *           llama Quick Add al confirmar una compra hecha desde esa lista), deleteItem (basura por
- *           fila en el detalle) y deleteList (swipe en el índice).
+ * @processes Cada mutador es server-authoritative: llama a listActions, espera la `List` que devuelve
+ *           el servidor (con sus totales recalculados) y la publica como snapshot NUEVO (array
+ *           inmutable, requisito de useSyncExternalStore). Ya no arma ids con `Date.now()` ni escribe
+ *           optimista: la verdad es la del backend. `hydrate` es idempotente (carga una vez).
+ *           Mutadores: createList, addItem, toggleItem (manda el valor nuevo, no un flip), clearList /
+ *           markPurchased (setAll false/true), deleteItem (basura por fila), deleteList (swipe).
  * @returns  { getSnapshot, subscribe, hydrate, createList, addItem, toggleItem, clearList, markPurchased, deleteItem, deleteList }
  */
-import { List, type ListItem } from '@core/entities/List';
-import { listRepository } from '@infrastructure/container';
+import { List } from '@core/entities/List';
+import { listActions, listRepository } from '@infrastructure/container';
 
 const WORKSPACE_ID = 'ws1';
 
@@ -29,15 +28,9 @@ function emit(next: List[]) {
   listeners.forEach((listener) => listener());
 }
 
-function replaceItems(listId: string, items: ListItem[]) {
-  const target = lists.find((l) => l.id === listId);
-  if (!target) return;
-  const updated = new List({
-    id: target.id, name: target.name, emoji: target.emoji,
-    jarId: target.jarId, workspaceId: target.workspaceId, items,
-  });
-  emit(lists.map((l) => (l.id === listId ? updated : l)));
-  void listRepository.update(updated);
+/** Reemplaza una lista por la versión fresca que devolvió el servidor (fuente de verdad). */
+function replaceList(updated: List) {
+  emit(lists.map((l) => (l.id === updated.id ? updated : l)));
 }
 
 export const listsStore = {
@@ -53,42 +46,30 @@ export const listsStore = {
     hydrated = true;
     emit(await listRepository.findByWorkspace(WORKSPACE_ID));
   },
-  createList(name: string, emoji: string, jarId: string) {
-    const list = new List({
-      id: `list-${Date.now()}`, name, emoji, jarId, workspaceId: WORKSPACE_ID, items: [],
-    });
+  async createList(name: string, emoji: string, jarId: string) {
+    const list = await listActions.create({ name, emoji, jarId });
     emit([...lists, list]);
-    void listRepository.save(list);
   },
-  addItem(listId: string, name: string, approxAmount?: number) {
-    const target = lists.find((l) => l.id === listId);
-    if (!target) return;
-    const item: ListItem = { id: `li-${Date.now()}`, name, isChecked: false, ...(approxAmount !== undefined ? { approxAmount } : {}) };
-    replaceItems(listId, [...target.items, item]);
+  async addItem(listId: string, name: string, approxAmount?: number) {
+    replaceList(await listActions.addItem(listId, name, approxAmount));
   },
-  toggleItem(listId: string, itemId: string) {
-    const target = lists.find((l) => l.id === listId);
-    if (!target) return;
-    replaceItems(listId, target.items.map((i) => i.id !== itemId ? i : { ...i, isChecked: !i.isChecked }));
+  async toggleItem(listId: string, itemId: string) {
+    const item = lists.find((l) => l.id === listId)?.items.find((i) => i.id === itemId);
+    if (!item) return;
+    replaceList(await listActions.setItemChecked(listId, itemId, !item.isChecked));
   },
-  clearList(listId: string) {
-    const target = lists.find((l) => l.id === listId);
-    if (!target) return;
-    replaceItems(listId, target.items.map((i) => ({ ...i, isChecked: false })));
+  async clearList(listId: string) {
+    replaceList(await listActions.setAll(listId, false));
   },
-  markPurchased(listId: string) {
-    const target = lists.find((l) => l.id === listId);
-    if (!target) return;
-    replaceItems(listId, target.items.map((i) => ({ ...i, isChecked: true })));
+  async markPurchased(listId: string) {
+    replaceList(await listActions.setAll(listId, true));
   },
-  deleteItem(listId: string, itemId: string) {
-    const target = lists.find((l) => l.id === listId);
-    if (!target) return;
-    replaceItems(listId, target.items.filter((i) => i.id !== itemId));
+  async deleteItem(listId: string, itemId: string) {
+    replaceList(await listActions.removeItem(listId, itemId));
   },
-  deleteList(listId: string) {
+  async deleteList(listId: string) {
     if (!lists.some((l) => l.id === listId)) return;
+    await listActions.remove(listId);
     emit(lists.filter((l) => l.id !== listId));
-    void listRepository.delete(listId);
   },
 };

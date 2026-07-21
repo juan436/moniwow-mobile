@@ -6,6 +6,8 @@ export interface WorkspaceProps {
   type: WorkspaceType;
   ownerId: string;
   memberIds: string[];
+  /** Código para unirse a un hogar. Solo lo tienen los `hogar`; los `individual` van sin él. */
+  inviteCode?: string;
 }
 
 export class Workspace {
@@ -14,6 +16,7 @@ export class Workspace {
   readonly type: WorkspaceType;
   readonly ownerId: string;
   readonly memberIds: string[];
+  readonly inviteCode?: string;
 
   constructor(props: WorkspaceProps) {
     this.id = props.id;
@@ -21,6 +24,7 @@ export class Workspace {
     this.type = props.type;
     this.ownerId = props.ownerId;
     this.memberIds = [...props.memberIds];
+    this.inviteCode = props.inviteCode;
   }
 
   isHogar(): boolean {

@@ -25,6 +25,7 @@ import { IWorkspaceRepository } from '@core/ports/IWorkspaceRepository';
 import { IDebtActions } from '@core/ports/IDebtActions';
 import { IRecurrenceActions } from '@core/ports/IRecurrenceActions';
 import { IJarActions } from '@core/ports/IJarActions';
+import { IListActions } from '@core/ports/IListActions';
 import { ITransactionActions } from '@core/ports/ITransactionActions';
 import { IGoalActions } from '@core/ports/IGoalActions';
 import { IWorkspaceActions } from '@core/ports/IWorkspaceActions';
@@ -41,6 +42,7 @@ import { HttpSummaryRepository } from './http/HttpSummaryRepository';
 import { HttpDebtActions } from './http/HttpDebtActions';
 import { HttpRecurrenceActions } from './http/HttpRecurrenceActions';
 import { HttpJarActions } from './http/HttpJarActions';
+import { HttpListActions } from './http/HttpListActions';
 import { HttpTransactionActions } from './http/HttpTransactionActions';
 import { HttpGoalActions } from './http/HttpGoalActions';
 import { HttpWorkspaceActions } from './http/HttpWorkspaceActions';
@@ -81,6 +83,9 @@ export const transactionActions: ITransactionActions = new HttpTransactionAction
 // Repartir un ingreso (M02) y sacar de una meta (M08) también son reglas del servidor: escriben
 // varios movimientos con signos y jarras que decide la API, no un `save()` armado en el cliente.
 export const goalActions: IGoalActions = new HttpGoalActions();
+// Listas: crear/borrar y tocar los ítems (subrecurso) van por acción, no por `repo.save()` — el id de
+// la lista y el de cada ítem los pone el servidor. El `listRepository` de arriba queda solo para leer.
+export const listActions: IListActions = new HttpListActions();
 
 // Crear el espacio también es acción: siembra las 4 jarras base y devuelve un token NUEVO (el viejo
 // lleva `workspaceId: ''` dentro). El `workspaceRepository` JSON de arriba sigue ahí solo para las

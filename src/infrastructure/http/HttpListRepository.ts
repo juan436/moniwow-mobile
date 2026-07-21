@@ -6,9 +6,9 @@
  * @processes Traduce el JSON a entidades `List`. No hay fechas que revivir.
  * @returns  Promise<List[]> · Promise<List | null>
  *
- * **Ojo, esto le pega a las listas de compra**: marcar un ítem, añadirlo o limpiar la lista pasan hoy
- * por `listsStore` → `update()`, y acá eso lanza. Las listas se quedarán en modo lectura hasta que la
- * API tenga su CRUD — es el dominio que más escritura tiene de los cinco.
+ * **La escritura ya NO pasa por acá**: crear/borrar la lista y tocar los ítems van por `IListActions`
+ * (`HttpListActions`), porque el id lo pone el servidor. Estos `save`/`update`/`delete` quedan como
+ * stubs muertos que el port aún exige; se borran en el Paso 5 (limpieza de `json/`).
  */
 import { List } from '@core/entities/List';
 import type { ListItem } from '@core/entities/List';
@@ -17,7 +17,7 @@ import type { IListRepository } from '@core/ports/IListRepository';
 import { request } from './httpClient';
 
 /** Forma exacta del JSON. Los totales llegan calculados pero la entidad los recalcula sola. */
-interface ListDto {
+export interface ListDto {
   id: string;
   name: string;
   emoji: string;
@@ -26,7 +26,7 @@ interface ListDto {
   items: ListItem[];
 }
 
-const toList = (dto: ListDto): List =>
+export const toList = (dto: ListDto): List =>
   new List({
     id: dto.id,
     name: dto.name,
@@ -54,16 +54,14 @@ export class HttpListRepository implements IListRepository {
   }
 
   async save(_list: List): Promise<void> {
-    throw new Error('Crear lista todavía no existe en la API (falta POST /lists)');
+    throw new Error('Stub muerto: crear lista va por IListActions.create, no por el repo');
   }
 
   async update(_list: List): Promise<void> {
-    throw new Error(
-      'Cambiar una lista (marcar ítem, añadir, limpiar) todavía no existe en la API (falta PATCH /lists/:id)',
-    );
+    throw new Error('Stub muerto: mutar una lista va por IListActions, no por el repo');
   }
 
   async delete(_id: string): Promise<void> {
-    throw new Error('Borrar lista todavía no existe en la API (falta DELETE /lists/:id)');
+    throw new Error('Stub muerto: borrar lista va por IListActions.remove, no por el repo');
   }
 }
