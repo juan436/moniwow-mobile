@@ -16,6 +16,10 @@
  *
  * **La fecha no viaja**: el movimiento se registra cuando ocurre. Con el reloj del teléfono mal
  * puesto, los totales del mes saldrían torcidos.
+ *
+ * **`distribute` (Registro de Ingreso) también es acción, no `create` repetido**: el servidor escribe
+ * UN ingreso a Libre por el total y una transferencia por cada reparto, y devuelve TODOS los
+ * movimientos. Ni los ids ni la fecha viajan. Repartir a Libre es un no-op (el dinero ya cae ahí).
  */
 import { Transaction } from '../entities/Transaction';
 
@@ -33,6 +37,19 @@ export interface CreateTransactionInput {
   receiptUri?: string;
 }
 
+export interface DistributionEntry {
+  jarId: string;
+  amount: number;
+}
+
+export interface DistributeInput {
+  totalAmount: number;
+  description: string;
+  distribution: DistributionEntry[];
+}
+
 export interface ITransactionActions {
   create(input: CreateTransactionInput): Promise<Transaction>;
+  /** Ingreso + reparto. Devuelve el ingreso y las transferencias, en ese orden, para el libro local. */
+  distribute(input: DistributeInput): Promise<Transaction[]>;
 }

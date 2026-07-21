@@ -5,6 +5,8 @@ export interface SummaryQuery {
   chartMonths?: number;
   /** Cuántos compromisos próximos devolver. */
   upcomingLimit?: number;
+  /** Mes ('YYYY-MM') del reparto de gasto. Sin él, el servidor usa el mes en curso. */
+  month?: string;
 }
 
 export interface ISummaryRepository {

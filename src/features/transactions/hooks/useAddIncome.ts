@@ -19,16 +19,10 @@
  */
 import { useState, useCallback, useMemo } from 'react';
 
-import { DistributeFunds } from '@core/use-cases/DistributeFunds';
-import { jarRepository, transactionRepository } from '@infrastructure/container';
+import { transactionActions } from '@infrastructure/container';
 import { applyNumpadKey } from '@shared/utils';
 import { useTransactionsStore } from '../stores/transactionsStore';
 import type { JarOption, IncomeDistribution } from '../types';
-
-const WORKSPACE_ID = 'ws1'; // mock-stage: único workspace sembrado
-const USER_ID = 'u1';
-
-const distributeFunds = new DistributeFunds(jarRepository, transactionRepository);
 
 function emptyDistribution(jars: JarOption[]): IncomeDistribution {
   return Object.fromEntries(jars.map(j => [j.id, 0]));
@@ -124,17 +118,15 @@ export function useAddIncome(jars: JarOption[]) {
         ? Object.entries(distribution).map(([jarId, amt]) => ({ jarId, amount: amt }))
         : [];
 
-      const { income, transfers } = await distributeFunds.execute({
-        id: `tx-${Date.now()}`,
+      // El servidor escribe el ingreso a Libre y las transferencias del reparto, y los devuelve todos
+      // (ingreso primero). Los ids, la fecha y las jarras los pone la API.
+      const written = await transactionActions.distribute({
         totalAmount,
         description: concept.trim() || 'Ingreso',
         distribution: entries,
-        workspaceId: WORKSPACE_ID,
-        userId: USER_ID,
       });
 
-      await addToLedger(income);
-      for (const transfer of transfers) await addToLedger(transfer);
+      for (const tx of written) await addToLedger(tx);
       resetAll();
     } catch {
       setError('No se pudo registrar el ingreso — intenta de nuevo');

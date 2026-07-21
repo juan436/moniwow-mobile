@@ -44,13 +44,22 @@ export function useAudit() {
 
   useEffect(() => { void loadLedger(); }, [loadLedger]);
 
+  const patrimonio = summary?.patrimonio ?? 0;
+  const barChart = useMemo(() => (summary?.monthlyTotals ?? []).map(toBarChartEntry), [summary]);
+
+  // Mes activo: el que el usuario tocó, o el último con datos.
+  const selectedMonth = pickedMonth ?? barChart[barChart.length - 1]?.key ?? monthKey(new Date());
+
+  // `month` pide a la API el reparto de gasto de ESE mes (card Distribución). `monthlyTotals` NO
+  // depende del mes, así que `barChart` —y con él `selectedMonth`— salen iguales entre fetches: sin
+  // bucle. Antes solo llegaba el mes en curso y otro mes salía vacío.
   const loadCollections = useCallback(async () => {
     try {
       const [gs, ds, jars, s] = await Promise.all([
         goalRepository.findByWorkspace(WORKSPACE_ID),
         debtRepository.findByWorkspace(WORKSPACE_ID),
         jarRepository.findByWorkspace(WORKSPACE_ID),
-        summaryRepository.find({ chartMonths: CHART_MONTHS }),
+        summaryRepository.find({ chartMonths: CHART_MONTHS, month: selectedMonth }),
       ]);
       setGoals(gs.map(toGoalDisplay));
       setDebts(ds);
@@ -60,21 +69,13 @@ export function useAudit() {
     } catch {
       setError('No se pudo cargar la revisión');
     }
-  }, []);
+  }, [selectedMonth]);
 
-  // Relee al crecer el libro: los números los suma el servidor, así que pagar una cuota en la Agenda
-  // no mueve nada de aquí hasta volver a preguntar. Todo lo que confirma un compromiso escribe una tx.
+  // Relee al crecer el libro o al cambiar de mes: los números los suma el servidor, así que pagar una
+  // cuota en la Agenda no mueve nada de aquí hasta volver a preguntar.
   useEffect(() => { void loadCollections(); }, [loadCollections, transactions.length]);
 
-  const patrimonio = summary?.patrimonio ?? 0;
-  const barChart = useMemo(() => (summary?.monthlyTotals ?? []).map(toBarChartEntry), [summary]);
-
-  // Mes activo: el que el usuario tocó, o el último con datos.
-  const selectedMonth = pickedMonth ?? barChart[barChart.length - 1]?.key ?? monthKey(new Date());
-
-  // `spendingByJar` viene del mes que el servidor eligió (el actual). Si el usuario mira otro mes,
-  // el reparto de ESE mes no está servido todavía — se muestra vacío en vez de enseñar el mes que no
-  // es. Pedirlo es un `?month=` que la API aún no acepta.
+  // `spendingByJar` ya es del mes elegido; el guardia solo evita el parpadeo entre fetch y `setSummary`.
   const distribution = useMemo(
     () => (summary && summary.month === selectedMonth
       ? toDistribution(summary.spendingByJar, presById)

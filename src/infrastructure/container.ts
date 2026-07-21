@@ -26,6 +26,7 @@ import { IDebtActions } from '@core/ports/IDebtActions';
 import { IRecurrenceActions } from '@core/ports/IRecurrenceActions';
 import { IJarActions } from '@core/ports/IJarActions';
 import { ITransactionActions } from '@core/ports/ITransactionActions';
+import { IGoalActions } from '@core/ports/IGoalActions';
 import { IWorkspaceActions } from '@core/ports/IWorkspaceActions';
 
 import { JsonWorkspaceRepository } from './json/JsonWorkspaceRepository';
@@ -41,6 +42,7 @@ import { HttpDebtActions } from './http/HttpDebtActions';
 import { HttpRecurrenceActions } from './http/HttpRecurrenceActions';
 import { HttpJarActions } from './http/HttpJarActions';
 import { HttpTransactionActions } from './http/HttpTransactionActions';
+import { HttpGoalActions } from './http/HttpGoalActions';
 import { HttpWorkspaceActions } from './http/HttpWorkspaceActions';
 
 export const transactionRepository: ITransactionRepository = new HttpTransactionRepository();
@@ -76,6 +78,9 @@ export const debtActions: IDebtActions = new HttpDebtActions();
 export const recurrenceActions: IRecurrenceActions = new HttpRecurrenceActions();
 export const jarActions: IJarActions = new HttpJarActions();
 export const transactionActions: ITransactionActions = new HttpTransactionActions();
+// Repartir un ingreso (M02) y sacar de una meta (M08) también son reglas del servidor: escriben
+// varios movimientos con signos y jarras que decide la API, no un `save()` armado en el cliente.
+export const goalActions: IGoalActions = new HttpGoalActions();
 
 // Crear el espacio también es acción: siembra las 4 jarras base y devuelve un token NUEVO (el viejo
 // lleva `workspaceId: ''` dentro). El `workspaceRepository` JSON de arriba sigue ahí solo para las

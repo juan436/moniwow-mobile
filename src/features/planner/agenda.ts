@@ -39,15 +39,16 @@ export function buildAgenda(
   jarOf: (jarId: string) => JarPresentation,
   today: Date,
 ): AgendaBundle {
-  // Cada compromiso vive en UN sitio: si venció, en Atrasados; si no, en Mi Mes. Antes un gasto
-  // vencido salía en los dos y pagarlo en uno lo borraba del otro — parecía un bug.
+  // Cada compromiso vive en UN sitio, y quién lo decide es el SERVIDOR: `status.current` es la
+  // ocurrencia/cuota de este mes (→ Mi Mes) y `status.overdue` son los meses pasados sin pagar
+  // (→ Atrasados). Acá NO se recalcula con la fecha: una cuota de julio con día ya vencido sigue
+  // siendo la del mes, no un atrasado, y así la clasificó la API.
   const items: AgendaItemDisplay[] = [];
   const atrasadas: AgendaItemDisplay[] = [];
   const toConfirm: AgendaItemDisplay[] = [];
-  const place = (item: AgendaItemDisplay) => (item.isOverdue ? atrasadas : items).push(item);
 
   // Un ingreso NO se atrasa (no lo debes): si pasó su día sin marcar, va a Por confirmar, no a
-  // Atrasados. `isOverdue` ya viene apagado para ingresos desde el mapper.
+  // Atrasados. `hasPassed` aquí es presentación pura (un recordatorio), no clasifica el compromiso.
   const askIfIncome = (item: AgendaItemDisplay, isIncome: boolean, dueDate: Date) => {
     if (isIncome && !item.isPaid && hasPassed(dueDate, today)) toConfirm.push(item);
   };
@@ -56,24 +57,28 @@ export function buildAgenda(
     const jar     = jarOf(rec.jarId);
     const isIncome = rec.type === 'ingreso';
 
+    // Este mes → Mi Mes, tal cual lo marcó el servidor.
     if (status.current) {
-      const item = toRecurrenceAgendaItem(rec, status.current, jar, today);
-      place(item);
+      const item = toRecurrenceAgendaItem(rec, status.current, jar, false);
+      items.push(item);
       askIfIncome(item, isIncome, status.current.dueDate);
     }
+    // Meses pasados sin pagar: gasto → Atrasados; ingreso → Por confirmar (no lo debes).
     for (const occ of status.overdue) {
-      const item = toRecurrenceAgendaItem(rec, occ, jar, today);
-      if (item.isOverdue) atrasadas.push(item);   // gasto atrasado
-      else askIfIncome(item, isIncome, occ.dueDate); // ingreso de mes pasado sin confirmar
+      const item = toRecurrenceAgendaItem(rec, occ, jar, !isIncome);
+      if (isIncome) askIfIncome(item, true, occ.dueDate);
+      else atrasadas.push(item);
     }
   }
 
   for (const { debt, status } of debts) {
     const jar    = jarOf(debt.sourceJarId);
 
-    if (status.current) place(toCuotaAgendaItem(debt, status.current, status.paidCount, jar, today));
+    if (status.current) {
+      items.push(toCuotaAgendaItem(debt, status.current, status.paidCount, jar, false));
+    }
     for (const cuota of status.overdue) {
-      atrasadas.push(toCuotaAgendaItem(debt, cuota, status.paidCount, jar, today));
+      atrasadas.push(toCuotaAgendaItem(debt, cuota, status.paidCount, jar, true));
     }
   }
 

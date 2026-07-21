@@ -11,7 +11,8 @@
  * `ComputeRecurringOccurrences` **ya no vive en mobile**. Además del ahorro, es lo único que funciona
  * para un cron de notificaciones: no puede preguntarle al teléfono qué ocurrencias existen.
  *
- * `findById` devuelve la regla sola — lo usa `CancelRecurrence`, que solo escribe `endMonth`.
+ * `findById` devuelve la regla sola (contrato del port). Cancelar ya NO pasa por acá: es una acción
+ * (`IRecurrenceActions.cancel` → `POST /recurrences/:id/cancel`), la regla del corte vive en el servidor.
  *
  * Confirmar una ocurrencia NO pasa por `save()`: va por `POST /recurrences/:id/confirm`, donde el
  * signo lo decide el `type` de la regla del lado servidor.
@@ -31,7 +32,7 @@ interface OccurrenceDto {
 }
 
 /** Forma exacta del JSON que devuelve la API. */
-interface RecurrenceDto {
+export interface RecurrenceDto {
   id: string;
   name: string;
   amount: number;
@@ -65,7 +66,7 @@ const toRecurrence = (dto: RecurrenceDto): Recurrence =>
     cancelledAt: dto.cancelledAt,
   });
 
-const toRecurrenceWithStatus = (dto: RecurrenceDto): RecurrenceWithStatus => ({
+export const toRecurrenceWithStatus = (dto: RecurrenceDto): RecurrenceWithStatus => ({
   recurrence: toRecurrence(dto),
   status: {
     overdue: dto.overdue.map(toOccurrence),

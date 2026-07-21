@@ -17,10 +17,8 @@ import { useCallback, useMemo } from 'react';
 
 import { Debt } from '@core/entities/Debt';
 import { Recurrence } from '@core/entities/Recurrence';
-import { CancelDebt } from '@core/use-cases/CancelDebt';
-import { CancelRecurrence } from '@core/use-cases/CancelRecurrence';
 import { monthKey } from '@core/utils/monthKey';
-import { debtRepository, recurrenceRepository } from '@infrastructure/container';
+import { debtRepository, recurrenceRepository, debtActions, recurrenceActions } from '@infrastructure/container';
 import { useTransactionsStore } from '@features/transactions/stores/transactionsStore';
 import { buildDebt, buildRecurrence, toDebtRecurringDisplay, toRecurringDisplay } from '../recurringMappers';
 import type { DebtWithStatus } from '@core/types/DebtStatus';
@@ -29,9 +27,6 @@ import type { JarPresentation } from '@shared/styles';
 import type { CreateRecurringData, SaveRecurringData, RecurringActions, RecurringDisplay } from '../types';
 
 const WORKSPACE_ID = 'ws1';
-
-const cancelRecurrence = new CancelRecurrence(recurrenceRepository);
-const cancelDebt = new CancelDebt(debtRepository);
 
 type Setter<T> = (fn: (prev: T[]) => T[]) => void;
 
@@ -99,8 +94,9 @@ export function useRecurrentes(
 
     if (isRecurrence) {
       if (hasPayments) {
-        const { recurrence } = await cancelRecurrence.execute({ recurrenceId: id, today: new Date() });
-        setRecurrences((list) => list.map((r) => (r.recurrence.id === id ? { ...r, recurrence } : r)));
+        // Cancela en el servidor y reemplaza la fila con el estado ya recalculado que devuelve.
+        const updated = await recurrenceActions.cancel(id);
+        setRecurrences((list) => list.map((r) => (r.recurrence.id === id ? updated : r)));
       } else {
         await recurrenceRepository.delete(id);
         setRecurrences((list) => list.filter((r) => r.recurrence.id !== id));
@@ -109,8 +105,8 @@ export function useRecurrentes(
     }
 
     if (hasPayments) {
-      const { debt } = await cancelDebt.execute({ debtId: id, today: new Date() });
-      setDebts((list) => list.map((d) => (d.debt.id === id ? { ...d, debt } : d)));
+      const updated = await debtActions.cancel(id);
+      setDebts((list) => list.map((d) => (d.debt.id === id ? updated : d)));
     } else {
       await debtRepository.delete(id);
       setDebts((list) => list.filter((x) => x.debt.id !== id));

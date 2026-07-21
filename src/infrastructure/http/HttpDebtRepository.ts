@@ -13,7 +13,8 @@
  * `findOverdue` sigue devolviendo las deudas VIVAS, no un subconjunto atrasado: quien las pinta ya
  * tiene `status.overdue` de cada una. Un endpoint `/debts/overdue` sería una segunda copia de la regla.
  *
- * `findById` devuelve la fila sola — lo usa `CancelDebt`, que solo necesita escribir `cancelledAt`.
+ * `findById` devuelve la fila sola (contrato del port). Cancelar ya NO pasa por acá: es una acción
+ * (`IDebtActions.cancel` → `POST /debts/:id/cancel`), porque dónde corta es una regla del servidor.
  *
  * Pagar una cuota NO pasa por `save()`: va por `POST /debts/:id/pay-cuota`, donde el servidor calcula
  * el monto. Ver la decisión B en [[planes/backend-api]].
@@ -34,7 +35,7 @@ interface CuotaDto {
 }
 
 /** Forma exacta del JSON. `totalCuotas`/`cuotaAmount` llegan pero la entidad los recalcula. */
-interface DebtDto {
+export interface DebtDto {
   id: string;
   description: string;
   amount: number;
@@ -71,7 +72,7 @@ const toDebt = (dto: DebtDto): Debt =>
     origin: dto.origin as DebtOrigin,
   });
 
-const toDebtWithStatus = (dto: DebtDto): DebtWithStatus => ({
+export const toDebtWithStatus = (dto: DebtDto): DebtWithStatus => ({
   debt: toDebt(dto),
   status: {
     paidCount: dto.paidCount,

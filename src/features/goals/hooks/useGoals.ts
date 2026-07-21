@@ -19,16 +19,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { Goal } from '@core/entities/Goal';
-import { WithdrawFromGoal } from '@core/use-cases/WithdrawFromGoal';
-import { goalRepository, jarRepository, transactionRepository } from '@infrastructure/container';
+import { goalRepository, jarRepository, goalActions } from '@infrastructure/container';
 import { useTransactionsStore } from '@features/transactions/stores/transactionsStore';
 import { toGoalItem } from '../mappers';
 import type { GoalItem, CreateGoalData, SaveGoalData } from '../types';
 
 const WORKSPACE_ID = 'ws1'; // mock-stage: único workspace sembrado
-const USER_ID = 'u1';
-
-const withdrawFromGoal = new WithdrawFromGoal(goalRepository, jarRepository, transactionRepository);
 
 /** Reconstruye la meta preservando lo que el form no toca (saldo asignado, fecha objetivo). */
 function editGoal(base: Goal, data: SaveGoalData): Goal {
@@ -113,13 +109,9 @@ export function useGoals() {
   // Sacar de una meta mueve dinero de verdad (Metas → Libre): tiene que quedar en el libro, o el
   // pozo —que ahora se deriva— no bajaría. El use-case persiste la meta; reflejamos la que devuelve.
   const handleWithdraw = useCallback(async (id: string, amount: number) => {
-    const { goal, transaction } = await withdrawFromGoal.execute({
-      id: `tx-${Date.now()}`,
-      goalId: id,
-      amount,
-      workspaceId: WORKSPACE_ID,
-      userId: USER_ID,
-    });
+    // El servidor baja el `currentAmount` de la meta y escribe la transferencia Metas → Libre; devuelve
+    // ambos. Reflejamos la meta que devuelve (no restamos a mano) y metemos el movimiento al libro.
+    const { goal, transaction } = await goalActions.withdraw(id, amount);
     await addToLedger(transaction);
     setGoals((g) => g.map((x) => (x.id === id ? goal : x)));
   }, [addToLedger]);

@@ -15,7 +15,7 @@ import type { IGoalRepository } from '@core/ports/IGoalRepository';
 import { request } from './httpClient';
 
 /** Forma exacta del JSON de la API. `progressPercent`/`stars` llegan pero la entidad los recalcula. */
-interface GoalDto {
+export interface GoalDto {
   id: string;
   name: string;
   icon: string;
@@ -25,7 +25,7 @@ interface GoalDto {
   targetDate?: string;
 }
 
-const toGoal = (dto: GoalDto): Goal =>
+export const toGoal = (dto: GoalDto): Goal =>
   new Goal({
     id: dto.id,
     name: dto.name,

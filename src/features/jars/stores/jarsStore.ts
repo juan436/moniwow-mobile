@@ -22,34 +22,6 @@ import type { CreateJarData, SaveJarData } from '../types';
 // Solo para LEER: el repo aún pide el workspace por firma aunque el servidor lo saque del token.
 const WORKSPACE_ID = 'ws1';
 
-function buildCustomJar(data: CreateJarData): Jar {
-  return new Jar({
-    id: `custom-${Date.now()}`,
-    name: data.name,
-    balance: 0,
-    type: 'custom',
-    workspaceId: WORKSPACE_ID,
-    icon: data.iconName,
-    isBlindado: data.isBlindado ?? false,
-    targetAmount: data.targetAmount,
-  });
-}
-
-/** Candado de dominio: solo escribe los campos que las capacidades de la jarra permiten. */
-function applySave(jar: Jar, data: SaveJarData): Jar {
-  const caps = jarCapabilities(jar.type);
-  return new Jar({
-    id: jar.id,
-    name: caps.canRename ? data.name : jar.name,
-    balance: jar.balance,
-    type: jar.type,
-    workspaceId: jar.workspaceId,
-    icon: data.iconName,
-    isBlindado: caps.canToggleBlindado ? (data.isBlindado ?? false) : jar.isBlindado,
-    targetAmount: caps.canEditBudget ? data.targetAmount : jar.targetAmount,
-  });
-}
-
 type JarsState = {
   jars: Jar[];
   isLoading: boolean;
@@ -94,25 +66,27 @@ export const useJarsStore = create<JarsState>((set, get) => ({
     return hydrating;
   },
 
+  // El id, el tipo y el candado de capacidades los pone el SERVIDOR (`POST /jars`). Antes se armaba
+  // la jarra local con `custom-${Date.now()}` y se escribía a ciegas; ahora se muestra la que la API
+  // devuelve, ya con su id real.
   create: (data) => {
-    const jar = buildCustomJar(data);
-    void jarRepository.save(jar);
-    set((s) => ({ jars: [...s.jars, jar] }));
+    void jarActions
+      .create({ name: data.name, icon: data.iconName, isBlindado: data.isBlindado, targetAmount: data.targetAmount })
+      .then((jar) => set((s) => ({ jars: [...s.jars, jar] })));
   },
 
+  // Se mandan todos los campos editables; el candado (qué se puede cambiar por tipo) lo aplica el
+  // servidor y devuelve la jarra ya con su balance real. Reemplazamos la fila con esa.
   save: (data) => {
-    const target = get().jars.find((j) => j.id === data.id);
-    if (!target) return;
-    const updated = applySave(target, data);
-    void jarRepository.update(updated);
-    set((s) => ({ jars: s.jars.map((j) => (j.id === updated.id ? updated : j)) }));
+    void jarActions
+      .update(data.id, { name: data.name, icon: data.iconName, isBlindado: data.isBlindado, targetAmount: data.targetAmount })
+      .then((jar) => set((s) => ({ jars: s.jars.map((j) => (j.id === jar.id ? jar : j)) })));
   },
 
   remove: (id) => {
     const jar = get().jars.find((j) => j.id === id);
-    if (!jar || !jarCapabilities(jar.type).canDelete) return; // jarra protegida → no-op
-    void jarRepository.delete(id);
-    set((s) => ({ jars: s.jars.filter((j) => j.id !== id) }));
+    if (!jar || !jarCapabilities(jar.type).canDelete) return; // guard de UI; el servidor también lo aplica (409)
+    void jarActions.remove(id).then(() => set((s) => ({ jars: s.jars.filter((j) => j.id !== id) })));
   },
 
   // Una transferencia es UN movimiento del libro, no dos balances tecleados: el balance se deriva

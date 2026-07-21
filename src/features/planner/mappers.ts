@@ -7,9 +7,10 @@
  *           **Nada se guarda como "compromiso"**: una deuda con cuotas pendientes (C2) y una regla
  *           recurrente YA son compromisos mensuales — su cuota/ocurrencia en su `dueDate`. Guardar
  *           también la fila era duplicar la colección.
- *           `isOverdue` se deriva de la fecha, no se guarda: un `status: 'atrasado'` en la BD habría
- *           que recalcularlo cada día, y el día que nadie lo haga, la app miente. **Solo pagos y
- *           cuotas se atrasan** — un ingreso que no llegó no es una deuda tuya.
+ *           **`isOverdue` lo decide el SERVIDOR, no este mapper**: la cuota/ocurrencia llega en
+ *           `status.current` (este mes → Mi Mes) o en `status.overdue` (meses pasados sin pagar →
+ *           Atrasados). El caller pasa cuál. Antes se recalculaba con `hasPassed(fecha, hoy)` y una
+ *           cuota del mes con día ya vencido se colaba a Atrasados, contradiciendo al servidor.
  * @returns  AgendaItemDisplay
  */
 import type { Debt } from '@core/entities/Debt';
@@ -62,7 +63,7 @@ export function toCuotaAgendaItem(
   cuota: CuotaStatus,
   paidCount: number,
   jar: JarPresentation,
-  today: Date,
+  isOverdue: boolean,
 ): AgendaItemDisplay {
   return {
     id: `debt-${debt.id}-${cuota.month}`,
@@ -78,7 +79,7 @@ export function toCuotaAgendaItem(
     day: cuota.dueDate.getDate(),
     amount: cuota.amount,
     isPaid: cuota.isPaid,
-    isOverdue: !cuota.isPaid && hasPassed(cuota.dueDate, today),
+    isOverdue,
     filter: 'deudas',
   };
 }
@@ -92,7 +93,7 @@ export function toRecurrenceAgendaItem(
   rec: Recurrence,
   occ: RecurrenceOccurrence,
   jar: JarPresentation,
-  today: Date,
+  isOverdue: boolean,
 ): AgendaItemDisplay {
   const isIncome = rec.type === 'ingreso';
   return {
@@ -107,7 +108,7 @@ export function toRecurrenceAgendaItem(
     day: occ.dueDate.getDate(),
     amount: occ.amount,
     isPaid: occ.isPaid,
-    isOverdue: !isIncome && !occ.isPaid && hasPassed(occ.dueDate, today),
+    isOverdue,
     filter: isIncome ? 'ingresos' : 'gastos',
   };
 }

@@ -25,7 +25,7 @@ import type { IJarRepository } from '@core/ports/IJarRepository';
 import { request } from './httpClient';
 
 /** Forma exacta del JSON de la API. Trae derivados (`isNegative`…) que la entidad recalcula sola. */
-interface JarDto {
+export interface JarDto {
   id: string;
   name: string;
   balance: number;
@@ -36,7 +36,7 @@ interface JarDto {
   targetAmount?: number;
 }
 
-const toJar = (dto: JarDto): Jar =>
+export const toJar = (dto: JarDto): Jar =>
   new Jar({
     id: dto.id,
     name: dto.name,
@@ -60,15 +60,18 @@ export class HttpJarRepository implements IJarRepository {
     return jars.find((j) => j.id === id) ?? null;
   }
 
+  // Escribir jarras NO pasa por el repo: crear/editar/borrar tienen reglas (candado de capacidades,
+  // id del servidor) y van por `IJarActions` (`POST`/`PATCH`/`DELETE /jars`). Estos quedan por el
+  // contrato del port, pero nadie debería llamarlos — si alguien lo hace, que falle a la vista.
   async save(_jar: Jar): Promise<void> {
-    throw new Error('Crear jarra todavía no existe en la API (falta POST /jars)');
+    throw new Error('Crear jarra va por IJarActions.create (POST /jars), no por el repositorio');
   }
 
   async update(_jar: Jar): Promise<void> {
-    throw new Error('Editar jarra todavía no existe en la API (falta PATCH /jars/:id)');
+    throw new Error('Editar jarra va por IJarActions.update (PATCH /jars/:id), no por el repositorio');
   }
 
   async delete(_id: string): Promise<void> {
-    throw new Error('Borrar jarra todavía no existe en la API (falta DELETE /jars/:id)');
+    throw new Error('Borrar jarra va por IJarActions.remove (DELETE /jars/:id), no por el repositorio');
   }
 }

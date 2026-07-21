@@ -48,6 +48,7 @@ function queryString(query: SummaryQuery): string {
   const params = new URLSearchParams();
   if (query.chartMonths !== undefined) params.set('chartMonths', String(query.chartMonths));
   if (query.upcomingLimit !== undefined) params.set('upcomingLimit', String(query.upcomingLimit));
+  if (query.month !== undefined) params.set('month', query.month);
   const qs = params.toString();
   return qs ? `?${qs}` : '';
 }
