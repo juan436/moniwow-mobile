@@ -11,7 +11,7 @@
  * pensado para leerse ("Esa cuota ya está pagada"). No hace falta traducirlos acá.
  */
 import { Transaction } from '@core/entities/Transaction';
-import type { IDebtActions } from '@core/ports/IDebtActions';
+import type { DebtWriteInput, IDebtActions } from '@core/ports/IDebtActions';
 import type { DebtWithStatus } from '@core/types/DebtStatus';
 
 import { toDebtWithStatus, type DebtDto } from './HttpDebtRepository';
@@ -34,5 +34,22 @@ export class HttpDebtActions implements IDebtActions {
   async cancel(debtId: string): Promise<DebtWithStatus> {
     const dto = await request<DebtDto>(`/debts/${debtId}/cancel`, { method: 'POST' });
     return toDebtWithStatus(dto);
+  }
+
+  /** Registra una deuda desde el form. El total, el id y el calendario los pone el servidor. */
+  async create(input: DebtWriteInput): Promise<DebtWithStatus> {
+    const dto = await request<DebtDto>('/debts', { method: 'POST', body: input });
+    return toDebtWithStatus(dto);
+  }
+
+  /** Edita una deuda. Preserva `createdAt`/`cancelledAt`; devuelve el estado recalculado. */
+  async update(debtId: string, input: DebtWriteInput): Promise<DebtWithStatus> {
+    const dto = await request<DebtDto>(`/debts/${debtId}`, { method: 'PATCH', body: input });
+    return toDebtWithStatus(dto);
+  }
+
+  /** Borra una deuda sin pagos (con pagos la API responde 409). */
+  async remove(debtId: string): Promise<void> {
+    await request<void>(`/debts/${debtId}`, { method: 'DELETE' });
   }
 }

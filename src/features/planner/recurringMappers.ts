@@ -14,18 +14,11 @@
  */
 import { Debt } from '@core/entities/Debt';
 import { Recurrence } from '@core/entities/Recurrence';
-import { monthKey } from '@core/utils/monthKey';
+import type { DebtWriteInput } from '@core/ports/IDebtActions';
+import type { RecurrenceWriteInput } from '@core/ports/IRecurrenceActions';
 import { asRecurringJar } from './jarOptions';
 import type { JarPresentation } from '@shared/styles';
 import type { CreateRecurringData, RecurringDisplay } from './types';
-
-const WORKSPACE_ID = 'ws1';
-
-/** 'YYYY-MM' + n meses. */
-function addMonths(month: string, n: number): string {
-  const [year, m] = month.split('-').map(Number);
-  return monthKey(new Date(year, m - 1 + n, 1));
-}
 
 /** Cuántos meses cubre [start, end] inclusive. */
 function monthsInclusive(start: string, end: string): number {
@@ -34,28 +27,31 @@ function monthsInclusive(start: string, end: string): number {
   return (ey - sy) * 12 + (em - sm) + 1;
 }
 
-export function buildRecurrence(d: CreateRecurringData, id: string, startMonth: string): Recurrence {
-  return new Recurrence({
-    id, name: d.name, amount: d.amount,
+/**
+ * Form del wizard → cuerpo de `POST`/`PATCH /recurrences`. Solo transporta lo que el usuario eligió:
+ * el `startMonth`/`endMonth`, el id y el tipo de entidad los decide el servidor (la lógica de
+ * `buildRecurrence` se mudó allá). El tipo sale del filtro (ingresos → ingreso, si no gasto).
+ */
+export function toRecurrenceWriteInput(d: CreateRecurringData): RecurrenceWriteInput {
+  return {
+    name: d.name, amount: d.amount, day: d.day,
     type: d.filter === 'ingresos' ? 'ingreso' : 'gasto',
-    dayOfMonth: d.day, jarId: d.jarra, startMonth,
-    endMonth: d.frecuencia === 'cuotas' ? addMonths(startMonth, d.cuotas - 1) : undefined,
-    workspaceId: WORKSPACE_ID,
-  });
+    jarId: d.jarra, frecuencia: d.frecuencia, cuotas: d.cuotas,
+  };
 }
 
 /**
- * Único pago: `cuotas` queda ausente y el total ES el monto (no se multiplica por nada — con
- * `cuotas: 0` el total daría 0). A plazos: total = cuota × cuotas, como siempre.
+ * Form del wizard → cuerpo de `POST`/`PATCH /debts`. `cuota` es el monto MENSUAL; el TOTAL
+ * (`cuota × cuotas`, o la cuota sola con único pago) lo calcula el servidor. `cuotas`/`cuotasPagadas`
+ * solo viajan a plazos (con único pago no aplican).
  */
-export function buildDebt(d: CreateRecurringData, id: string, createdAt: Date, origin: Debt['origin']): Debt {
-  return new Debt({
-    id, description: d.name,
-    amount: d.unicoPago ? d.amount : d.amount * d.cuotas,
+export function toDebtWriteInput(d: CreateRecurringData): DebtWriteInput {
+  return {
+    name: d.name, cuota: d.amount, day: d.day, unicoPago: d.unicoPago,
     cuotas: d.unicoPago ? undefined : d.cuotas,
     cuotasPagadas: d.unicoPago ? undefined : d.cuotasPagadas,
-    dueDay: d.day, sourceJarId: d.jarra, workspaceId: WORKSPACE_ID, createdAt, origin,
-  });
+    sourceJarId: d.jarra,
+  };
 }
 
 export function toRecurringDisplay(rec: Recurrence, jar: JarPresentation, paymentCount: number, thisMonth: string): RecurringDisplay {

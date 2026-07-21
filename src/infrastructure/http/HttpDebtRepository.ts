@@ -102,15 +102,17 @@ export class HttpDebtRepository implements IDebtRepository {
     return found ? toDebt(found) : null;
   }
 
+  // Escribir deudas va por `IDebtActions` (POST/PATCH/DELETE /debts + pay-cuota + cancel), no por el
+  // repo: el id/total los pone el servidor y hay reglas. Quedan por el contrato del port.
   async save(_debt: Debt): Promise<void> {
-    throw new Error('Crear deuda todavía no existe en la API (falta POST /debts)');
+    throw new Error('Crear deuda va por IDebtActions.create (POST /debts), no por el repositorio');
   }
 
   async update(_debt: Debt): Promise<void> {
-    throw new Error('Editar o cancelar deuda todavía no existe en la API (falta PATCH /debts/:id)');
+    throw new Error('Editar deuda va por IDebtActions.update (PATCH /debts/:id), no por el repositorio');
   }
 
   async delete(_id: string): Promise<void> {
-    throw new Error('Borrar deuda todavía no existe en la API (falta DELETE /debts/:id)');
+    throw new Error('Borrar deuda va por IDebtActions.remove (DELETE /debts/:id), no por el repositorio');
   }
 }

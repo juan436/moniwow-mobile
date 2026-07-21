@@ -15,28 +15,21 @@
  */
 import { useCallback, useMemo } from 'react';
 
-import { Debt } from '@core/entities/Debt';
-import { Recurrence } from '@core/entities/Recurrence';
 import { monthKey } from '@core/utils/monthKey';
-import { debtRepository, recurrenceRepository, debtActions, recurrenceActions } from '@infrastructure/container';
+import { debtActions, recurrenceActions } from '@infrastructure/container';
 import { useTransactionsStore } from '@features/transactions/stores/transactionsStore';
-import { buildDebt, buildRecurrence, toDebtRecurringDisplay, toRecurringDisplay } from '../recurringMappers';
+import {
+  toDebtRecurringDisplay,
+  toDebtWriteInput,
+  toRecurrenceWriteInput,
+  toRecurringDisplay,
+} from '../recurringMappers';
 import type { DebtWithStatus } from '@core/types/DebtStatus';
 import type { RecurrenceWithStatus } from '@core/types/RecurrenceStatus';
 import type { JarPresentation } from '@shared/styles';
 import type { CreateRecurringData, SaveRecurringData, RecurringActions, RecurringDisplay } from '../types';
 
-const WORKSPACE_ID = 'ws1';
-
 type Setter<T> = (fn: (prev: T[]) => T[]) => void;
-
-/**
- * Una entidad recién creada aún no tiene estado servido: sus ocurrencias las deriva el servidor al
- * volver a leer. Se mete vacío para no inventar cuotas que nadie calculó — y hoy este camino ni
- * siquiera llega, porque `save()` lanza mientras falte `POST /recurrences`.
- */
-const NO_RECURRENCE_STATUS = { overdue: [], current: null };
-const NO_DEBT_STATUS = { paidCount: 0, totalCuotas: 0, remaining: 0, isPaid: false, overdue: [], current: null };
 
 export function useRecurrentes(
   recurrences: RecurrenceWithStatus[],
@@ -56,31 +49,29 @@ export function useRecurrentes(
       transactions.filter((t) => t.debtId === d.id).length, thisMonth)),
   ], [recurrences, debts, jarOf, transactions, thisMonth]);
 
+  // El id, el total y el calendario (deuda) / `startMonth`+`endMonth` (regla) los arma el SERVIDOR
+  // desde el form; se muestra la entidad que devuelve, ya con su estado del libro.
   const onCreate = useCallback(async (d: CreateRecurringData) => {
     if (d.filter === 'deudas') {
-      const debt = buildDebt(d, `debt-${Date.now()}`, new Date(), 'cuotas');
-      await debtRepository.save(debt);
-      setDebts((prev) => [...prev, { debt, status: NO_DEBT_STATUS }]);
+      const created = await debtActions.create(toDebtWriteInput(d));
+      setDebts((prev) => [...prev, created]);
     } else {
-      const rec = buildRecurrence(d, `rec-${Date.now()}`, monthKey(new Date()));
-      await recurrenceRepository.save(rec);
-      setRecurrences((prev) => [...prev, { recurrence: rec, status: NO_RECURRENCE_STATUS }]);
+      const created = await recurrenceActions.create(toRecurrenceWriteInput(d));
+      setRecurrences((prev) => [...prev, created]);
     }
   }, [setRecurrences, setDebts]);
 
+  // Editar preserva `createdAt`/`startMonth`/`cancelledAt` del lado servidor: ya no hace falta buscar
+  // la entidad previa. Se reemplaza la fila con la que devuelve la API.
   const onSave = useCallback(async (d: SaveRecurringData) => {
     if (d.filter === 'deudas') {
-      const prev = debts.find((x) => x.debt.id === d.id);
-      const debt = buildDebt(d, d.id, prev?.debt.createdAt ?? new Date(), prev?.debt.origin ?? 'cuotas');
-      await debtRepository.update(debt);
-      setDebts((list) => list.map((x) => (x.debt.id === d.id ? { ...x, debt } : x)));
+      const updated = await debtActions.update(d.id, toDebtWriteInput(d));
+      setDebts((list) => list.map((x) => (x.debt.id === d.id ? updated : x)));
     } else {
-      const prev = recurrences.find((x) => x.recurrence.id === d.id);
-      const rec = buildRecurrence(d, d.id, prev?.recurrence.startMonth ?? monthKey(new Date()));
-      await recurrenceRepository.update(rec);
-      setRecurrences((list) => list.map((x) => (x.recurrence.id === d.id ? { ...x, recurrence: rec } : x)));
+      const updated = await recurrenceActions.update(d.id, toRecurrenceWriteInput(d));
+      setRecurrences((list) => list.map((x) => (x.recurrence.id === d.id ? updated : x)));
     }
-  }, [debts, recurrences, setRecurrences, setDebts]);
+  }, [setRecurrences, setDebts]);
 
   /**
    * Eliminar un compromiso. **La app decide, el usuario no elige**: le pregunta al libro si tiene
@@ -98,7 +89,7 @@ export function useRecurrentes(
         const updated = await recurrenceActions.cancel(id);
         setRecurrences((list) => list.map((r) => (r.recurrence.id === id ? updated : r)));
       } else {
-        await recurrenceRepository.delete(id);
+        await recurrenceActions.remove(id);
         setRecurrences((list) => list.filter((r) => r.recurrence.id !== id));
       }
       return;
@@ -108,7 +99,7 @@ export function useRecurrentes(
       const updated = await debtActions.cancel(id);
       setDebts((list) => list.map((d) => (d.debt.id === id ? updated : d)));
     } else {
-      await debtRepository.delete(id);
+      await debtActions.remove(id);
       setDebts((list) => list.filter((x) => x.debt.id !== id));
     }
   }, [recurrences, transactions, setRecurrences, setDebts]);

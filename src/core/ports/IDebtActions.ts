@@ -17,11 +17,29 @@
  *
  * **`cancel` también es acción, no `update()`**: dónde corta (última cuota vencida) es una regla que
  * vive en el servidor. Devuelve la deuda con su estado ya recalculado para reemplazar la fila local.
+ *
+ * **`create`/`update` reciben el FORM, no la entidad**: el total (`cuota × cuotas`), el id y el
+ * calendario (`createdAt`) los arma el servidor — la lógica de `buildDebt` se mudó allá. Devuelven la
+ * deuda con su estado del libro.
  */
 import { Transaction } from '../entities/Transaction';
 import type { DebtWithStatus } from '../types/DebtStatus';
 
+/** Datos del wizard. `cuota` es el monto MENSUAL; el total lo calcula el servidor. */
+export interface DebtWriteInput {
+  name: string;
+  cuota: number;
+  day: number;
+  unicoPago: boolean;
+  cuotas?: number;
+  cuotasPagadas?: number;
+  sourceJarId: string;
+}
+
 export interface IDebtActions {
   payCuota(debtId: string, cuotaMonth: string): Promise<Transaction>;
   cancel(debtId: string): Promise<DebtWithStatus>;
+  create(input: DebtWriteInput): Promise<DebtWithStatus>;
+  update(debtId: string, input: DebtWriteInput): Promise<DebtWithStatus>;
+  remove(debtId: string): Promise<void>;
 }

@@ -87,17 +87,17 @@ export class HttpRecurrenceRepository implements IRecurrenceRepository {
     return found ? toRecurrence(found) : null;
   }
 
+  // Escribir recurrencias va por `IRecurrenceActions` (POST/PATCH/DELETE /recurrences + confirm +
+  // cancel), no por el repo: el id y `startMonth`/`endMonth` los pone el servidor. Quedan por contrato.
   async save(_recurrence: Recurrence): Promise<void> {
-    throw new Error('Crear compromiso recurrente todavía no existe en la API (falta POST /recurrences)');
+    throw new Error('Crear recurrente va por IRecurrenceActions.create (POST /recurrences), no por el repositorio');
   }
 
   async update(_recurrence: Recurrence): Promise<void> {
-    throw new Error(
-      'Editar o cancelar un recurrente todavía no existe en la API (falta PATCH /recurrences/:id)',
-    );
+    throw new Error('Editar recurrente va por IRecurrenceActions.update (PATCH /recurrences/:id), no por el repositorio');
   }
 
   async delete(_id: string): Promise<void> {
-    throw new Error('Borrar compromiso recurrente todavía no existe en la API (falta DELETE /recurrences/:id)');
+    throw new Error('Borrar recurrente va por IRecurrenceActions.remove (DELETE /recurrences/:id), no por el repositorio');
   }
 }
