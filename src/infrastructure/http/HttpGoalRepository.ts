@@ -48,15 +48,17 @@ export class HttpGoalRepository implements IGoalRepository {
     return goals.find((g) => g.id === id) ?? null;
   }
 
+  // Escribir metas va por `IGoalActions` (POST/PATCH/DELETE /goals + /deposit + /withdraw), no por el
+  // repo: el id lo pone el servidor y Aportar/Sacrificio son reglas. Quedan por el contrato del port.
   async save(_goal: Goal): Promise<void> {
-    throw new Error('Crear meta todavía no existe en la API (falta POST /goals)');
+    throw new Error('Crear meta va por IGoalActions.create (POST /goals), no por el repositorio');
   }
 
   async update(_goal: Goal): Promise<void> {
-    throw new Error('Editar meta todavía no existe en la API (falta PATCH /goals/:id)');
+    throw new Error('Editar meta va por IGoalActions.update (PATCH /goals/:id), no por el repositorio');
   }
 
   async delete(_id: string): Promise<void> {
-    throw new Error('Borrar meta todavía no existe en la API (falta DELETE /goals/:id)');
+    throw new Error('Borrar meta va por IGoalActions.remove (DELETE /goals/:id), no por el repositorio');
   }
 }

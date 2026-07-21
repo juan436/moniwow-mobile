@@ -1,15 +1,16 @@
 /**
  * IGoalActions — Port (acción)
  *
- * @what     Sacar dinero de una meta (Slider de Sacrificio, M08). Es una ACCIÓN, no un `update()`.
- * @receives goalId · amount
- * @processes Lo implementa `HttpGoalActions` contra `POST /goals/:id/withdraw`.
- * @returns  Promise<WithdrawResult> — la meta con su `currentAmount` ya bajado **y** el movimiento
- *           escrito (Metas → Libre), para meterlo al libro local.
+ * @what     Escrituras de meta server-authoritative: CRUD (crear/editar/borrar), Aportar y el Slider
+ *           de Sacrificio (sacar).
+ * @receives Según el método.
+ * @processes Lo implementa `HttpGoalActions` contra `POST/PATCH/DELETE /goals` + `/deposit` + `/withdraw`.
+ * @returns  Goal (create/update/deposit) · void (remove) · WithdrawResult (withdraw).
  *
- * Mismo motivo que [[IDebtActions]]: sacar de una meta mueve dinero de verdad y baja un dato guardado
- * de la meta a la vez — es una regla, no dos escrituras de fila que el cliente arme por su cuenta. El
- * `id` del movimiento y la fecha los pone el servidor; `workspaceId`/`userId` salen del token.
+ * **Por qué no `IGoalRepository`:** el id lo pone el servidor (mobile no genera UUID); `withdraw` mueve
+ * dinero de verdad (Metas → Libre) además de bajar el saldo asignado; `deposit` reasigna dentro del
+ * pozo. Son reglas, no escrituras de fila que el cliente arme. `create`/`update`/`deposit` devuelven la
+ * meta con su estado del servidor; `withdraw` además el movimiento, para el libro local.
  */
 import { Goal } from '../entities/Goal';
 import { Transaction } from '../entities/Transaction';
@@ -19,6 +20,22 @@ export interface WithdrawResult {
   transaction: Transaction;
 }
 
+export interface CreateGoalInput {
+  name: string;
+  icon: string;
+  targetAmount: number;
+}
+
+export interface UpdateGoalInput {
+  name?: string;
+  icon?: string;
+  targetAmount?: number;
+}
+
 export interface IGoalActions {
+  create(input: CreateGoalInput): Promise<Goal>;
+  update(goalId: string, input: UpdateGoalInput): Promise<Goal>;
+  remove(goalId: string): Promise<void>;
+  deposit(goalId: string, amount: number): Promise<Goal>;
   withdraw(goalId: string, amount: number): Promise<WithdrawResult>;
 }

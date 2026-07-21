@@ -26,21 +26,6 @@ import type { GoalItem, CreateGoalData, SaveGoalData } from '../types';
 
 const WORKSPACE_ID = 'ws1'; // mock-stage: único workspace sembrado
 
-/** Reconstruye la meta preservando lo que el form no toca (saldo asignado, fecha objetivo). */
-function editGoal(base: Goal, data: SaveGoalData): Goal {
-  return new Goal({
-    id: base.id, name: data.name, icon: data.icon, targetAmount: data.targetAmount,
-    currentAmount: base.currentAmount, workspaceId: base.workspaceId, targetDate: base.targetDate,
-  });
-}
-/** Reasigna el saldo del pozo (Aportar): cambia solo `currentAmount`, no el libro. */
-function reassign(goal: Goal, currentAmount: number): Goal {
-  return new Goal({
-    id: goal.id, name: goal.name, icon: goal.icon, targetAmount: goal.targetAmount,
-    currentAmount, workspaceId: goal.workspaceId, targetDate: goal.targetDate,
-  });
-}
-
 export function useGoals() {
   const [goals, setGoals] = useState<Goal[]>([]);
   const [poolTotal, setPoolTotal] = useState(0);
@@ -82,28 +67,23 @@ export function useGoals() {
   const handleCardPress = useCallback((goal: GoalItem) => setSelectedGoal(goal), []);
   const handleCloseEdit = useCallback(() => setSelectedGoal(null), []);
 
+  // El id y el `currentAmount` inicial (0) los pone el SERVIDOR (`POST /goals`); se muestra la meta que
+  // devuelve, ya con su id real. Antes se armaba con `goal-${Date.now()}` y se escribía a ciegas.
   const handleCreate = useCallback((data: CreateGoalData) => {
-    const goal = new Goal({
-      id: `goal-${Date.now()}`, name: data.name, icon: data.icon,
-      targetAmount: data.targetAmount, currentAmount: 0, workspaceId: WORKSPACE_ID,
-    });
-    void goalRepository.save(goal);
-    setGoals((g) => [...g, goal]);
+    void goalActions
+      .create({ name: data.name, icon: data.icon, targetAmount: data.targetAmount })
+      .then((goal) => setGoals((g) => [...g, goal]));
   }, []);
 
+  // Editar solo cambia nombre/icono/objetivo; el saldo asignado y la fecha los preserva el servidor.
   const handleSave = useCallback((data: SaveGoalData) => {
-    setGoals((g) => {
-      const base = g.find((x) => x.id === data.id);
-      if (!base) return g;
-      const updated = editGoal(base, data);
-      void goalRepository.update(updated);
-      return g.map((x) => (x.id === updated.id ? updated : x));
-    });
+    void goalActions
+      .update(data.id, { name: data.name, icon: data.icon, targetAmount: data.targetAmount })
+      .then((goal) => setGoals((g) => g.map((x) => (x.id === goal.id ? goal : x))));
   }, []);
 
   const handleDelete = useCallback((id: string) => {
-    void goalRepository.delete(id);
-    setGoals((g) => g.filter((x) => x.id !== id));
+    void goalActions.remove(id).then(() => setGoals((g) => g.filter((x) => x.id !== id)));
   }, []);
 
   // Sacar de una meta mueve dinero de verdad (Metas → Libre): tiene que quedar en el libro, o el
@@ -116,14 +96,11 @@ export function useGoals() {
     setGoals((g) => g.map((x) => (x.id === id ? goal : x)));
   }, [addToLedger]);
 
+  // Aportar reasigna dentro del pozo (sube `currentAmount`, no toca el libro). Lo hace el servidor y
+  // devuelve la meta con el nuevo saldo asignado.
   const handleDeposit = useCallback((id: string, amount: number) => {
-    setGoals((g) => {
-      const base = g.find((x) => x.id === id);
-      if (!base) return g;
-      const updated = reassign(base, base.currentAmount + amount);
-      void goalRepository.update(updated);
-      return g.map((x) => (x.id === id ? updated : x));
-    });
+    void goalActions.deposit(id, amount).then((goal) =>
+      setGoals((g) => g.map((x) => (x.id === id ? goal : x))));
   }, []);
 
   return {
