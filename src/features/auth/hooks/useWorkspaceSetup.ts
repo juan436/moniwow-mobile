@@ -1,14 +1,14 @@
 /**
  * useWorkspaceSetup — Hook
  *
- * @what     Orquesta la selección y creación del workspace en el primer uso.
+ * @what     Orquesta la selección y creación/unión del workspace en el primer uso.
  * @receives Ningún parámetro.
- * @processes Llama a `POST /workspaces`, **que es quien crea el espacio de verdad**: le pone nombre
- *            según el modo, siembra las 4 jarras base y devuelve un token nuevo (el adapter lo
- *            guarda). Antes esto llamaba al use-case local `CreateWorkspace`, que fabricaba una
- *            entidad con `ownerId: 'user_local'` y **la tiraba**: elegías modo, la pantalla avanzaba
- *            y no había pasado nada. Maneja estado, loading y errores del onboarding.
- * @returns  { selected, isLoading, error, handleSelect, handleConfirm }
+ * @processes `selected: 'individual' | 'hogar'` llama a `POST /workspaces` (crea, siembra las 4
+ *            jarras base y devuelve token nuevo). `selected: 'join'` llama a `POST /workspaces/join`
+ *            con el código escrito en `inviteCode` (une a un hogar existente, también token nuevo).
+ *            Ambos casos los resuelve `workspaceActions`, que guarda el token — el hook solo decide
+ *            cuál de los dos llamar y valida el código antes de mandarlo.
+ * @returns  { selected, inviteCode, isLoading, error, handleSelect, handleChangeCode, handleConfirm }
  * @props    —
  */
 import { useState, useCallback } from 'react';
@@ -16,8 +16,11 @@ import { useState, useCallback } from 'react';
 import type { WorkspaceType } from '@core/entities/Workspace';
 import { workspaceActions } from '@infrastructure/container';
 
+type Selection = WorkspaceType | 'join';
+
 type WorkspaceSetupState = {
-  selected: WorkspaceType | null;
+  selected: Selection | null;
+  inviteCode: string;
   isLoading: boolean;
   error: string | null;
 };
@@ -25,12 +28,17 @@ type WorkspaceSetupState = {
 export function useWorkspaceSetup() {
   const [state, setState] = useState<WorkspaceSetupState>({
     selected: null,
+    inviteCode: '',
     isLoading: false,
     error: null,
   });
 
-  const handleSelect = useCallback((type: WorkspaceType) => {
-    setState((prev) => ({ ...prev, selected: type, error: null }));
+  const handleSelect = useCallback((id: Selection) => {
+    setState((prev) => ({ ...prev, selected: id, error: null }));
+  }, []);
+
+  const handleChangeCode = useCallback((inviteCode: string) => {
+    setState((prev) => ({ ...prev, inviteCode, error: null }));
   }, []);
 
   const handleConfirm = useCallback(async (): Promise<boolean> => {
@@ -38,25 +46,35 @@ export function useWorkspaceSetup() {
       setState((prev) => ({ ...prev, error: 'Selecciona un modo para continuar' }));
       return false;
     }
+    if (state.selected === 'join' && !state.inviteCode.trim()) {
+      setState((prev) => ({ ...prev, error: 'Escribe el código que te compartieron' }));
+      return false;
+    }
 
     try {
       setState((prev) => ({ ...prev, isLoading: true, error: null }));
-      await workspaceActions.create(state.selected);
+      if (state.selected === 'join') {
+        await workspaceActions.join(state.inviteCode.trim());
+      } else {
+        await workspaceActions.create(state.selected);
+      }
       return true;
     } catch (e) {
-      const message = e instanceof Error ? e.message : 'Error al crear el espacio';
+      const message = e instanceof Error ? e.message : 'Error al continuar';
       setState((prev) => ({ ...prev, error: message, isLoading: false }));
       return false;
     } finally {
       setState((prev) => ({ ...prev, isLoading: false }));
     }
-  }, [state.selected]);
+  }, [state.selected, state.inviteCode]);
 
   return {
     selected: state.selected,
+    inviteCode: state.inviteCode,
     isLoading: state.isLoading,
     error: state.error,
     handleSelect,
+    handleChangeCode,
     handleConfirm,
   };
 }

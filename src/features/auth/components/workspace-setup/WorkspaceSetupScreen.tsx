@@ -3,9 +3,10 @@
  *
  * @what     Paso 2 del registro: elegir cómo se usa MoniWow. Layout hero+sheet.
  * @receives Ninguna prop — se usa como screen desde app/workspace-setup.tsx.
- * @processes Delega selección y confirmación a useWorkspaceSetup. Al confirmar entra a la app
+ * @processes Delega selección y confirmación a useWorkspaceSetup. La opción "join" muestra un campo
+ *           de código de invitación en vez de crear un espacio nuevo. Al confirmar entra a la app
  *           (/(tabs)): la cuenta ya existe, este era el último paso del alta.
- * @returns  JSX — pantalla hero+bottom-sheet con 2 opciones de workspace y footer CTA.
+ * @returns  JSX — pantalla hero+bottom-sheet con 3 opciones de workspace y footer CTA.
  * @props    —
  */
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
@@ -13,7 +14,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 
 import { useWorkspaceSetup } from '@features/auth/hooks/useWorkspaceSetup';
-import { MoniButton, MoniLogo } from '@shared/components';
+import { MoniButton, MoniInput, MoniLogo } from '@shared/components';
 import { colors, typography, spacing, radius, shadows } from '@shared/styles';
 import { WorkspaceOptionCard } from './WorkspaceOptionCard';
 import type { WorkspaceOption } from './WorkspaceOptionCard';
@@ -31,11 +32,19 @@ const OPTIONS: WorkspaceOption[] = [
     title: 'Con mi familia',
     description: 'Espacio compartido con tu pareja o hijos. Tú eres el Representante.',
   },
+  {
+    id: 'join',
+    icon: 'vpn-key',
+    title: 'Ya tengo un hogar',
+    description: 'Únete con el código que te compartió tu familia.',
+  },
 ];
 
 export function WorkspaceSetupScreen() {
   const insets = useSafeAreaInsets();
-  const { selected, isLoading, error, handleSelect, handleConfirm } = useWorkspaceSetup();
+  const { selected, inviteCode, isLoading, error, handleSelect, handleChangeCode, handleConfirm } =
+    useWorkspaceSetup();
+  const canStart = selected === 'join' ? inviteCode.trim().length > 0 : !!selected;
 
   async function handleStart() {
     const success = await handleConfirm();
@@ -63,11 +72,19 @@ export function WorkspaceSetupScreen() {
               onPress={handleSelect}
             />
           ))}
+          {selected === 'join' ? (
+            <MoniInput
+              value={inviteCode}
+              onChangeText={handleChangeCode}
+              placeholder="Ej. A1B2C3"
+              label="Código de invitación"
+            />
+          ) : null}
           {error ? <Text style={styles.errorText}>{error}</Text> : null}
         </ScrollView>
 
         <View style={[styles.footer, { paddingBottom: insets.bottom + spacing.stackLg }]}>
-          <MoniButton label="Comenzar" onPress={handleStart} disabled={!selected || isLoading} />
+          <MoniButton label="Comenzar" onPress={handleStart} disabled={!canStart || isLoading} />
         </View>
       </View>
     </View>

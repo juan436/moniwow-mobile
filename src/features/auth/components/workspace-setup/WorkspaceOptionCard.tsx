@@ -4,8 +4,8 @@ import type { WorkspaceType } from '@core/entities/Workspace';
 import { colors, typography, spacing, radius, shadows } from '@shared/styles';
 
 export type WorkspaceOption = {
-  id: WorkspaceType;
-  icon: 'person' | 'group';
+  id: WorkspaceType | 'join';
+  icon: 'person' | 'group' | 'vpn-key';
   title: string;
   description: string;
 };
@@ -13,7 +13,7 @@ export type WorkspaceOption = {
 type WorkspaceOptionCardProps = {
   option: WorkspaceOption;
   active: boolean;
-  onPress: (id: WorkspaceType) => void;
+  onPress: (id: WorkspaceType | 'join') => void;
 };
 
 export function WorkspaceOptionCard({ option, active, onPress }: WorkspaceOptionCardProps) {
