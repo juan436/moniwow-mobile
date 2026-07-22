@@ -2,11 +2,10 @@
  * container — Composition root
  *
  * @what     Punto único donde se instancian los adapters concretos y se exponen como sus PORTS.
- *           Las features/use-cases dependen de estas interfaces, no de la implementación JSON.
- * @processes **F6 casi cerrada**: los 7 dominios de datos hablan con la API real. Solo `workspaces`
- *           sigue en JSON, porque la API no tiene ese controller (ver la nota abajo). Cambiar de
- *           origen fue cambiar SOLO estas líneas (`JsonXRepository` → `HttpXRepository`): ni los
- *           hooks ni las pantallas se enteraron.
+ *           Las features/use-cases dependen de estas interfaces, no de una implementación concreta.
+ * @processes **F6 cerrada**: los 8 dominios hablan con la API real, el andamiaje JSON (`json/`, `db/`)
+ *           se borró — ya no hacía falta ni de repuesto. Cambiar de origen fue cambiar SOLO estas
+ *           líneas (`JsonXRepository` → `HttpXRepository`): ni los hooks ni las pantallas se enteraron.
  *
  *           **Lectura sí, escritura no**: los adapters HTTP leen, pero `save`/`update`/`delete`
  *           lanzan nombrando el endpoint que falta. Es deliberado — el adapter JSON los aceptaba y
@@ -21,7 +20,6 @@ import { IDebtRepository } from '@core/ports/IDebtRepository';
 import { IListRepository } from '@core/ports/IListRepository';
 import { IRecurrenceRepository } from '@core/ports/IRecurrenceRepository';
 import { ISummaryRepository } from '@core/ports/ISummaryRepository';
-import { IWorkspaceRepository } from '@core/ports/IWorkspaceRepository';
 import { IDebtActions } from '@core/ports/IDebtActions';
 import { IRecurrenceActions } from '@core/ports/IRecurrenceActions';
 import { IJarActions } from '@core/ports/IJarActions';
@@ -30,7 +28,6 @@ import { ITransactionActions } from '@core/ports/ITransactionActions';
 import { IGoalActions } from '@core/ports/IGoalActions';
 import { IWorkspaceActions } from '@core/ports/IWorkspaceActions';
 
-import { JsonWorkspaceRepository } from './json/JsonWorkspaceRepository';
 import { HttpAuthRepository } from './http/HttpAuthRepository';
 import { HttpJarRepository } from './http/HttpJarRepository';
 import { HttpTransactionRepository } from './http/HttpTransactionRepository';
@@ -62,12 +59,6 @@ export const recurrenceRepository: IRecurrenceRepository = new HttpRecurrenceRep
 // 359 transacciones en cada arranque. No tiene adapter JSON: nació después de que la API mandara.
 export const summaryRepository: ISummaryRepository = new HttpSummaryRepository();
 
-// **`workspaces` sigue en JSON y no por olvido: la API no tiene ese controller.** Es el agujero que
-// documenta [[planes/moniwow-multitenant]] — `POST /auth/register` deja `workspaceId: ''` y no hay
-// endpoint para crear el espacio. Mientras exista este JSON, el registro de un amigo "funciona" y
-// entra a un workspace que no existe. Migrarlo es F2 de ese plan, no de F6.
-export const workspaceRepository: IWorkspaceRepository = new JsonWorkspaceRepository();
-
 // Auth ya NO es mock: habla con la API. `HttpAuthRepository` añade `me()` y `logout()` sobre el
 // port, que `AuthProvider` necesita para restaurar y cerrar sesión.
 export const authRepository = new HttpAuthRepository() satisfies IAuthRepository;
@@ -87,7 +78,7 @@ export const goalActions: IGoalActions = new HttpGoalActions();
 // la lista y el de cada ítem los pone el servidor. El `listRepository` de arriba queda solo para leer.
 export const listActions: IListActions = new HttpListActions();
 
-// Crear el espacio también es acción: siembra las 4 jarras base y devuelve un token NUEVO (el viejo
-// lleva `workspaceId: ''` dentro). El `workspaceRepository` JSON de arriba sigue ahí solo para las
-// lecturas que nadie ha migrado — `POST /workspaces` ya es real.
+// Crear el espacio y unirse a uno también son acciones: ambas siembran/cambian estado del lado
+// servidor y devuelven un token NUEVO (el viejo lleva `workspaceId: ''` o el de antes congelado
+// dentro). No hay `workspaceRepository`: mobile nunca lee un workspace suelto, solo crea o se une.
 export const workspaceActions: IWorkspaceActions = new HttpWorkspaceActions();
