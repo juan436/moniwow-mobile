@@ -5,6 +5,8 @@
  * @receives jars: JarOption[] — jarras reales del workspace (M03: 4 base + N personalizadas).
  *           onListPurchased?: (listId) => void — se llama al confirmar si la compra se armó desde una
  *           lista, para chulear sus ítems (lo inyecta el composition root con listsStore.markPurchased).
+ *           onWritten?: () => void — se llama tras persistir, para que el composition root refresque
+ *           `jarsStore` (FB-013: el balance lo suma el servidor, sin esto queda viejo hasta recargar).
  * @processes Maneja string del monto (applyKey), concepto, ítems en borrador (solo nombre), jarra
  *           seleccionada y paso activo. El paso Detalle (ítems) es opcional: se avanza con Continuar
  *           u Omitir por igual. Default de selectedJar: "libre" si existe, si no la primera jarra.
@@ -34,7 +36,7 @@ function defaultJarId(jars: JarOption[]): string {
   return jars.find(j => j.type === 'libre')?.id ?? jars[0]?.id ?? '';
 }
 
-export function useQuickAdd(jars: JarOption[], onListPurchased?: (listId: string) => void) {
+export function useQuickAdd(jars: JarOption[], onListPurchased?: (listId: string) => void, onWritten?: () => void) {
   const [amount,      setAmount]      = useState('0');
   const [concept,     setConcept]     = useState('');
   const [items,       setItems]       = useState<DraftPurchaseItem[]>([]);
@@ -94,12 +96,13 @@ export function useQuickAdd(jars: JarOption[], onListPurchased?: (listId: string
       });
 
       await addToLedger(transaction);
+      onWritten?.(); // el balance de la jarra lo suma el servidor: hay que volver a preguntarle
       if (importedListId) onListPurchased?.(importedListId);
       resetForm();
     } catch {
       setError('No se pudo registrar el gasto — intenta de nuevo');
     }
-  }, [amount, concept, items, selectedJar, importedListId, onListPurchased, addToLedger, resetForm]);
+  }, [amount, concept, items, selectedJar, importedListId, onListPurchased, onWritten, addToLedger, resetForm]);
 
   const handleBack = useCallback(() => {
     setStep(prev => (prev > 1 ? (prev - 1) as Step : 1));

@@ -19,6 +19,6 @@
  */
 
 /** IP de la PC en la red local. Cambia si el router reparte otra: verificar con `ipconfig`. */
-const LAN_FALLBACK = 'http://192.168.1.3:3000';
+const LAN_FALLBACK = 'http://192.168.1.2:3000';
 
 export const API_URL = process.env.EXPO_PUBLIC_API_URL ?? LAN_FALLBACK;

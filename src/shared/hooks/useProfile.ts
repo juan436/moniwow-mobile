@@ -1,40 +1,42 @@
 /**
  * useProfile — Hook
  *
- * @what     Provee datos de presentación del usuario activo para el avatar/menú. Mock hasta backend.
+ * @what     Provee datos de presentación del usuario activo para el avatar/menú/Editar perfil.
  * @receives Ninguno.
- * @processes Deriva `name` (nombre completo) e `initials` (avatar del TopBar) desde firstName/lastName.
- *           Independiente de useAuth (stub sin persistencia) — misma etapa mock que el resto.
+ * @processes Deriva de `useAuth().user` (contexto real, FB-020) — antes eran 4 constantes
+ *           hardcodeadas ("Juan Villegas") que TODO usuario logueado veía por igual, sin importar
+ *           quién entrara. `name` es un solo campo (así lo guarda el backend, sin `firstName`/
+ *           `lastName` inventados) — `initials` saca las primeras dos palabras.
  * @returns  { profile }
  */
 import { useMemo } from 'react';
 
+import { useAuth } from './useAuth';
+
 export type ProfileData = {
-  firstName: string;
-  lastName: string;
   name: string;
   email: string;
   roleLabel: string;
   initials: string;
 };
 
-const MOCK_FIRST_NAME = 'Juan';
-const MOCK_LAST_NAME = 'Villegas';
-const MOCK_EMAIL = 'juancvillefer@gmail.com';
-const MOCK_ROLE_LABEL = 'Representante · Hogar';
+function initialsOf(name: string): string {
+  const [first, second] = name.trim().split(/\s+/);
+  return ((first?.charAt(0) ?? '') + (second?.charAt(0) ?? '')).toUpperCase();
+}
 
 export function useProfile() {
-  const profile = useMemo<ProfileData>(
-    () => ({
-      firstName: MOCK_FIRST_NAME,
-      lastName: MOCK_LAST_NAME,
-      name: `${MOCK_FIRST_NAME} ${MOCK_LAST_NAME}`,
-      email: MOCK_EMAIL,
-      roleLabel: MOCK_ROLE_LABEL,
-      initials: (MOCK_FIRST_NAME.charAt(0) + MOCK_LAST_NAME.charAt(0)).toUpperCase(),
-    }),
-    [],
-  );
+  const { user } = useAuth();
+
+  const profile = useMemo<ProfileData>(() => {
+    if (!user) return { name: '', email: '', roleLabel: '', initials: '' };
+    return {
+      name: user.name,
+      email: user.email,
+      roleLabel: user.role === 'representante' ? 'Representante' : 'Integrante',
+      initials: initialsOf(user.name),
+    };
+  }, [user]);
 
   return { profile };
 }

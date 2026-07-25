@@ -2,11 +2,11 @@
  * QuickAddScreen — Component (Screen)
  *
  * @what     M02 — Orquestador Quick Add: header + Paso 1 (numpad) → Paso 2 (ítems) → Paso 3 (jarra).
- * @receives 1 prop: jars
+ * @receives 4 props: jars, listas, onListPurchased, onWritten
  * @processes Gestiona step via useQuickAdd. Header cambia ícono (X/←) y título según paso. El Paso 2
  *           (Detalle/ítems) es opcional: Continuar u Omitir avanzan igual a la jarra.
  * @returns  JSX — SafeArea + header + QuickAddStep1 / QuickAddStepItems / QuickAddStep2.
- * @props    1: jars
+ * @props    4: jars, listas, onListPurchased, onWritten
  */
 import { useMemo } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
@@ -25,9 +25,9 @@ const TITLES = { 1: 'Registro de Gasto', 2: 'Detalle (opcional)', 3: '¿De qué 
 
 function handleClose() { router.navigate('/'); }
 
-type Props = { jars: JarOption[]; listas: PickableList[]; onListPurchased: (listId: string) => void };
+type Props = { jars: JarOption[]; listas: PickableList[]; onListPurchased: (listId: string) => void; onWritten?: () => void };
 
-export function QuickAddScreen({ jars, listas, onListPurchased }: Props) {
+export function QuickAddScreen({ jars, listas, onListPurchased, onWritten }: Props) {
   const insets = useSafeAreaInsets();
   const {
     amount, concept, setConcept,
@@ -35,7 +35,7 @@ export function QuickAddScreen({ jars, listas, onListPurchased }: Props) {
     selectedJar, setSelectedJar,
     step,
     handleKey, handleSiguiente, handleGoToJar, handleConfirmar, handleBack,
-  } = useQuickAdd(jars, onListPurchased);
+  } = useQuickAdd(jars, onListPurchased, onWritten);
 
   const listImport = useMemo(() => ({ listas, onImport: importList }), [listas, importList]);
 

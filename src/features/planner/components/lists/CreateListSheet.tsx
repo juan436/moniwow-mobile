@@ -15,9 +15,11 @@ import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
 
 import { colors, typography, spacing, radius } from '@shared/styles';
 import { MoniInput, MoniButton, WizardSheet } from '@shared/components';
+import { useJars } from '@features/jars/hooks/useJars';
 import { RecurringJarSelector } from '../recurring/RecurringJarSelector';
+import { defaultJarId } from '../recurring/recurringFormHelpers';
 import { ListPreview } from './ListPreview';
-import type { RecurringJar } from '../../types';
+import type { JarOption } from '@features/transactions/types';
 
 const EMOJI_SIZE = 48;
 const EMOJI_GAP  = 8;
@@ -32,16 +34,17 @@ const EMOJIS = [
 
 const TITLES = ['Nueva lista', '¿De qué jarra sale?', 'Confirmar'];
 
-type Form = { nombre: string; emoji: string; jarra: RecurringJar };
-function emptyForm(): Form { return { nombre: '', emoji: '', jarra: 'libre' }; }
+type Form = { nombre: string; emoji: string; jarra: string };
+function emptyForm(jars: JarOption[]): Form { return { nombre: '', emoji: '', jarra: defaultJarId(jars) }; }
 
 type Props = { visible: boolean; onClose: () => void; onCreate: (name: string, emoji: string, jarId: string) => void };
 
 export function CreateListSheet({ visible, onClose, onCreate }: Props) {
-  const [form, setForm] = useState<Form>(emptyForm);
+  const { jars } = useJars();
+  const [form, setForm] = useState<Form>(() => emptyForm(jars));
   const [step, setStep] = useState(0);
 
-  useEffect(() => { if (visible) { setForm(emptyForm()); setStep(0); } }, [visible]);
+  useEffect(() => { if (visible) { setForm(emptyForm(jars)); setStep(0); } }, [visible, jars]);
 
   function setField<K extends keyof Form>(key: K, val: Form[K]) {
     setForm((prev) => ({ ...prev, [key]: val }));
@@ -88,8 +91,8 @@ export function CreateListSheet({ visible, onClose, onCreate }: Props) {
           </View>
         </>
       )}
-      {step === 1 && <RecurringJarSelector jarra={form.jarra} onChange={(v) => setField('jarra', v)} />}
-      {step === 2 && <ListPreview nombre={form.nombre} emoji={form.emoji} jarra={form.jarra} />}
+      {step === 1 && <RecurringJarSelector jarra={form.jarra} jars={jars} onChange={(v) => setField('jarra', v)} />}
+      {step === 2 && <ListPreview nombre={form.nombre} emoji={form.emoji} jarra={form.jarra} jars={jars} />}
     </WizardSheet>
   );
 }

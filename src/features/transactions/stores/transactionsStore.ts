@@ -7,6 +7,10 @@
  *           montan a la vez). `add` escribe la transacción y la publica al estado, para que quien
  *           la esté mirando se entere. Antes cada hook leía el repo por su cuenta con un `useEffect`
  *           y nadie se enteraba de un guardado: registrabas un gasto y la pantalla no se movía.
+ *           **`reset` (FB-019):** mismo bug que `jarsStore` — `hydrating` module-level queda TRUE
+ *           para siempre tras la primera carga, así que cambiar de cuenta/workspace sin matar la app
+ *           dejaba el libro de la cuenta ANTERIOR pegado (y con él, todo lo derivado: fugas,
+ *           distribución, Últimos movimientos). `reset()` limpia y desarma el candado.
  * @returns  useTransactionsStore hook (selectores).
  */
 import { create } from 'zustand';
@@ -22,6 +26,8 @@ type TransactionsState = {
   error: string | null;
   load: () => Promise<void>;
   add: (transaction: Transaction) => Promise<void>;
+  /** Vacía el store y desarma el candado de hidratación — llamar al cambiar de cuenta/workspace. */
+  reset: () => void;
 };
 
 // El libro se guarda en orden cronológico; la app lo lee al revés (lo último, arriba).
@@ -48,5 +54,10 @@ export const useTransactionsStore = create<TransactionsState>((set) => ({
 
   add: async (transaction) => {
     set((s) => ({ transactions: [transaction, ...s.transactions] }));
+  },
+
+  reset: () => {
+    hydrating = null;
+    set({ transactions: [], isLoading: true, error: null });
   },
 }));

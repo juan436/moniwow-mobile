@@ -14,7 +14,7 @@
  * @returns  JSX — ScrollView vertical con todas las secciones.
  * @props    3: data, scrollY, topOffset
  */
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { View, Text, Animated, ScrollView, Pressable, StyleSheet } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
@@ -60,9 +60,12 @@ export function DashboardPage({ data, scrollY, topOffset }: Props) {
   const handleUpcomingLongPress  = useCallback((item: UpcomingExpense) => setSelectedUpcoming(item), []);
   const handleUpcomingModalClose = useCallback(() => setSelectedUpcoming(null), []);
 
-  const [selectedJar, setSelectedJar] = useState<JarDisplay | null>(null);
-  const handleJarPress = useCallback((jar: JarDisplay) => setSelectedJar(jar), []);
-  const handleJarModalClose = useCallback(() => setSelectedJar(null), []);
+  // Se guarda el id, no la jarra entera (FB-013 cont.): un `JarDisplay` completo en `useState` queda
+  // congelado al balance de cuando se tocó. Derivarlo de `jars` por id en cada render lo mantiene vivo.
+  const [selectedJarId, setSelectedJarId] = useState<string | null>(null);
+  const selectedJar = useMemo(() => jars.find((j) => j.id === selectedJarId) ?? null, [jars, selectedJarId]);
+  const handleJarPress = useCallback((jar: JarDisplay) => setSelectedJarId(jar.id), []);
+  const handleJarModalClose = useCallback(() => setSelectedJarId(null), []);
   // Por `type`: el id de la jarra Metas es un UUID opaco, no la cadena 'goals'.
   const isGoalsSelected = selectedJar?.type === 'goals';
 

@@ -10,7 +10,7 @@
  *           fuerza esos valores — el tab de Agenda no se desmonta al cambiar de tab de la app, así
  *           que sin esto quedaba pegado en el último tab/filtro que el usuario haya dejado abierto.
  * @returns  JSX — statusBarBg + float animado (PlannerTabBar) + página activa.
- * @props    0
+ * @props    1: onJarsChanged
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { View, Animated, StyleSheet } from 'react-native';
@@ -25,9 +25,11 @@ import { ListsPage } from '../lists/ListsPage';
 import { RecurringPage } from '../recurring/RecurringPage';
 import type { AgendaTab, AgendaFilter } from '../../types';
 
-export function PlannerScreen() {
+type Props = { onJarsChanged?: () => void };
+
+export function PlannerScreen({ onJarsChanged }: Props) {
   const insets   = useSafeAreaInsets();
-  const { activeTab, setActiveTab, activeFilter, setActiveFilter, data, overdue, toConfirm, onConfirmItem, recurrentes, recurrenteActions } = usePlanner();
+  const { activeTab, setActiveTab, activeFilter, setActiveFilter, data, overdue, toConfirm, onConfirmItem, recurrentes, recurrenteActions } = usePlanner(onJarsChanged);
   const { tab: tabParam, filter: filterParam } = useLocalSearchParams<{ tab?: AgendaTab; filter?: AgendaFilter }>();
   const scrollY  = useRef(new Animated.Value(0)).current;
 

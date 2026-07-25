@@ -14,9 +14,15 @@
  *           **Fugas es interino**: hoy lista los gastos hormiga del mes, ordenados por monto, sin
  *           agrupar. Agrupar por categoría exige que la IA etiquete cada gasto (M09) — inventar la
  *           categoría aquí sería mentir. `isHormiga` lo decide la transacción, no un id de jarra.
+ *           **Refetch al enfocar (FB-014):** Aportar a una meta no toca el libro (reasigna el pozo,
+ *           `useGoals.handleDeposit` en la screen de Metas) → el `transactions.length` de acá nunca
+ *           cambia y `goalsTotal` quedaba viejo hasta recargar la app entera. Dashboard y Revisión
+ *           montan esta hook cada uno por su lado (sin store compartido de metas) — `useFocusEffect`
+ *           relee al volver a cualquiera de las dos pantallas, sin acoplar Metas con Dashboard/Audit.
  * @returns  Datos para las 4 páginas del carrusel + selectedMonth/onSelectMonth + isLoading + error.
  */
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useFocusEffect } from 'expo-router';
 
 import { monthKey } from '@core/utils/monthKey';
 import { goalRepository, debtRepository, jarRepository, summaryRepository } from '@infrastructure/container';
@@ -74,6 +80,10 @@ export function useAudit() {
   // Relee al crecer el libro o al cambiar de mes: los números los suma el servidor, así que pagar una
   // cuota en la Agenda no mueve nada de aquí hasta volver a preguntar.
   useEffect(() => { void loadCollections(); }, [loadCollections, transactions.length]);
+
+  // Relee al enfocar la pantalla: cubre mutaciones que no crecen el libro (Aportar a una meta), que
+  // el trigger de arriba no detecta.
+  useFocusEffect(useCallback(() => { void loadCollections(); }, [loadCollections]));
 
   // `spendingByJar` ya es del mes elegido; el guardia solo evita el parpadeo entre fetch y `setSummary`.
   const distribution = useMemo(

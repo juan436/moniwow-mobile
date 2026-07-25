@@ -2,7 +2,7 @@
  * OverdueScreen — Screen
  *
  * @what     Lo que se pasó de fecha y sigue sin pagar, en DOS bloques: pagos sueltos y deudas.
- * @receives —
+ * @receives 1 prop: onJarsChanged?
  * @processes **Un gasto atrasado no es una deuda atrasada.** El pago es único del mes (renta, Netflix);
  *           la cuota es parte de una deuda mayor que se acumula y mueve la barra de Revisión. Van en
  *           secciones separadas, con ícono y subtotal. El dato ya los distingue: la cuota trae
@@ -33,8 +33,10 @@ function keyExtractor(item: AgendaItemDisplay) { return item.id; }
 function sum(items: AgendaItemDisplay[]) { return items.reduce((s, i) => s + i.amount, 0); }
 function monthLabel(m: string) { const [y, mm] = m.split('-'); return `${MESES[Number(mm) - 1]} ${y}`; }
 
-export function OverdueScreen() {
-  const { overdue, onConfirmItem, error } = usePlanner();
+type Props = { onJarsChanged?: () => void };
+
+export function OverdueScreen({ onJarsChanged }: Props) {
+  const { overdue, onConfirmItem, error } = usePlanner(onJarsChanged);
   const { asking, ask, confirm, cancel } = useConfirmFlow(overdue, onConfirmItem);
   const insets = useSafeAreaInsets();
 

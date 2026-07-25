@@ -9,7 +9,11 @@
  *           las 2 columnas. Tocar la jarra Goals abre GoalsJarSheet (Ir a Metas / Transferir),
  *           nunca resta directo. Cualquier otra (incluida Fondo Seguridad) abre JarDetailSheet, que
  *           a su vez puede abrir TransferSheet o EditJarSheet sobre la misma jarra activa
- *           (`activeJar` + `mode`).
+ *           (`activeJarId` + `mode`). **Se guarda el id, no la jarra entera** (FB-013 cont.): un
+ *           `JarDisplay` completo en `useState` queda congelado al balance de cuando se tocó — si
+ *           otra pantalla escribe mientras el sheet sigue abierto (o se reabre tras un `reload` en
+ *           vuelo), el saldo mostrado no se movía aunque `jars` sí. `activeJar` se DERIVA de `jars`
+ *           por id en cada render, así que sigue vivo mientras el store cambie.
  * @returns  JSX — content-first (sin AppTopBar; la barra global vive solo en Dashboard): FlatList 2
  *           columnas liderada por su propio summaryCard + JarsListHeader + CreateJarSheet +
  *           JarDetailSheet + GoalsJarSheet + TransferSheet + EditJarSheet.
@@ -41,9 +45,10 @@ export function JarsScreen() {
   const { transactions } = useTransactions();
   const insets = useSafeAreaInsets();
   const [isCreateVisible, setIsCreateVisible] = useState(false);
-  const [activeJar, setActiveJar] = useState<JarDisplay | null>(null);
+  const [activeJarId, setActiveJarId] = useState<string | null>(null);
   const [mode, setMode] = useState<Mode>(null);
 
+  const activeJar = useMemo(() => jars.find((j) => j.id === activeJarId) ?? null, [jars, activeJarId]);
   const total = useMemo(() => jars.reduce((s, j) => s + j.balance, 0), [jars]);
 
   const gridJars = useMemo(() => {
@@ -55,7 +60,7 @@ export function JarsScreen() {
   const handleCloseCreate = useCallback(() => setIsCreateVisible(false), []);
 
   const handleJarPress = useCallback((jar: JarDisplay) => {
-    setActiveJar(jar);
+    setActiveJarId(jar.id);
     // Por `type`: el id de la jarra Metas es un UUID opaco, no la cadena 'goals'.
     setMode(jar.type === 'goals' ? 'goals' : 'detail');
   }, []);

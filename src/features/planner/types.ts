@@ -69,8 +69,8 @@ export type RecurringDisplay = {
   /** El monto MENSUAL (la cuota, en deudas). El total de una deuda = amount × cuotas. */
   amount: number;
   filter: AgendaFilter;
-  /** Necesarios para editar sin perder datos: la jarra de pago y la duración. Derivados de la entidad. */
-  jarra: RecurringJar;
+  /** Necesarios para editar sin perder datos: la jarra de pago (id real) y la duración. Derivados de la entidad. */
+  jarra: string;
   frecuencia: RecurringFrequency;
   cuotas: number;
   /**
@@ -92,7 +92,7 @@ export type CreateRecurringData = {
   amount: number; // mensual: para deuda es la cuota (total = amount × cuotas)
   day: number;
   filter: AgendaFilter;
-  jarra: RecurringJar;
+  jarra: string;
   frecuencia: RecurringFrequency;
   cuotas: number; // duración en meses (ingreso/gasto finito) o nº de cuotas (deuda a plazos)
   /** Solo deuda: el total se paga de una vez, en `day`. Con esto, `cuotas` no aplica. */
@@ -109,7 +109,6 @@ export type RecurringActions = {
 };
 
 export type RecurringFrequency = 'indefinido' | 'cuotas';
-export type RecurringJar       = 'hogar' | 'goals' | 'libre' | 'transporte' | 'salud' | 'educacion' | 'viajes' | 'emergencias' | 'ocio';
 
 export type RecurringForm = {
   tipo:          AgendaFilter;
@@ -122,7 +121,8 @@ export type RecurringForm = {
   unicoPago:     boolean;
   cuotasTotales: number;
   cuotasPagadas: number;
-  jarra:         RecurringJar;
+  /** Id real de la jarra del workspace — no un catálogo fijo (FB-013). */
+  jarra:         string;
 };
 
 /** `pending` = lo que te queda (baja al confirmar). `paid` = lo ya hecho. Derivados de los ítems. */

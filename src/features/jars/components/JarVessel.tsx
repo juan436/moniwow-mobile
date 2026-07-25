@@ -4,11 +4,15 @@
  * @what     Frasco de vidrio SVG que se llena de monedas doradas (base densa) y billetes verdes
  *           (encima) hasta el nivel de la jarra.
  * @receives 2 props: jar, width
- * @processes El nivel = `progress/100` (o 0.24 si no hay meta: pila baja, sin nivel falso). El relleno
- *           llega de `buildJarFill` como **5 cadenas `d`, una por color** (FB-012): antes cada moneda
- *           eran 3 nodos y cada billete 5 → ~222 nodos por jarra, ~1.800 en pantalla. Todo lo que
- *           comparte fill/stroke se dibuja en un solo `Path`. Va clipeado al cuerpo del frasco. El
- *           emoji/ícono NO va acá — es un overlay RN (medallón) del contenedor.
+ * @processes El nivel = `progress/100` si hay meta. **Sin meta (Libre/Fondo Seguridad/Metas, FB-016):**
+ *           el pozo no tiene techo real, pero el frasco sí tiene un alto fijo en pantalla — se llena
+ *           por el `balance` real contra un techo visual fijo (`NO_BUDGET_FULL_AMOUNT`), no un 24%
+ *           constante que mentía por igual estando en $5 o en $900. Pasado el techo queda lleno: no
+ *           es "100% de la meta" (no hay meta, no se muestra pill de %), es nomás el frasco a tope.
+ *           El relleno llega de `buildJarFill` como **5 cadenas `d`, una por color** (FB-012): antes
+ *           cada moneda eran 3 nodos y cada billete 5 → ~222 nodos por jarra, ~1.800 en pantalla. Todo
+ *           lo que comparte fill/stroke se dibuja en un solo `Path`. Va clipeado al cuerpo del frasco.
+ *           El emoji/ícono NO va acá — es un overlay RN (medallón) del contenedor.
  * @returns  JSX — Svg con relación de aspecto fija (JAR_GEO).
  * @props    2: jar, width
  */
@@ -24,12 +28,15 @@ const COIN_RIM = '#A97E2E';
 const COIN_SHINE = '#F6E6AC';
 const BILL = ['#2F9160', '#237A4C'];
 const BILL_STROKE = '#0F3D28';
+const NO_BUDGET_FULL_AMOUNT = 1000; // jarra sin meta: balance a partir del cual se ve llena
 
 type Props = { jar: JarDisplay; width: number };
 
 export const JarVessel = memo(function JarVessel({ jar, width }: Props) {
   const { viewW, viewH, body } = JAR_GEO;
-  const level = jar.progress !== undefined ? jar.progress / 100 : 0.24;
+  const level = jar.progress !== undefined
+    ? jar.progress / 100
+    : Math.max(0, Math.min(1, jar.balance / NO_BUDGET_FULL_AMOUNT));
   const fill = buildJarFill(jar.id, level);
   const cid = `jarClip-${jar.id}`;
   const gid = `coinG-${jar.id}`;

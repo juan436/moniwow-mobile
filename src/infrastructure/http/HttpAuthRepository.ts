@@ -23,6 +23,13 @@ interface AuthResponse {
   user: { id: string; name: string; email: string; role: string; workspaceId: string };
 }
 
+export interface UpdateProfileInput {
+  name?: string;
+  email?: string;
+  currentPassword?: string;
+  newPassword?: string;
+}
+
 function toUser(dto: AuthResponse['user']): User {
   return new User({
     id: dto.id,
@@ -65,5 +72,11 @@ export class HttpAuthRepository implements IAuthRepository {
 
   async logout(): Promise<void> {
     await tokenStore.clear();
+  }
+
+  /** Editar perfil: nombre/correo, y opcionalmente contraseña (exige la actual). */
+  async updateProfile(input: UpdateProfileInput): Promise<User> {
+    const dto = await request<AuthResponse['user']>('/auth/me', { method: 'PATCH', body: input });
+    return toUser(dto);
   }
 }

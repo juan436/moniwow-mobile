@@ -10,6 +10,12 @@
  *           importa `jarCapabilities` (core) como candado — `remove` rechaza jarras protegidas y
  *           `save` ignora campos que la jarra no permite editar. La UI ya deshabilita esos controles;
  *           este candado es la segunda capa (varias entradas, UI falible, futuro backend).
+ *           **`reset` (FB-019):** `hydrating` es module-level — una vez resuelto queda TRUE para
+ *           siempre (una Promise resuelta sigue siendo verdadera), así que `load()` solo pega a la
+ *           red la primera vez en la vida del proceso JS. Cambiar de cuenta/workspace sin matar la
+ *           app (cerrar sesión, crear o unirse a un hogar) dejaba las jarras de la cuenta ANTERIOR
+ *           pegadas en pantalla — el token cambiaba, el store no se enteraba. `reset()` limpia el
+ *           array y pone `hydrating = null` para que el próximo `load()` vuelva a preguntar.
  * @returns  useJarsStore hook (selectores) — envuelto por useJars, que mapea Jar → JarDisplay.
  */
 import { create } from 'zustand';
@@ -29,6 +35,8 @@ type JarsState = {
   load: () => Promise<void>;
   /** Vuelve a preguntarle al servidor, ignorando la hidratación ya hecha. */
   reload: () => Promise<void>;
+  /** Vacía el store y desarma el candado de hidratación — llamar al cambiar de cuenta/workspace. */
+  reset: () => void;
   create: (data: CreateJarData) => void;
   save: (data: SaveJarData) => void;
   remove: (id: string) => void;
@@ -64,6 +72,11 @@ export const useJarsStore = create<JarsState>((set, get) => ({
   reload: () => {
     hydrating = fetchJars(set);
     return hydrating;
+  },
+
+  reset: () => {
+    hydrating = null;
+    set({ jars: [], isLoading: true, error: null });
   },
 
   // El id, el tipo y el candado de capacidades los pone el SERVIDOR (`POST /jars`). Antes se armaba

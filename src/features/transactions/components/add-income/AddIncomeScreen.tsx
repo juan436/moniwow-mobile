@@ -8,7 +8,7 @@
  *           state/actions de Step2 van memoizados (useMemo/useCallback) — objetos inline como
  *           prop JSX causan re-render en cada render del padre (code_rules §2).
  * @returns  JSX — SafeArea + header + AddIncomeStep1 o AddIncomeStep2.
- * @props    1: jars
+ * @props    2: jars, onWritten
  */
 import { useMemo, useCallback } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
@@ -26,9 +26,9 @@ const TITLES = { 1: 'Registro de Ingreso', 2: '¿Distribuir fondos?' } as const;
 
 function handleClose() { router.back(); }
 
-type Props = { jars: JarOption[] };
+type Props = { jars: JarOption[]; onWritten?: () => void };
 
-export function AddIncomeScreen({ jars }: Props) {
+export function AddIncomeScreen({ jars, onWritten }: Props) {
   const insets = useSafeAreaInsets();
   const {
     amount, concept, setConcept,
@@ -38,7 +38,7 @@ export function AddIncomeScreen({ jars }: Props) {
     handleKey, handleSiguiente, handleToggleDistribute,
     handleSelectJar, handleJarNumpadKey, handleJarNumpadConfirm, handleAssignAll, handleJarNumpadCancel,
     handleConfirmar, handleBack,
-  } = useAddIncome(jars);
+  } = useAddIncome(jars, onWritten);
 
   const handleConfirmarYVolver = useCallback(() => {
     handleConfirmar();

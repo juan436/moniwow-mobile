@@ -28,7 +28,7 @@ function emptyDistribution(jars: JarOption[]): IncomeDistribution {
   return Object.fromEntries(jars.map(j => [j.id, 0]));
 }
 
-export function useAddIncome(jars: JarOption[]) {
+export function useAddIncome(jars: JarOption[], onWritten?: () => void) {
   const [amount,       setAmount]       = useState('0');
   const [concept,      setConcept]      = useState('');
   const [step,         setStep]         = useState<1 | 2>(1);
@@ -127,11 +127,12 @@ export function useAddIncome(jars: JarOption[]) {
       });
 
       for (const tx of written) await addToLedger(tx);
+      onWritten?.(); // el balance de las jarras (Libre + repartidas) lo suma el servidor
       resetAll();
     } catch {
       setError('No se pudo registrar el ingreso — intenta de nuevo');
     }
-  }, [totalAmount, isDistributing, distribution, concept, addToLedger, resetAll]);
+  }, [totalAmount, isDistributing, distribution, concept, onWritten, addToLedger, resetAll]);
 
   const handleBack = useCallback(() => setStep(1), []);
 

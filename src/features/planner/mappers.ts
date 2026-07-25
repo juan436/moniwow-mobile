@@ -20,20 +20,22 @@ import type { CuotaStatus } from '@core/types/DebtStatus';
 import type { RecurrenceOccurrence } from '@core/types/RecurrenceStatus';
 import type { JarPresentation } from '@shared/styles';
 import type { AgendaItemDisplay, ListDisplay } from './types';
-import { jarLabelOf } from './jarOptions';
 
 /**
  * `List` (dominio) → `ListDisplay` (presentación). El `emoji` es dato de la lista (lo eligió el
  * usuario); la `jarLabel` se DERIVA del `jarId` — la lista referencia la jarra por id, no guarda su
- * nombre. Los ítems se copian tal cual (misma forma display que dominio). El `approxTotal` lo calcula
- * la ENTIDAD (`List.approxTotal()`), no este mapper: sumar es regla de negocio, acá solo se transporta.
+ * nombre, así que el nombre real lo resuelve el caller (`useLists`, que tiene las jarras del
+ * workspace) y lo pasa ya resuelto (FB-013: antes `jarLabelOf` buscaba en un catálogo hardcodeado que
+ * no coincidía con ningún jarId real). Los ítems se copian tal cual (misma forma display que
+ * dominio). El `approxTotal` lo calcula la ENTIDAD (`List.approxTotal()`), no este mapper: sumar es
+ * regla de negocio, acá solo se transporta.
  */
-export function toListDisplay(list: List): ListDisplay {
+export function toListDisplay(list: List, jarLabel: string): ListDisplay {
   return {
     id: list.id,
     emoji: list.emoji,
     name: list.name,
-    jarLabel: jarLabelOf(list.jarId),
+    jarLabel,
     items: list.items.map((i) => ({
       id: i.id,
       name: i.name,

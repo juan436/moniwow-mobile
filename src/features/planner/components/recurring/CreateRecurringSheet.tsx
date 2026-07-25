@@ -19,6 +19,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { spacing } from '@shared/styles';
 import { MoniButton, MoniSheet } from '@shared/components';
+import { useJars } from '@features/jars/hooks/useJars';
 import { RecurringFormStep1 } from './RecurringFormStep1';
 import { RecurringDayStep } from './RecurringDayStep';
 import { RecurringDurationStep } from './RecurringDurationStep';
@@ -34,15 +35,16 @@ type Props = { visible: boolean; initialType: AgendaFilter; onClose: () => void;
 
 export function CreateRecurringSheet({ visible, initialType, onClose, onCreate }: Props) {
   const insets = useSafeAreaInsets();
-  const [form, setForm] = useState<RecurringForm>(() => emptyRecurringForm(initialType));
+  const { jars } = useJars();
+  const [form, setForm] = useState<RecurringForm>(() => emptyRecurringForm(initialType, jars));
   const [stepIndex, setStepIndex] = useState(0);
   const isDeuda    = form.tipo === 'deudas';
   const currentKey = STEPS[stepIndex];
   const lastIndex  = STEPS.length - 1;
 
   useEffect(() => {
-    if (visible) { setForm(emptyRecurringForm(initialType)); setStepIndex(0); }
-  }, [visible, initialType]);
+    if (visible) { setForm(emptyRecurringForm(initialType, jars)); setStepIndex(0); }
+  }, [visible, initialType, jars]);
 
   function setField<K extends keyof RecurringForm>(key: K, val: RecurringForm[K]) {
     if (key === 'tipo') setStepIndex(0);
@@ -76,7 +78,7 @@ export function CreateRecurringSheet({ visible, initialType, onClose, onCreate }
           ? <RecurringInstallmentsStep form={form} onChange={setField} />
           : <RecurringDurationStep form={form} onChange={setField} />
         )}
-        {currentKey === 'jarra' && <RecurringJarSelector jarra={form.jarra} onChange={(v) => setField('jarra', v)} />}
+        {currentKey === 'jarra' && <RecurringJarSelector jarra={form.jarra} jars={jars} onChange={(v) => setField('jarra', v)} />}
         {stepIndex < lastIndex
           ? <MoniButton label="Continuar" onPress={() => setStepIndex(stepIndex + 1)} disabled={!canContinue} />
           : <MoniButton label="Programar compromiso" onPress={handleSave} disabled={!canContinue} />

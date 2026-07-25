@@ -14,7 +14,7 @@ import { QuickAddScreen } from '@features/transactions/components/quick-add/Quic
 import type { PickableList } from '@features/transactions/types';
 
 export default function QuickAddTab() {
-  const { jars } = useJars();
+  const { jars, reload } = useJars();
   const { listas: sourceListas, markPurchased } = useLists();
 
   const listas: PickableList[] = useMemo(
@@ -22,5 +22,5 @@ export default function QuickAddTab() {
     [sourceListas]
   );
 
-  return <QuickAddScreen jars={jars} listas={listas} onListPurchased={markPurchased} />;
+  return <QuickAddScreen jars={jars} listas={listas} onListPurchased={markPurchased} onWritten={reload} />;
 }

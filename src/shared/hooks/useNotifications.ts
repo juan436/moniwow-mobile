@@ -1,15 +1,26 @@
 /**
  * useNotifications — Hook
  *
- * @what     Provee lista de notificaciones de presentación + marcar leídas. Mock hasta backend.
+ * @what     Notificaciones derivadas de datos reales — pagos próximos y metas cerca del objetivo.
  * @receives Ninguno.
- * @processes Dueño de los datos de notificaciones (mismo patrón mock-stage que useJars/useGoals).
- *           `unreadCount` alimenta el badge de la campanita. `markAllRead` pone todas en leído.
- * @returns  { notifications, unreadCount, markAllRead }
+ * @processes **FB-020: sin backend de notificaciones ni colección nueva** — se deriva de
+ *           `GET /summary` (compromisos próximos, mismo dato que "Próximos" del Dashboard) y
+ *           `GET /goals` (progreso, mismo dato que la tab Metas). Sin "leído" persistido: no son
+ *           eventos pasados, son hechos vigentes — si el pago sigue por vencer, sigue en la lista la
+ *           próxima vez que se abra, y eso es correcto, no un bug. `unreadCount` = cuántas alertas
+ *           hay activas ahora, no un contador de mensajes sin abrir.
+ * @returns  { notifications, unreadCount }
  */
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import type { MaterialIcons } from '@expo/vector-icons';
+
 import { colors } from '@shared/styles';
+import { summaryRepository, goalRepository } from '@infrastructure/container';
+
+const WORKSPACE_ID = 'ws1'; // mock-stage: único workspace sembrado
+const UPCOMING_LIMIT = 10;
+const GOAL_NEAR_THRESHOLD = 75; // % de la meta a partir del cual se avisa "casi"
+const MS_PER_DAY = 86_400_000;
 
 type IconName = keyof typeof MaterialIcons.glyphMap;
 
@@ -19,29 +30,55 @@ export type NotificationItem = {
   tint: string;
   title: string;
   body: string;
-  time: string;
-  isRead: boolean;
 };
 
-const INITIAL_NOTIFICATIONS: NotificationItem[] = [
-  { id: 'n1', icon: 'receipt-long', tint: colors.emeraldSuccess, title: 'Compra registrada', body: 'Supermercado — $ 42.300 asignado a Comida.', time: 'Hace 5 min', isRead: false },
-  { id: 'n2', icon: 'savings', tint: colors.goldDreams, title: '¡Meta más cerca!', body: 'Viaje Europa llegó al 35 % de su objetivo.', time: 'Hace 2 h', isRead: false },
-  { id: 'n3', icon: 'event', tint: colors.alertOrange, title: 'Pago próximo', body: 'Alquiler vence en 3 días — $ 850.000.', time: 'Ayer', isRead: false },
-  { id: 'n4', icon: 'shield', tint: colors.primary, title: 'Fondo Seguridad protegido', body: 'Se bloqueó un retiro no planeado. Bien hecho.', time: 'Hace 2 días', isRead: true },
-  { id: 'n5', icon: 'group', tint: colors.slateGray, title: 'Nuevo integrante', body: 'Sofía se unió a tu espacio Hogar.', time: 'Hace 4 días', isRead: true },
-];
+function daysUntil(due: Date, today: Date): number {
+  const d = Date.UTC(due.getFullYear(), due.getMonth(), due.getDate());
+  const t = Date.UTC(today.getFullYear(), today.getMonth(), today.getDate());
+  return Math.round((d - t) / MS_PER_DAY);
+}
+
+function dueLabel(days: number): string {
+  if (days < 0) return 'atrasado';
+  if (days === 0) return 'vence hoy';
+  if (days === 1) return 'vence mañana';
+  return `vence en ${days} días`;
+}
 
 export function useNotifications() {
-  const [notifications, setNotifications] = useState<NotificationItem[]>(INITIAL_NOTIFICATIONS);
+  const [items, setItems] = useState<NotificationItem[]>([]);
 
-  const unreadCount = useMemo(
-    () => notifications.filter((n) => !n.isRead).length,
-    [notifications],
-  );
+  const load = useCallback(async () => {
+    const today = new Date();
+    const [summary, goals] = await Promise.all([
+      summaryRepository.find({ upcomingLimit: UPCOMING_LIMIT }),
+      goalRepository.findByWorkspace(WORKSPACE_ID),
+    ]);
 
-  const markAllRead = useCallback(() => {
-    setNotifications((prev) => prev.map((n) => (n.isRead ? n : { ...n, isRead: true })));
+    const upcomingItems: NotificationItem[] = summary.upcoming
+      .filter((c) => c.type === 'pago')
+      .map((c) => ({
+        id: `upcoming-${c.id}`,
+        icon: 'event',
+        tint: colors.alertOrange,
+        title: 'Pago próximo',
+        body: `${c.description} — ${dueLabel(daysUntil(c.dueDate, today))}, $ ${c.amount.toLocaleString('es')}.`,
+      }));
+
+    const goalItems: NotificationItem[] = goals
+      .filter((g) => g.progressPercent() >= GOAL_NEAR_THRESHOLD && g.progressPercent() < 100)
+      .map((g) => ({
+        id: `goal-${g.id}`,
+        icon: 'savings',
+        tint: colors.goldDreams,
+        title: '¡Meta más cerca!',
+        body: `${g.name} llegó al ${Math.round(g.progressPercent())}% de su objetivo.`,
+      }));
+
+    setItems([...upcomingItems, ...goalItems]);
   }, []);
 
-  return { notifications, unreadCount, markAllRead };
+  useEffect(() => { void load(); }, [load]);
+
+  return { notifications: items, unreadCount: items.length };
 }

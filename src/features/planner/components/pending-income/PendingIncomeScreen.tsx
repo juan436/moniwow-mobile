@@ -2,7 +2,7 @@
  * PendingIncomeScreen — Screen
  *
  * @what     Ingresos cuya fecha ya pasó y siguen sin marcar. Se confirman desde aquí.
- * @receives —
+ * @receives 1 prop: onJarsChanged?
  * @processes Gemela de `/overdue`, pero al revés: no es deuda, es un **recordatorio** de que quizá
  *           se te olvidó marcar que un ingreso llegó. Por eso verde, no naranja. La lista se DERIVA
  *           (`buildAgenda.toConfirm`): ingresos `pending` con fecha pasada y sin confirmar. Confirmar
@@ -24,8 +24,10 @@ import type { AgendaItemDisplay } from '@features/planner/types';
 
 function keyExtractor(item: AgendaItemDisplay) { return item.id; }
 
-export function PendingIncomeScreen() {
-  const { toConfirm, onConfirmItem, error } = usePlanner();
+type Props = { onJarsChanged?: () => void };
+
+export function PendingIncomeScreen({ onJarsChanged }: Props) {
+  const { toConfirm, onConfirmItem, error } = usePlanner(onJarsChanged);
   const { asking, ask, confirm, cancel } = useConfirmFlow(toConfirm, onConfirmItem);
   const insets = useSafeAreaInsets();
 

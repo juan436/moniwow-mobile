@@ -16,7 +16,6 @@ import { Debt } from '@core/entities/Debt';
 import { Recurrence } from '@core/entities/Recurrence';
 import type { DebtWriteInput } from '@core/ports/IDebtActions';
 import type { RecurrenceWriteInput } from '@core/ports/IRecurrenceActions';
-import { asRecurringJar } from './jarOptions';
 import type { JarPresentation } from '@shared/styles';
 import type { CreateRecurringData, RecurringDisplay } from './types';
 
@@ -59,7 +58,7 @@ export function toRecurringDisplay(rec: Recurrence, jar: JarPresentation, paymen
     id: rec.id, iconName: jar.iconName, iconColor: jar.iconColor, iconBg: jar.iconBg,
     name: rec.name, day: rec.dayOfMonth, amount: rec.amount,
     filter: rec.type === 'ingreso' ? 'ingresos' : 'gastos',
-    jarra: asRecurringJar(rec.jarId),
+    jarra: rec.jarId,
     frecuencia: rec.endMonth ? 'cuotas' : 'indefinido',
     cuotas: rec.endMonth ? monthsInclusive(rec.startMonth, rec.endMonth) : 12,
     paymentCount,
@@ -73,7 +72,7 @@ export function toDebtRecurringDisplay(debt: Debt, jar: JarPresentation, payment
   return {
     id: debt.id, iconName: jar.iconName, iconColor: jar.iconColor, iconBg: jar.iconBg,
     name: debt.description, day: debt.dueDay, amount: debt.cuotaAmount(),
-    filter: 'deudas', jarra: asRecurringJar(debt.sourceJarId), frecuencia: 'cuotas', cuotas: debt.totalCuotas(),
+    filter: 'deudas', jarra: debt.sourceJarId, frecuencia: 'cuotas', cuotas: debt.totalCuotas(),
     paymentCount,
     // `cancelledAt` solo lo pone CancelDebt (el fin natural es `isPaid`, no este campo): presente =
     // cancelada → sale de "activos" YA. Lo aún vencido sin pagar sigue en Atrasados vía las cuotas.

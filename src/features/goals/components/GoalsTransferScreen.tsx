@@ -2,13 +2,15 @@
  * GoalsTransferScreen — Component (Screen)
  *
  * @what     Selector dedicado de meta para retirar — pantalla propia, distinta de GoalsScreen (M10).
- * @receives —
+ * @receives 1 prop opcional: onJarsChanged
  * @processes Se llega desde GoalsJarSheet → "Transferir". Lista de metas (useGoals, mismo mock que
  *           GoalsScreen — no comparten estado entre pantallas, mismo límite mock-stage que el resto
  *           de hooks del proyecto hasta conectar backend). Tap en una card abre SacrificeSheet
- *           (Slider de Sacrificio); confirmar llama handleWithdraw y cierra el modal.
+ *           (Slider de Sacrificio); confirmar llama handleWithdraw y cierra el modal. Retirar mueve
+ *           Metas → Libre — `onJarsChanged` (FB-015) avisa a `jarsStore` para que esas dos jarras
+ *           no queden con el balance viejo hasta recargar la app.
  * @returns  JSX — Header con back + lista de GoalCard (sin botón Aportar) + SacrificeSheet.
- * @props    —
+ * @props    1: onJarsChanged
  */
 import { useCallback, useState } from 'react';
 import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native';
@@ -24,9 +26,11 @@ import type { GoalItem } from '../types';
 
 function handleBack() { router.back(); }
 
-export function GoalsTransferScreen() {
+type Props = { onJarsChanged?: () => void };
+
+export function GoalsTransferScreen({ onJarsChanged }: Props) {
   const insets = useSafeAreaInsets();
-  const { goals, handleWithdraw } = useGoals();
+  const { goals, handleWithdraw } = useGoals(onJarsChanged);
   const [selectedGoal, setSelectedGoal] = useState<GoalItem | null>(null);
 
   const handleGoalPress = useCallback((goal: GoalItem) => setSelectedGoal(goal), []);

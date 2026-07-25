@@ -12,6 +12,10 @@
  *           dentro del pozo — el dinero ya está en la jarra Metas, no toca el libro, pero sí cambia
  *           `currentAmount` → se persiste. handleWithdraw (Sacrificio) SÍ mueve dinero (Metas → Libre):
  *           `WithdrawFromGoal` escribe la transferencia y persiste la meta; usamos la que devuelve.
+ *           **`onJarsChanged` (FB-015):** withdraw cambia el balance de Metas Y Libre — quien
+ *           mantiene esas jarras es `jarsStore` (Zustand), ajeno a esta hook (`goals/` no importa
+ *           `jars/`, mismo principio que `QuickAddTab`). Se compone en la ruta y baja como callback,
+ *           igual que el `reload` de FB-013.
  * @returns  { goals, isAddVisible, selectedGoal, poolTotal, asignado, disponible, handleAnadir,
  *            handleCloseAdd, handleCreate, handleCardPress, handleCloseEdit, handleSave,
  *            handleDelete, handleWithdraw, handleDeposit }
@@ -26,7 +30,7 @@ import type { GoalItem, CreateGoalData, SaveGoalData } from '../types';
 
 const WORKSPACE_ID = 'ws1'; // mock-stage: único workspace sembrado
 
-export function useGoals() {
+export function useGoals(onJarsChanged?: () => void) {
   const [goals, setGoals] = useState<Goal[]>([]);
   const [poolTotal, setPoolTotal] = useState(0);
   const [isAddVisible, setIsAddVisible] = useState(false);
@@ -94,7 +98,8 @@ export function useGoals() {
     const { goal, transaction } = await goalActions.withdraw(id, amount);
     await addToLedger(transaction);
     setGoals((g) => g.map((x) => (x.id === id ? goal : x)));
-  }, [addToLedger]);
+    onJarsChanged?.();
+  }, [addToLedger, onJarsChanged]);
 
   // Aportar reasigna dentro del pozo (sube `currentAmount`, no toca el libro). Lo hace el servidor y
   // devuelve la meta con el nuevo saldo asignado.

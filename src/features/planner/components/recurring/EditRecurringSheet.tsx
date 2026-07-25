@@ -17,6 +17,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { spacing } from '@shared/styles';
 import { MoniButton, MoniSheet } from '@shared/components';
+import { useJars } from '@features/jars/hooks/useJars';
 import { RecurringFormStep1 } from './RecurringFormStep1';
 import { RecurringDayStep } from './RecurringDayStep';
 import { RecurringDurationStep } from './RecurringDurationStep';
@@ -38,6 +39,7 @@ type Props = {
 
 export function EditRecurringSheet({ visible, item, onClose, onSave, onDelete }: Props) {
   const insets = useSafeAreaInsets();
+  const { jars } = useJars();
   const [form, setForm] = useState<RecurringForm | null>(null);
   const [stepIndex, setStepIndex] = useState(0);
 
@@ -91,7 +93,7 @@ export function EditRecurringSheet({ visible, item, onClose, onSave, onDelete }:
           ? <RecurringInstallmentsStep form={form} onChange={setField} />
           : <RecurringDurationStep form={form} onChange={setField} />
         )}
-        {currentKey === 'jarra' && <RecurringJarSelector jarra={form.jarra} onChange={(v) => setField('jarra', v)} />}
+        {currentKey === 'jarra' && <RecurringJarSelector jarra={form.jarra} jars={jars} onChange={(v) => setField('jarra', v)} />}
         {stepIndex < lastIndex
           ? <MoniButton label="Continuar" onPress={() => setStepIndex(stepIndex + 1)} disabled={!canContinue} />
           : <MoniButton label="Guardar cambios" onPress={handleSave} disabled={!canContinue} />

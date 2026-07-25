@@ -8,6 +8,6 @@ import { useJars } from '@features/jars/hooks/useJars';
 import { AddIncomeScreen } from '@features/transactions/components/add-income/AddIncomeScreen';
 
 export default function AddIncomeRoute() {
-  const { jars } = useJars();
-  return <AddIncomeScreen jars={jars} />;
+  const { jars, reload } = useJars();
+  return <AddIncomeScreen jars={jars} onWritten={reload} />;
 }

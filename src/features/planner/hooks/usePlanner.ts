@@ -2,7 +2,8 @@
  * usePlanner — Hook
  *
  * @what     Estado y datos de la Agenda + CRUD local de compromisos recurrentes.
- * @receives —
+ * @receives onWrite?: () => void — se llama tras pagar/confirmar, para que el composition root
+ *           refresque `jarsStore` (FB-013: el balance lo suma el servidor).
  * @processes La Agenda se DERIVA: reglas recurrentes (`recurrenceRepository`) + deudas
  *           (`debtRepository`), **que ya llegan cruzadas con el libro por el servidor**. Cada
  *           ocurrencia del mes y las atrasadas vienen en su `status`; mobile ya no las calcula
@@ -33,7 +34,7 @@ import type { AgendaTab, AgendaFilter } from '../types';
 const WORKSPACE_ID = 'ws1';
 const FALLBACK: JarPresentation = { name: 'Libre', iconName: 'account-balance-wallet', ...colorByType('libre') };
 
-export function usePlanner() {
+export function usePlanner(onWrite?: () => void) {
   const [activeTab, setActiveTab] = useState<AgendaTab>('mi-mes');
   const [activeFilter, setActiveFilter] = useState<AgendaFilter>('gastos');
   const [recurrences, setRecurrences] = useState<RecurrenceWithStatus[]>([]);
@@ -104,12 +105,13 @@ export function usePlanner() {
 
       await addToLedger(transaction);
       await load(); // relee compromisos: su estado vive en la BD, no en memoria
+      onWrite?.(); // el balance de la jarra que pagó/cobró lo suma el servidor
     } catch (e) {
       setError(e instanceof Error ? e.message : 'No se pudo confirmar el compromiso — intenta de nuevo');
     } finally {
       inFlight.current.delete(id);
     }
-  }, [data.items, overdue, toConfirm, addToLedger, load]);
+  }, [data.items, overdue, toConfirm, addToLedger, load, onWrite]);
 
   return {
     activeTab, setActiveTab, activeFilter, setActiveFilter,

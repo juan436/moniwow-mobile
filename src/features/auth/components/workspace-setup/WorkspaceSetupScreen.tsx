@@ -6,9 +6,12 @@
  * @processes Delega selección y confirmación a useWorkspaceSetup. La opción "join" muestra un campo
  *           de código de invitación en vez de crear un espacio nuevo. Al confirmar entra a la app
  *           (/(tabs)): la cuenta ya existe, este era el último paso del alta.
+ *           **Crear un hogar navega distinto (FB-017):** en vez de entrar directo, muestra
+ *           `WorkspaceCreatedScreen` con el código de invitación — es la única vez que se ve.
  * @returns  JSX — pantalla hero+bottom-sheet con 3 opciones de workspace y footer CTA.
  * @props    —
  */
+import { useState } from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -17,6 +20,7 @@ import { useWorkspaceSetup } from '@features/auth/hooks/useWorkspaceSetup';
 import { MoniButton, MoniInput, MoniLogo } from '@shared/components';
 import { colors, typography, spacing, radius, shadows } from '@shared/styles';
 import { WorkspaceOptionCard } from './WorkspaceOptionCard';
+import { WorkspaceCreatedScreen } from './WorkspaceCreatedScreen';
 import type { WorkspaceOption } from './WorkspaceOptionCard';
 
 const OPTIONS: WorkspaceOption[] = [
@@ -45,10 +49,21 @@ export function WorkspaceSetupScreen() {
   const { selected, inviteCode, isLoading, error, handleSelect, handleChangeCode, handleConfirm } =
     useWorkspaceSetup();
   const canStart = selected === 'join' ? inviteCode.trim().length > 0 : !!selected;
+  const [createdCode, setCreatedCode] = useState<string | null>(null);
 
   async function handleStart() {
-    const success = await handleConfirm();
-    if (success) router.replace('/(tabs)' as never);
+    const result = await handleConfirm();
+    if (!result.success) return;
+    if (result.inviteCode) { setCreatedCode(result.inviteCode); return; }
+    router.replace('/(tabs)' as never);
+  }
+
+  function handleContinue() {
+    router.replace('/(tabs)' as never);
+  }
+
+  if (createdCode) {
+    return <WorkspaceCreatedScreen code={createdCode} onContinue={handleContinue} />;
   }
 
   return (
@@ -92,46 +107,12 @@ export function WorkspaceSetupScreen() {
 }
 
 const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: colors.navyDark,
-  },
-  hero: {
-    alignItems: 'center',
-    paddingHorizontal: spacing.marginPage,
-    paddingVertical: spacing.stackLg,
-    gap: spacing.stackSm,
-  },
-  heroTitle: {
-    ...typography.headlineMd,
-    color: colors.pureWhite,
-    textAlign: 'center',
-  },
-  heroSubtitle: {
-    ...typography.labelMd,
-    color: colors.pureWhite,
-    opacity: 0.65,
-    textAlign: 'center',
-  },
-  sheet: {
-    flex: 1,
-    backgroundColor: colors.pureWhite,
-    borderTopLeftRadius: radius.xl,
-    borderTopRightRadius: radius.xl,
-    ...shadows.modal,
-  },
-  sheetBody: {
-    padding: spacing.marginPage,
-    paddingTop: spacing.stackLg,
-    gap: spacing.stackMd,
-  },
-  errorText: {
-    ...typography.labelMd,
-    color: colors.error,
-    textAlign: 'center',
-  },
-  footer: {
-    paddingHorizontal: spacing.marginPage,
-    paddingTop: spacing.stackSm,
-  },
+  screen: { flex: 1, backgroundColor: colors.navyDark },
+  hero: { alignItems: 'center', paddingHorizontal: spacing.marginPage, paddingVertical: spacing.stackLg, gap: spacing.stackSm },
+  heroTitle: { ...typography.headlineMd, color: colors.pureWhite, textAlign: 'center' },
+  heroSubtitle: { ...typography.labelMd, color: colors.pureWhite, opacity: 0.65, textAlign: 'center' },
+  sheet: { flex: 1, backgroundColor: colors.pureWhite, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, ...shadows.modal },
+  sheetBody: { padding: spacing.marginPage, paddingTop: spacing.stackLg, gap: spacing.stackMd },
+  errorText: { ...typography.labelMd, color: colors.error, textAlign: 'center' },
+  footer: { paddingHorizontal: spacing.marginPage, paddingTop: spacing.stackSm },
 });

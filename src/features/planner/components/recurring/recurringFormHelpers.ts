@@ -13,9 +13,15 @@
  * @returns  RecurringForm inicial.
  */
 import type { AgendaFilter, RecurringForm, RecurringDisplay } from '../../types';
+import type { JarOption } from '@features/transactions/types';
 
-export function emptyRecurringForm(tipo: AgendaFilter): RecurringForm {
-  return { tipo, nombre: '', monto: '', dia: 1, frecuencia: 'indefinido', unicoPago: true, cuotasTotales: 12, cuotasPagadas: 0, jarra: 'libre' };
+/** Jarra por defecto: Libre por `type` (no por id — los ids son UUID, no literales). Mismo criterio que `useQuickAdd`. */
+export function defaultJarId(jars: JarOption[]): string {
+  return jars.find((j) => j.type === 'libre')?.id ?? jars[0]?.id ?? '';
+}
+
+export function emptyRecurringForm(tipo: AgendaFilter, jars: JarOption[]): RecurringForm {
+  return { tipo, nombre: '', monto: '', dia: 1, frecuencia: 'indefinido', unicoPago: true, cuotasTotales: 12, cuotasPagadas: 0, jarra: defaultJarId(jars) };
 }
 
 export function recurringFormFromItem(item: RecurringDisplay): RecurringForm {

@@ -6,6 +6,11 @@
  * @processes Usa useSafeAreaInsets para paddingTop dinámico según dispositivo. Campanita y avatar
  *           abren bottom sheets (NotificationsSheet / ProfileSheet) con datos mock de hooks.
  *           Badge visible solo si hay notificaciones sin leer. Avatar muestra iniciales del perfil.
+ *           **`onSignOut` (FB-018):** llamaba solo `setProfileOpen(false)` — cerraba el sheet y no
+ *           cerraba sesión. `signOut()` (contexto real, `AuthProvider`) borra el token y el usuario;
+ *           `router.replace` es necesario además porque la navegación en expo-router es explícita,
+ *           no reacciona sola al cambio de `isAuthenticated` (el `<Redirect>` de `app/index.tsx`
+ *           solo corre si esa ruta se vuelve a montar).
  * @returns  JSX — barra superior reutilizable por cualquier feature (excepto auth).
  * @props    0
  */
@@ -17,6 +22,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { MoniLogo } from './MoniLogo';
 import { ProfileSheet } from './ProfileSheet';
+import { useAuth } from '@shared/hooks/useAuth';
 import { useNotifications } from '@shared/hooks/useNotifications';
 import { useProfile } from '@shared/hooks/useProfile';
 import { colors, typography, spacing, radius, sizes } from '@shared/styles';
@@ -25,11 +31,18 @@ export function AppTopBar() {
   const insets = useSafeAreaInsets();
   const { unreadCount } = useNotifications();
   const { profile } = useProfile();
+  const { signOut } = useAuth();
   const [profileOpen, setProfileOpen] = useState(false);
+
+  async function handleSignOut() {
+    setProfileOpen(false);
+    await signOut();
+    router.replace('/login' as never);
+  }
 
   return (
     <View style={[styles.bar, { paddingTop: insets.top + spacing.stackSm }]}>
-      <MoniLogo width={80} height={44} />
+      <MoniLogo width={56} height={38} />
       <View style={styles.actions}>
         <Pressable style={styles.iconButton} hitSlop={sizes.dotSm} onPress={() => router.push('/notifications')}>
           <MaterialIcons name="notifications" size={24} color={colors.emeraldSuccess} />
@@ -44,7 +57,7 @@ export function AppTopBar() {
         visible={profileOpen}
         profile={profile}
         onClose={() => setProfileOpen(false)}
-        onSignOut={() => setProfileOpen(false)}
+        onSignOut={handleSignOut}
       />
     </View>
   );
