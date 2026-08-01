@@ -27,6 +27,7 @@ import { IListActions } from '@core/ports/IListActions';
 import { ITransactionActions } from '@core/ports/ITransactionActions';
 import { IGoalActions } from '@core/ports/IGoalActions';
 import { IWorkspaceActions } from '@core/ports/IWorkspaceActions';
+import { IFeedbackActions } from '@core/ports/IFeedbackActions';
 
 import { HttpAuthRepository } from './http/HttpAuthRepository';
 import { HttpJarRepository } from './http/HttpJarRepository';
@@ -43,6 +44,7 @@ import { HttpListActions } from './http/HttpListActions';
 import { HttpTransactionActions } from './http/HttpTransactionActions';
 import { HttpGoalActions } from './http/HttpGoalActions';
 import { HttpWorkspaceActions } from './http/HttpWorkspaceActions';
+import { HttpFeedbackActions } from './http/HttpFeedbackActions';
 
 export const transactionRepository: ITransactionRepository = new HttpTransactionRepository();
 // El balance YA viene calculado por la API (`FindJarsByWorkspace` suma el libro del lado servidor),
@@ -82,3 +84,7 @@ export const listActions: IListActions = new HttpListActions();
 // servidor y devuelven un token NUEVO (el viejo lleva `workspaceId: ''` o el de antes congelado
 // dentro). No hay `workspaceRepository`: mobile nunca lee un workspace suelto, solo crea o se une.
 export const workspaceActions: IWorkspaceActions = new HttpWorkspaceActions();
+
+// Buzón de desarrollo: cualquier usuario autenticado puede mandar un texto. Sin lectura desde la
+// app — se extrae aparte, no es una feature de producto.
+export const feedbackActions: IFeedbackActions = new HttpFeedbackActions();

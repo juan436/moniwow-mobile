@@ -24,6 +24,7 @@ const MENU: MenuItem[] = [
   { icon: 'edit', label: 'Editar perfil', route: '/edit-profile' },
   { icon: 'settings', label: 'Configuración', route: '/settings' },
   { icon: 'help-outline', label: 'Ayuda y soporte', route: '/help' },
+  { icon: 'chat-bubble-outline', label: 'Enviar feedback', route: '/feedback' },
 ];
 
 type Props = {

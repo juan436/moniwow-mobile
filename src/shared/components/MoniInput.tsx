@@ -2,11 +2,12 @@
  * MoniInput — Component
  *
  * @what     Campo de texto estilizado del design system.
- * @receives 6 props: value, onChangeText, placeholder?, label?, inputType?, disabled?
+ * @receives 8 props: value, onChangeText, placeholder?, label?, inputType?, disabled?, multiline?, numberOfLines?
  * @processes Maneja estado de foco. inputType controla secureTextEntry y keyboardType. `disabled`
  *           bloquea edición y atenúa (para campos que la regla de negocio no permite editar).
+ *           `multiline` crece en alto en vez de mantener h=56 fijo (texto libre largo, ej. feedback).
  * @returns  JSX — TextInput con label opcional, h=56, radius=16.
- * @props    6: value, onChangeText, placeholder?, label?, inputType?, disabled?
+ * @props    8: value, onChangeText, placeholder?, label?, inputType?, disabled?, multiline?, numberOfLines?
  */
 import { useState } from 'react';
 import { TextInput, View, Text, StyleSheet } from 'react-native';
@@ -21,9 +22,11 @@ type Props = {
   label?: string;
   inputType?: InputType;
   disabled?: boolean;
+  multiline?: boolean;
+  numberOfLines?: number;
 };
 
-export function MoniInput({ value, onChangeText, placeholder, label, inputType = 'text', disabled = false }: Props) {
+export function MoniInput({ value, onChangeText, placeholder, label, inputType = 'text', disabled = false, multiline = false, numberOfLines }: Props) {
   const [focused, setFocused] = useState(false);
 
   const isPassword = inputType === 'password';
@@ -45,7 +48,14 @@ export function MoniInput({ value, onChangeText, placeholder, label, inputType =
         autoCorrect={!isPassword && !isEmail}
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
-        style={[styles.input, focused && styles.inputFocused, disabled && styles.inputDisabled]}
+        multiline={multiline}
+        numberOfLines={numberOfLines}
+        style={[
+          styles.input,
+          focused && styles.inputFocused,
+          disabled && styles.inputDisabled,
+          multiline && styles.inputMultiline,
+        ]}
       />
     </View>
   );
@@ -79,5 +89,11 @@ const styles = StyleSheet.create({
   inputDisabled: {
     backgroundColor: colors.surfaceContainerLow,
     color: colors.slateGray,
+  },
+  inputMultiline: {
+    height: undefined,
+    minHeight: spacing.inputHeight * 2,
+    paddingVertical: spacing.stackSm,
+    textAlignVertical: 'top',
   },
 });
