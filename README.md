@@ -1,6 +1,33 @@
-# MoniWow — App Móvil
+# MoniWow — App móvil
 
-App de administración financiera hogar/personal. React Native + Expo, `StyleSheet.create()` puro (sin NativeWind/Tailwind).
+App de finanzas personales/hogar basada en el método de jarras (envelope budgeting). **React Native + Expo**, `StyleSheet.create()` puro (sin NativeWind/Tailwind).
+
+El backend está en [`api-moniwow`](https://github.com/juan436/api-moniwow).
+
+---
+
+## Arquitectura
+
+Clean Architecture por capas, espejada con el backend. La regla de dependencia: `src/core/` es **TypeScript puro, sin React** — entidades, casos de uso y puertos que no saben que existe una UI.
+
+```
+src/
+  app/         Expo Router — solo navegación y layouts ((tabs), (modals), rutas de detalle)
+  core/        entities + use-cases + ports + utils — TS puro, sin React
+  features/    un módulo por dominio: dashboard, jars, transactions, goals, planner,
+               auth, profile, settings, audit, feedback
+  infrastructure/http/   adaptadores que implementan los ports contra la API real
+  shared/      components, hooks, context, styles, utils reutilizables
+```
+
+Los **ports** del `core` son el contrato con el backend: cambiar de fuente de datos es reescribir `infrastructure/http/`, sin tocar `core/` ni las features.
+
+### Decisiones que definen la app
+
+- **Nunca se almacena lo que se puede calcular.** Saldo de jarra, patrimonio, progreso de meta: todo se deriva del libro de movimientos, no se guarda como estado.
+- **Capacidades como fuente única.** Los permisos por tipo de jarra (eliminar, renombrar, editar presupuesto, blindar) son una función pura consultada por dos lados: la UI la usa para deshabilitar controles (buena UX) y el caso de uso la usa para rechazar la operación si igual llega (seguridad real). Un solo lugar para cambiar la matriz.
+- **Gestos sobre el hilo nativo.** El visor de comprobantes con zoom/pan usa `react-native-gesture-handler` + `react-native-reanimated`, tras descartar `PanResponder` y el manejo manual de eventos táctiles — decisión de rendimiento.
+- **Estado con Zustand**, navegación con **Expo Router**, tokens en **`expo-secure-store`**.
 
 ---
 
@@ -8,44 +35,30 @@ App de administración financiera hogar/personal. React Native + Expo, `StyleShe
 
 | Herramienta | Versión | Nota |
 |---|---|---|
-| Node.js | 20.x LTS | Expo 54 no soporta SDK 55/56 en Play Store todavía |
-| pnpm | última | Gestor de paquetes del proyecto — **no usar npm/yarn** |
-| Expo Go o Development Build | — | Para probar en el celular (ver abajo) |
+| Node.js | 20.x LTS | El SDK de Expo del proyecto no soporta versiones más nuevas todavía |
+| pnpm | última | Gestor del proyecto — **no usar npm/yarn** |
+| Expo Go o Development Build | — | Para probar en el celular |
 
 ---
 
-## Instalación
+## Instalación y desarrollo
 
 ```bash
-cd dev/mobile
 pnpm install
-```
-
-pnpm ya viene configurado en este repo (`.npmrc`) para que Metro encuentre todo en un solo `node_modules` — no hace falta tocar nada más.
-
----
-
-## Correr en local
-
-```bash
 pnpm expo start
 ```
 
-Escaneá el QR con la app **Expo Go** (Android/iOS) desde el celular conectado a la misma red WiFi. Los cambios de código JS se reflejan al instante (live reload).
-
-Otros comandos disponibles:
+Escaneá el QR con **Expo Go** (Android/iOS) desde un celular en la misma red WiFi. Los cambios de JS se reflejan al instante.
 
 ```bash
-pnpm android   # abre en emulador/dispositivo Android
-pnpm ios       # abre en simulador/dispositivo iOS (requiere macOS)
-pnpm web       # abre en navegador (experimental, no es el target principal)
+pnpm android   # emulador/dispositivo Android
+pnpm ios       # simulador/dispositivo iOS (requiere macOS)
+pnpm web       # navegador (experimental)
 ```
 
----
+### ¿Cuándo hace falta un build nativo (EAS)?
 
-## ¿Cuándo hace falta un build nativo (EAS)?
-
-Expo Go solo sirve para JS puro. Si tocás algo nativo, hace falta un build:
+Expo Go solo corre JS puro.
 
 | Cambio | ¿EAS Build? |
 |---|---|
@@ -58,36 +71,22 @@ Expo Go solo sirve para JS puro. Si tocás algo nativo, hace falta un build:
 eas build --profile development --platform android
 ```
 
-Tarda ~12 min, entrega un QR/link para descargar el APK. Instalás ese APK una vez en el celular, y de ahí en adelante `pnpm expo start` normal (no hace falta rebuildear por cada cambio de JS).
+Entrega un APK que se instala **una vez**; de ahí en adelante `pnpm expo start` normal.
 
----
+### Actualizar dependencias
 
-## Actualizar dependencias
-
-Nunca a mano. Siempre:
+Nunca a mano:
 
 ```bash
 pnpm exec expo install --fix
 ```
 
-Este comando resuelve las versiones compatibles entre sí para el SDK de Expo que usa el proyecto.
+Resuelve las versiones compatibles con el SDK de Expo del proyecto.
 
 ---
 
-## Estructura del proyecto
+## Forma de trabajo
 
-Clean Architecture por capas — ver detalle completo en el vault de Obsidian del proyecto (`arquitectura/clean_architecture.md`, `arquitectura/code_rules.md`):
-
-```
-src/
-├── app/        Expo Router — solo navegación y layouts
-├── features/   Un módulo por dominio (dashboard, transactions, agenda, ...)
-├── shared/     Componentes, hooks, estilos y utils reutilizables
-└── core/       Entidades + use-cases + ports — TypeScript puro, sin React
-```
-
----
-
-## Documentación y decisiones de arquitectura
-
-Este repo no tiene la fuente de verdad de decisiones de diseño/arquitectura — vive en el vault de Obsidian del proyecto (`moniwow/`). Antes de tocar código, revisar ahí: `arquitectura/`, `dev/` (patrones probados: modal vs page, teclado, status bar, etc.) y `moni-master-planes.md` para el estado actual de cada módulo.
+- **Contrato con el backend definido antes de construir**: ambos lados espejan Clean Architecture; las entidades del `core` están **duplicadas** entre este repo y `api-moniwow` (se descartó monorepo) — se modifican en ambos lados en el **mismo commit**.
+- Commits en Conventional Commits con scope (`feat(feedback):`, `fix:`, `chore(infrastructure):`). Rama `main`.
+- Las decisiones de arquitectura y los patrones probados (modal vs. page, teclado, status bar, gestos) viven en el vault de Obsidian del proyecto (`moniwow/`) como ADRs, no en el repo.
